@@ -1,0 +1,3 @@
+[submodule "nova-floc"]
+	path = nova-floc
+	url = git@github.com:EchoNet-Capstone/nova-floc.git
