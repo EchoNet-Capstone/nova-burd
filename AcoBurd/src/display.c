@@ -1,5 +1,5 @@
 
-#include <display.h>
+#include "display.h"
 
 // Sleep display for power saving
 void oled_sleep() {
