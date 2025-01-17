@@ -5,7 +5,7 @@
 #include "radio.hpp"
 #include "sleep.hpp"
 #include "gps.hpp"
-#include "innerWdt.h"
+#include "watchdog.hpp"
 #include "LoRa_APP.h"
 
 static RadioEvents_t RadioEvents;

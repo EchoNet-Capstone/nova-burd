@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "gps.hpp"
 #include "globals.hpp"
-#include "innerWdt.h"
+#include "watchdog.hpp"
 #include "GPS_Air530Z.h"
 #include "subroutines.hpp"
 

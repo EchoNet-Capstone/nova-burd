@@ -3,8 +3,9 @@
 #include "display.hpp"
 #include "motor.hpp"
 #include "globals.hpp"
-#include "innerWdt.h"
+#include "watchdog.hpp"
 #include "LoRa_APP.h"
+#include <Arduino.h>
 
 // Interrupt Timer Configuration
 #define timetillwakeup 1000                   // Cannot be longer than 1.4 seconds due to WDT

@@ -3,7 +3,7 @@
 
 // PREVIOUS INCLUDES DO NOT DELETE
 // #include <Arduino.h>
-// #include "innerWdt.h"
+// #include "watchdog.hpp"
 // #include <Wire.h>
 // #include "HT_SSD1306Wire.h"
 // #include "CubeCell_NeoPixel.h"

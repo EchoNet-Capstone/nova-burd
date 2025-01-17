@@ -1,8 +1,8 @@
 #include "motor.hpp"
 #include "globals.hpp"
 #include "subroutines.hpp"
-#include "innerWdt.h"
-
+#include "watchdog.hpp"
+#include "Arduino.h"
 
 int motor_position;
 int motor_target;

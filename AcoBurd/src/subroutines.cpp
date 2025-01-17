@@ -2,8 +2,9 @@
 #include "subroutines.hpp"
 #include "motor.hpp"
 #include "globals.hpp"
-#include "innerWdt.h"
+#include "watchdog.hpp"
 #include "sleep.hpp"
+#include <Arduino.h>
 
 // timer vars
  long display_timer;
