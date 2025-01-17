@@ -1,18 +1,102 @@
+#include "motor.hpp"
+#include "globals.hpp"
+#include "subroutines.hpp"
+#include "innerWdt.h"
 
-#include "motor.h"
+
+int motor_position;
+int motor_target;
+int motor_target_last;
+bool last_quad_a_state;
+bool last_quad_b_state;
+bool is_motor_running;
+int motor_last_position1;
+int motor_last_position2;
+int motor_last_position3;
+long wiggle_timer;
+
+void set_motor_position(int new_motor_position){
+  motor_position = new_motor_position;
+}
+
+int get_motor_position(void){
+  return motor_position;
+}
+void set_motor_target(int new_motor_target){
+  motor_target = new_motor_target;
+}
+
+int get_motor_target(void){
+  return motor_target;
+}
+void set_motor_target_last(int new_motor_target_last){
+  motor_target_last = new_motor_target_last;
+}
+
+int get_motor_target_last(void){
+  return motor_target_last;
+}
+void set_last_quad_a_state(bool new_last_quad_a_state){
+  last_quad_a_state = new_last_quad_a_state;
+}
+
+bool get_last_quad_a_state(void){
+  return last_quad_a_state;
+}
+void set_last_quad_b_state(bool new_last_quad_b_state){
+  last_quad_b_state = new_last_quad_b_state;
+}
+
+bool get_last_quad_b_state(void){
+  return last_quad_b_state;
+}
+void set_is_motor_running(bool new_is_motor_running){
+  is_motor_running = new_is_motor_running;
+}
+
+bool get_is_motor_running(void){
+  return is_motor_running;
+}
+void set_motor_last_position1(int new_motor_last_position1){
+  motor_last_position1 = new_motor_last_position1;
+}
+
+int get_motor_last_position1(void){
+  return motor_last_position1;
+}
+void set_motor_last_position2(int new_motor_last_position2){
+  motor_last_position2 = new_motor_last_position2;
+}
+
+int get_motor_last_position2(void){
+  return motor_last_position2;
+}
+void set_motor_last_position3(int new_motor_last_position3){
+  motor_last_position3 = new_motor_last_position3;
+}
+
+int get_motor_last_position3(void){
+  return motor_last_position3;
+}
+
+void set_wiggle_timer(long new_wiggle_timer){
+  wiggle_timer = new_wiggle_timer; 
+}
+
+long get_wiggle_timer(){
+  return wiggle_timer;
+}
 
 // Motor Power Save
 void motor_sleep() {
   digitalWrite(motor_driver_power, LOW);
 }
 
-
 // Motor Wake Up
 void motor_wake_up() {
-  encoder_timer = InternalClock() + encoder_timeout;
+  set_encoder_timer(InternalClock() + encoder_timeout);
   digitalWrite(motor_driver_power, HIGH);
 }
-
 
 // Turn Motor Off
 void motor_off() {
@@ -20,14 +104,12 @@ void motor_off() {
   digitalWrite(motor_driver_b, LOW);
 }
 
-
 // Run Motor Reverse
 void motor_reverse() {
   motor_wake_up();
   digitalWrite(motor_driver_a, HIGH);
   digitalWrite(motor_driver_b, LOW);
 }
-
 
 // Run Motor Forward
 void motor_forward() {
@@ -39,7 +121,9 @@ void motor_forward() {
 
 // Motor encoder interrupt
 void motor_quadrature_interrupt() {
-  if (digitalRead(motor_quad_b) ) motor_position++;
+  if (digitalRead(motor_quad_b) ){
+    motor_position++;
+  }
   else motor_position--;
 
   if (abs(motor_position - motor_target) < motor_deadband ) {
@@ -73,12 +157,12 @@ void motor_run_to_position(int target) {
     //if ( !is_motor_running && ( motor_position == motor_last_position1 ) && ( motor_last_position1 == motor_last_position2 ) && ( motor_last_position2 == motor_last_position3 ) ) motor_sleep();    // Shut down motor encoder and driver
   }
   else if (motor_target < motor_position) {
-    display_timer = InternalClock() + display_timeout;                                                // Activate display
+    set_display_timer(InternalClock() + display_timeout);                                                // Activate display
     motor_wake_up();
     motor_forward();
   }
   else if (motor_target > motor_position) {
-    display_timer = InternalClock() + display_timeout;                                                // Activate display
+    set_display_timer(InternalClock() + display_timeout);                                                // Activate display
     motor_wake_up();
     motor_reverse();
   }
@@ -106,5 +190,5 @@ void wiggle_motor(){
   delay(1000);
   feedInnerWdt();           // Pet the watchdog
 
-  wiggle_timer = InternalClock() + wiggle_interval;                         // Need to reset this here because it gets called on boot - this causes this subroutine to run twice
+  set_wiggle_timer(InternalClock() + wiggle_interval);                       // Need to reset this here because it gets called on boot - this causes this subroutine to run twice
 }

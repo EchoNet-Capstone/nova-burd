@@ -1,7 +1,7 @@
 #ifndef RADIO_H
 #define RADIO_H
 
-#include "main.h"
+#include <stdint.h>
 
 void OnTxDone(void);
 void OnTxTimeout(void);

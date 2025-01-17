@@ -1,7 +1,7 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include "main.h"
+#include <stdio.h>
 
 void oled_sleep(void);
 void oled_wake(void);

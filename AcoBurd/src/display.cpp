@@ -1,3 +1,15 @@
+#include "display.hpp"
+#include "subroutines.hpp"
+#include "globals.hpp"
+#include "HT_SSD1306Wire.h"
+#include "CubeCell_NeoPixel.h"
+#include "sleep.hpp"
+
+SSD1306Wire  oled(0x3c, 500000, SDA, SCL, GEOMETRY_128_64, GPIO10); // addr , freq , SDA, SCL, resolution , rst
+
+// Configure RGB LED
+ CubeCell_NeoPixel rgbpixel(1, RGB, NEO_GRB + NEO_KHZ800);
+
 // Sleep display for power saving
 void oled_sleep() {
   oled.sleep();//OLED sleep
@@ -13,28 +25,27 @@ void oled_wake() {
 
 
 void update_display() {
-  //long time_until_release;
 
   // Time until release
-  time_until_release = release_timer - InternalClock();
-  if (time_until_release < 0) time_until_release = 0;
+  set_time_until_release(get_release_timer() - InternalClock());
+  if (get_time_until_release() < 0) 
+    set_time_until_release(0);
 
-  int release_days = time_until_release / 86400;
-  int release_hours = (time_until_release - (release_days * 86400) ) / 3600;
-  int release_minutes = (time_until_release - (release_days * 86400) - (release_hours * 3600) ) / 60;
-  int release_seconds = (time_until_release - (release_days * 86400) - (release_hours * 3600) - (release_minutes * 60) );
+  int release_days = get_time_until_release() / 86400;
+  int release_hours = (get_time_until_release() - (release_days * 86400) ) / 3600;
+  int release_minutes = (get_time_until_release() - (release_days * 86400) - (release_hours * 3600) ) / 60;
+  int release_seconds = (get_time_until_release() - (release_days * 86400) - (release_hours * 3600) - (release_minutes * 60) );
 
   // 9 pixel height works well for line spacing
   oled_wake();
   oled.clear();
   oled.setFont(ArialMT_Plain_10);
-  oled.drawString(0, 0, "Battery: " + (String)battery_percent + "%");
-  //oled.drawString(10, 0, "Battery: " + (String)(battery_volts) + "mV  " + (String)battery_percent + "%");
+  oled.drawString(0, 0, "Battery: " + (String)get_battery_percent() + "%");
 
-  if (gps_lock == 1) {
+  if (get_gps_lock() == 1) {
     oled.drawString(85, 0, "GPS Lock");
   }
-  else if (gps_enabled == 1) {
+  else if (get_gps_enabled() == 1) {
     oled.drawString(85, 0, "GPS On");
   }
   else {
@@ -42,10 +53,10 @@ void update_display() {
   }
 
 
-  if (time_until_release > 0) {
+  if (get_time_until_release > 0) {
     int reset_countdown = 0;
 
-    if (reed_switch1 || reed_switch2 ) reset_countdown = reed_switch_long_press - (InternalClock() - reed_switch_first_press);
+    if (get_reed_switch1() || get_reed_switch2()  ) reset_countdown = reed_switch_long_press - (InternalClock() - get_reed_switch_first_press());
     else reset_countdown = reed_switch_long_press;
 
     oled.drawString(5, 15, "Hold magnet " + (String)reset_countdown + " seconds");
@@ -151,7 +162,7 @@ void led_flasher() {
   rgb_led(0, 255, 0);
   delay(20);
   rgb_led(0, 0, 0);
-  is_led_activated = 1;
+  set_is_led_activated(1);
 
   //if (gps_lock == 1){
   //  rgb_led(0, 0, 32);
