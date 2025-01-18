@@ -16,16 +16,13 @@ void oled_sleep() {
   //VextOFF();
 }
 
-
 // Wake up display
 void oled_wake() {
   VextON();
   oled.wakeup();
 }
 
-
 void update_display() {
-
   // Time until release
   set_time_until_release(get_release_timer() - InternalClock());
   if (get_time_until_release() < 0) 
@@ -51,7 +48,6 @@ void update_display() {
   else {
     oled.drawString(85, 0, "GPS Off");
   }
-
 
   if (get_time_until_release > 0) {
     int reset_countdown = 0;
@@ -124,16 +120,13 @@ void update_display() {
     oled.drawString(1, 45, "RELEASE OPEN");
   }
 
-
   oled.setFont(ArialMT_Plain_10);                                       // Reset font back to small
   // Is release open?
   //if ( release_is_open == 1 ) oled.drawString(20, 54, "RELEASE OPEN");
   //else oled.drawString(15, 54, "RELEASE CLOSED");
 
   oled.display();
-
 }
-
 
 void rgb_led(uint8_t red, uint8_t green, uint8_t blue) {
   if ( (red > 0) || (green > 0) || (blue > 0) ) {
@@ -149,12 +142,9 @@ void rgb_led(uint8_t red, uint8_t green, uint8_t blue) {
     //rgbpixel.clear(); // Set all pixel colors to 'off'
     rgbpixel.show();   // Send the updated pixel colors to the hardware.
   }
-
 }
 
-
 void led_flasher() {
-
   rgb_led(255, 0, 0);
   delay(20);
   rgb_led(0, 0, 0);
@@ -167,7 +157,6 @@ void led_flasher() {
   //if (gps_lock == 1){
   //  rgb_led(0, 0, 32);
   //}
-
 }
 
 
@@ -189,8 +178,6 @@ void logo() {
   oled.display();
   //oled.setFont(ArialMT_Plain_10);
 }
-
-
 
 // Waiting screen
 void waiting_screen() {
