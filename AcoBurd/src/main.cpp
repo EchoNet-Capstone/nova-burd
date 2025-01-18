@@ -11,25 +11,10 @@
 static RadioEvents_t RadioEvents;
 int packet_number = 0;                        // Used for testing only to count how many TX packets
 
-
-
-
-
-
- long lora_timer;
-
-
-
-
-
-
-
-
-
+long lora_timer;
 
 // Needed for watchdog timer for some reason
- bool autoFeed = false;
-
+bool autoFeed = false;
 
 void setup() {
   // put your setup code here, to run once:
@@ -38,7 +23,6 @@ void setup() {
   }
   TimerReset(0);
   boardInitMcu();                                                                                         // Hopefully reset onboard timers
-
 
   delay(100);
 
@@ -128,7 +112,6 @@ void setup() {
   go_to_sleep();
 }
 
-
 void loop() {
   if (debug){
     Serial.printf("Loop Started\n");
@@ -181,12 +164,10 @@ void loop() {
   }
   else gps_sleep();
 
-
   // Power down encoder and motor driver if it's been a while since motor has been energized
   if (get_encoder_timer() < InternalClock() ) {
     motor_sleep();
   }
-
 
   // Send a LoRa packet
   if ( lora_enable && get_waiting_to_be_retrieved() && ( lora_timer < InternalClock() ) ) {
@@ -206,7 +187,6 @@ void loop() {
     Radio.Sleep();                                                                                   // Put LoRa to sleep if we're not sending a packet
     //lora_timer = InternalClock() + lora_interval;                                                  // Increment this even if not tranmitting.  That way the LoRa radio won't transmit immediately upon activation (let float to surface) THIS BREAKS THINGS
   }
-
 
   // Draw OLED display
   int loop_counter = 0;
@@ -235,7 +215,6 @@ void loop() {
     delay(500);
   }
 
-
   // Flash LED or turn it off if not needed
   //if ( (waiting_to_be_retrieved == 1) && (display_active == 0) ) led_flasher();
   //else rgbpixel.clear(); // Set all pixel colors to 'off'
@@ -257,5 +236,4 @@ void loop() {
   }
 
   go_to_sleep();
-
 }
