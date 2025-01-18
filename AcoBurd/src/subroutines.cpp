@@ -7,30 +7,30 @@
 #include <Arduino.h>
 
 // timer vars
- long display_timer;
- long encoder_timer;
- long release_timer;
- long release_timer1;
- long release_timer2;
- long battery_timer;
- long time_until_release;
+long display_timer;
+long encoder_timer;
+long release_timer;
+long release_timer1;
+long release_timer2;
+long battery_timer;
+long time_until_release;
 
 // battery
- int battery_percent = 0;
- bool sleep_inhibit = 1;                        // Default to staying awake on boot
- bool display_active = 0;
- bool reed_switch1 = 0;
- bool reed_switch2 = 0;
- bool last_reed_switch_state = 0;
- bool waiting_to_be_retrieved = 0;
- bool release_is_open = 0;
- bool release_last_position = 0;
- bool is_led_activated = 0;
- bool gps_enabled = 0;
- bool gps_lock = 0;
- bool input_slowdown_toggle = 0;
+int battery_percent = 0;
+bool sleep_inhibit = 1;                        // Default to staying awake on boot
+bool display_active = 0;
+bool reed_switch1 = 0;
+bool reed_switch2 = 0;
+bool last_reed_switch_state = 0;
+bool waiting_to_be_retrieved = 0;
+bool release_is_open = 0;
+bool release_last_position = 0;
+bool is_led_activated = 0;
+bool gps_enabled = 0;
+bool gps_lock = 0;
+bool input_slowdown_toggle = 0;
 
-void VextON() {
+void VextON(){
   pinMode(Vext, OUTPUT);
   digitalWrite(Vext, LOW);
 }
@@ -43,18 +43,17 @@ void set_encoder_timer(long new_encoder){
   encoder_timer = new_encoder;
 }
 
-void VextOFF() {
+void VextOFF(){
   pinMode(Vext, OUTPUT);
   digitalWrite(Vext, HIGH);
 }
 
-
-void set_motor_state() {
-  if (get_release_timer() > InternalClock() ) {
+void set_motor_state(){
+  if(get_release_timer() > InternalClock()){
     motor_run_to_position(closed_position);
     waiting_to_be_retrieved = 0;                                                        // If there is time on the clock, not waiting to be recovered
   }
-  else {
+  else{
     motor_run_to_position(open_position);
   }
 }
@@ -92,7 +91,7 @@ void set_display_timer(long new_display){
 }
 
 // Measure battery voltage
-uint16_t sampleBatteryVoltage() {
+uint16_t sampleBatteryVoltage(){
   noInterrupts();
   VextON();
 
@@ -102,17 +101,19 @@ uint16_t sampleBatteryVoltage() {
 
   uint16_t battery_usable_volts = battery_full - battery_empty;
 
-  battery_percent = (int)( (100 * (volts - battery_empty) ) / battery_usable_volts);
-  if (battery_percent > 100){
+  battery_percent = (int)((100 * (volts - battery_empty)) / battery_usable_volts);
+  if(battery_percent > 100){
     battery_percent = 100;
   }
-  if (battery_percent < 0){
+
+  if(battery_percent < 0){
     battery_percent = 0;
   }
 
-  if (battery_percent < low_battery){
+  if(battery_percent < low_battery){\
+    // Release trap if battery gets low
     set_release_timer(InternalClock());
-  }             // Release trap if battery gets low
+  }             
 
   return volts;
 }
@@ -120,20 +121,22 @@ uint16_t sampleBatteryVoltage() {
 void reed_switch_debounce() {
   long time_delta;
 
-  reed_switch1 = !digitalRead(reed_switch_input1);                                                                        // Signal is inverted
-  reed_switch2 = !digitalRead(reed_switch_input2);                                                                        // Signal is inverted
+  reed_switch1 = !digitalRead(reed_switch_input1); // Signal is inverted
+  reed_switch2 = !digitalRead(reed_switch_input2); // Signal is inverted
   time_delta = InternalClock() - get_reed_switch_first_press();
 
-  if ((reed_switch1 || reed_switch2) && (get_release_timer() < InternalClock())){
-    set_release_timer(InternalClock());            // Don't let release_timer have old time
+  if((reed_switch1 || reed_switch2) && (get_release_timer() < InternalClock())){
+    // Don't let release_timer have old time
+    set_release_timer(InternalClock());            
   }
    
   // If magnet is present
-  if ( reed_switch1 || reed_switch2 ) {
-    waiting_to_be_retrieved = 0;                                                                                          // User has interacted - not waiting to be retrieved
+  if(reed_switch1 || reed_switch2){
+    // User has interacted - not waiting to be retrieved
+    waiting_to_be_retrieved = 0;
 
-    if ( time_delta > reed_switch_calibrate ) {
-      while (!digitalRead(reed_switch_input1) ) {
+    if(time_delta > reed_switch_calibrate){
+      while(!digitalRead(reed_switch_input1)){
         time_delta = InternalClock() - get_reed_switch_first_press();
         motor_forward();
         noInterrupts();
@@ -148,22 +151,21 @@ void reed_switch_debounce() {
         waiting_to_be_retrieved = 1;
       }
     }
-    else if ( time_delta > reed_switch_long_press ) {
+    else if(time_delta > reed_switch_long_press){
       set_release_timer(InternalClock());                                                                                    // Reset timer if long press
-
     }
-    else if ( time_delta > reed_switch_short_press ) {
+    else if(time_delta > reed_switch_short_press){
       input_slowdown_toggle = !input_slowdown_toggle;                                                                     // Slow down adding time
 
-      if (reed_switch1 && input_slowdown_toggle) {
+      if(reed_switch1 && input_slowdown_toggle){
         if (get_release_timer() < ( 60 + InternalClock())){
           set_release_timer(InternalClock() + release_timer_first_press_1);
         }
-        else {
+        else{
           set_release_timer(get_release_timer() + release_timer_add_1);
         }
       }
-      else if (reed_switch2 && input_slowdown_toggle) {
+      else if(reed_switch2 && input_slowdown_toggle){
         if (get_release_timer() < ( 60 + InternalClock())){
           set_release_timer(InternalClock() + release_timer_first_press_2);
         }
@@ -177,7 +179,7 @@ void reed_switch_debounce() {
   }
 }
 
-void am_i_waiting_to_be_recovered() {
+void am_i_waiting_to_be_recovered(){
   if(abs(get_motor_position()) < (open_position + 1000)){
     release_is_open = 1;
   }
@@ -196,7 +198,7 @@ void am_i_waiting_to_be_recovered() {
   last_reed_switch_state = ( reed_switch1 || reed_switch2 );                                                                                   // Save state for next time
 }
 
-void debug_subroutine(void) {
+void debug_subroutine(void){
   Serial.printf("Main Clock: %ld Time Until Release: %ld Encoder Time: %ld Encoder Power: %d Vext: %d\n"
   , InternalClock(), time_until_release, get_encoder_timer(), digitalRead(motor_driver_power), digitalRead(Vext));
 }
