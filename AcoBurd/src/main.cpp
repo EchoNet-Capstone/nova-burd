@@ -16,9 +16,9 @@ long lora_timer;
 // Needed for watchdog timer for some reason
 bool autoFeed = false;
 
-void setup() {
+void setup(){
   // put your setup code here, to run once:
-  if (debug){
+  if(debug){
     Serial.begin(115200);
   }
   TimerReset(0);
@@ -26,7 +26,7 @@ void setup() {
 
   delay(100);
 
-  if (debug){
+  if(debug){
     Serial.printf("Booting up...\n");
   }
 
@@ -35,11 +35,11 @@ void setup() {
 
   // Userkey interrupt
   //pinMode(INT_GPIO, INPUT);
-  if (hall_effect) {
+  if(hall_effect){
     pinMode(reed_switch_input1, INPUT);
     pinMode(reed_switch_input2, INPUT);
   }
-  else {
+  else{
     pinMode(reed_switch_input1, INPUT_PULLUP);                                                               // Internal pull-up is 4.7k --maybe
     pinMode(reed_switch_input2, INPUT_PULLUP);
   }
@@ -112,8 +112,8 @@ void setup() {
   go_to_sleep();
 }
 
-void loop() {
-  if (debug){
+void loop(){
+  if(debug){
     Serial.printf("Loop Started\n");
   }
 
@@ -121,30 +121,29 @@ void loop() {
 
   feedInnerWdt();                                               // Pet the watchdog - interrupt generated every 1.4 seconds.  Two consecutive interrupts causes a reboot (2.8s)
 
-  if (is_low_power()) {
+  if(is_low_power()){
     //if (debug) Serial.printf("lowPowerHandler\n");
     lowPowerHandler();                                          //note that lowPowerHandler() runs six times before the mcu goes into low_power mode;
   }
-
   // Release is opened and closed in TimerWakeUp interrupt routine
 
   // Time until release
   set_time_until_release(get_release_timer() - InternalClock());
-  if (get_time_until_release() < 0) 
+  if(get_time_until_release() < 0){
     set_time_until_release(0);
-
+  }
+    
   // Update battery samples
-  if (get_battery_timer() < InternalClock() ) {
+  if(get_battery_timer() < InternalClock()) {
     //Serial.printf("Sampling battery voltage.\n");
 
     set_battery_timer(InternalClock() + battery_interval);
   }
 
   // Wiggle motor to break barnacles if release is closed
-  if ( (get_wiggle_timer() < InternalClock() ) && ( get_release_is_open() == 0 ) ) {
-
+  if((get_wiggle_timer() < InternalClock()) && (get_release_is_open() == 0)) {
     // If we're more than wiggle_deadband seconds from opening the release, then allow a wiggle
-    if ( get_wiggle_timer() < (get_release_timer() - wiggle_deadband) ) {
+    if(get_wiggle_timer() < (get_release_timer() - wiggle_deadband)){
       wiggle_motor();
     }
 
@@ -152,28 +151,33 @@ void loop() {
   }
 
   // Enable GPS if release is waiting to be retrieved
-  if ( gps_enable && get_waiting_to_be_retrieved() && ( ( InternalClock() - get_last_gps_fix() ) > gps_interval ) ) {
+  if(gps_enable && get_waiting_to_be_retrieved() && ((InternalClock() - get_last_gps_fix()) > gps_interval)) {
     //Serial.printf("Waking GPS.\n");
     gps_wake();                                               // This will only wake if GPS is asleep
+
     if (is_air_available() > 0) {
       if (debug){
         Serial.printf("GPS Available.\n");
       }
+
       update_gps();
     }
   }
-  else gps_sleep();
-
+  else{
+    gps_sleep();
+  }
+  
   // Power down encoder and motor driver if it's been a while since motor has been energized
-  if (get_encoder_timer() < InternalClock() ) {
+  if(get_encoder_timer() < InternalClock()){
     motor_sleep();
   }
 
   // Send a LoRa packet
-  if ( lora_enable && get_waiting_to_be_retrieved() && ( lora_timer < InternalClock() ) ) {
+  if(lora_enable && get_waiting_to_be_retrieved() && ( lora_timer < InternalClock())){
     if (debug){
       Serial.printf("Sending LoRa packet.\n");
     }
+
     oled_wake();                                                                                     // Need to power up Vext to supply power to LoRa radio
     //sprintf(txpacket, "%s %f %s %f", "Lat:", gps_latitude, "Long:", gps_longitude);                  // Save packet in txpacket
     //Radio.Send( (uint8_t *)lora_tx_packet, strlen(lora_tx_packet) );                                           // send the package out
@@ -193,14 +197,14 @@ void loop() {
   set_timer_tap_multiplier1(0);                                                                          // Reset timer tap counter
   set_timer_tap_multiplier2(0);                                                                          // Reset timer tap counter
 
-  while ( (get_display_timer() > InternalClock() ) || (abs(release_delta) < 10) ) {
+  while((get_display_timer() > InternalClock()) || (abs(release_delta) < 10)) {
     release_delta = get_release_timer() - InternalClock();                                                 // Re-calculate difference from clock to set release time or it'll get stuck in display loop
 
     //VextON();                                                                                      // Power up Vext
     TimerWakeUp();                                                                                   // Call timer routine because it stops working when display loop is active
     set_display_active(1);
 
-    if ( loop_counter > 5 ){
+    if(loop_counter > 5){
       reed_switch_debounce();
     }                                                  // Check reed switch input
 
@@ -210,7 +214,7 @@ void loop() {
   }
 
   // Display notification screen if Waiting to be retrieved
-  if ( (get_waiting_to_be_retrieved() == 1) && (get_display_active() == 0) ) {
+  if((get_waiting_to_be_retrieved() == 1) && (get_display_active() == 0)){
     waiting_screen();
     delay(500);
   }
@@ -220,18 +224,18 @@ void loop() {
   //else rgbpixel.clear(); // Set all pixel colors to 'off'
 
   //Make sure Vext is off
-  if ( (get_waiting_to_be_retrieved == 0) && (get_display_active == 0) ){
+  if((get_waiting_to_be_retrieved == 0) && (get_display_active == 0)){
     VextOFF();
   }
 
-  if (debug){
+  if(debug){
     debug_subroutine();
   }
 
   // I have no idea what this does - something about being able to call an interrupt on completion of LoRa TX
-  Radio.IrqProcess( );  
+  Radio.IrqProcess();  
                                                                                
-  if (debug){
+  if(debug){
     Serial.printf("Loop Ended, going to sleep.\n");
   }
 
