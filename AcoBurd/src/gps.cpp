@@ -19,7 +19,7 @@ int gps_time_minutes = 0;
 long last_gps_fix = -3600;                                         // Initial value hack needed to aquire GPS fix on bootup
 
 int lora_packet_len = 0;
- char lora_tx_packet[BUFFER_SIZE];
+char lora_tx_packet[BUFFER_SIZE];
 
 long get_last_gps_fix(){
   return last_gps_fix;
@@ -33,8 +33,8 @@ int is_air_available(){
   return Air530.available();
 }
 
-void gps_wake() {
-  if (get_gps_enabled() == 0) {
+void gps_wake(){
+  if(get_gps_enabled() == 0){
     //digitalWrite(gps_power, LOW);                                           // This is controlled by Air530 library?
     //Air530.begin(9600);
     //Air530.setPPS(3, 200);                                                  // Doesn't seem to do anything
@@ -44,12 +44,13 @@ void gps_wake() {
     //Air530.setNMEA(NMEA_GST);
     //Air530.setNMEA(NMEA_GGA);
   }
+
   set_gps_enabled(1);
   //sleep_inhibit = 1;                                                        // Keep CPU awake if GPS is in use
 }
 
-void gps_sleep() {
-  if (get_gps_enabled() == 1) {
+void gps_sleep(){
+  if(get_gps_enabled() == 1){
     Air530.end();
   }
 
@@ -57,12 +58,10 @@ void gps_sleep() {
   //sleep_inhibit = 0;                                                        // Allow CPU to go to sleep if GPS is not in use
 }
 
-void update_gps() {
-
+void update_gps(){
   feedInnerWdt();           // Pet the watchdog
 
-  while (Air530.available() > 0)
-  {
+  while(Air530.available() > 0){
     Air530.encode(Air530.read());
   }
 
@@ -70,18 +69,18 @@ void update_gps() {
   //String NMEA = Air530.getGSA();
   String NMEA = Air530.getGGA();
 
-  if (NMEA == "0") {                                
+  if (NMEA == "0"){                                
     return;
   }
 
-  if (debug){
+  if(debug){
     Serial.println(NMEA);
   }
 
   int commas[15];
   commas[0] = NMEA.indexOf(',');
 
-  for (int i = 1; i < 10; i++) {
+  for(int i = 1; i < 10; i++){
     commas[i] = NMEA.indexOf(',', commas[i - 1] + 1 );
   }
 
@@ -101,20 +100,20 @@ void update_gps() {
 
   gps_latitude = gps_latitude_string.toFloat();
 
-  if (gps_north_south_string == "S"){
+  if(gps_north_south_string == "S"){
     gps_latitude = -gps_latitude;
   } 
     
   gps_latitude = gps_latitude / 100;
 
   int gps_latitude_degrees = (int)gps_latitude;
-  float gps_latitude_minutes = 100 * ( (gps_latitude - gps_latitude_degrees) / 60 );
+  float gps_latitude_minutes = 100 * ((gps_latitude - gps_latitude_degrees) / 60);
 
   gps_latitude = (float)gps_latitude_degrees + gps_latitude_minutes;
 
   gps_longitude = gps_longitude_string.toFloat();
 
-  if (gps_east_west_string == "W"){
+  if(gps_east_west_string == "W"){
     gps_longitude = -gps_longitude;
   }
 
@@ -132,7 +131,7 @@ void update_gps() {
   //sprintf(gps_latitude_temp_string, "%s %f", "Lat:", gps_latitude);
 
   //snprintf(txpacket, sizeof txpacket, "%s%s%s%s", str1, str2, str3, str4);
-  if (debug) {
+  if(debug){
     Serial.printf("GPS Time: %02d:%02d", gps_time_hours, gps_time_minutes);
     Serial.printf(" Lat: ");
     Serial.print(gps_latitude, 6);
@@ -144,10 +143,11 @@ void update_gps() {
     Serial.println(lora_tx_packet);
   }
 
-  if ( (gps_hdop > 0.1 ) && (gps_hdop < 1.5) ) 
+  if((gps_hdop > 0.1 ) && (gps_hdop < 1.5)){
     set_last_gps_fix(InternalClock());
-
-  if (debug){
+  }
+    
+  if(debug){
     Serial.println();
   }
 }
