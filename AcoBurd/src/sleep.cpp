@@ -59,8 +59,7 @@ void init_sleep(){
   TimerInit( &wakeUp, TimerWakeUp );
 }
 
-void TimerWakeUp()
-{
+void TimerWakeUp(){
   if (debug) Serial.printf("Woke up at %ld s.  Countdown timer %ld.\n", InternalClock(), get_release_timer());
   low_power = false;
   feedInnerWdt();           // Pet the watchdog
@@ -78,8 +77,7 @@ void TimerWakeUp()
 
 }
 
-void go_to_sleep()
-{
+void go_to_sleep(){
   // Prevent CPU sleep if GPS is active
   if (get_gps_enabled() == 1) set_sleep_inhibit(1);
   else set_sleep_inhibit(0);
