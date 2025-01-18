@@ -16,13 +16,12 @@ void OnTxDone(){
 }
 
 void OnTxTimeout(){
-    rgb_led(16, 0, 0);                                                        // Flash red LED to indicate failed packet
-    Radio.Sleep( );
-    if (debug){
-      Serial.print("LoRa TX Timeout......");
-    }
+  rgb_led(16, 0, 0);                                                        // Flash red LED to indicate failed packet
+  Radio.Sleep( );
+  if (debug){
+    Serial.print("LoRa TX Timeout......");
+  }
 }
-
 
 void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr ){
     Rssi=rssi;
@@ -31,10 +30,10 @@ void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr ){
     lora_rx_packet[size]='\0';
     Radio.Sleep( );
 
-    if (debug){
+    if(debug){
       Serial.printf("\r\nreceived packet \"%s\" with rssi %d , length %d\r\n", lora_rx_packet, Rssi, rxSize);
     }
-    if (debug){
+    if(debug){
       Serial.println("wait to send next packet");
     }
 }
