@@ -118,7 +118,6 @@ void motor_forward() {
   digitalWrite(motor_driver_b, HIGH);
 }
 
-
 // Motor encoder interrupt
 void motor_quadrature_interrupt() {
   if (digitalRead(motor_quad_b) ){
@@ -144,7 +143,6 @@ void motor_quadrature_interrupt() {
     //encoder_timer = InternalClock() + encoder_timeout;
   }
 }
-
 
 // Set motor target position
 void motor_run_to_position(int target) {
@@ -172,9 +170,7 @@ void motor_run_to_position(int target) {
   //motor_last_position1 = motor_position;
 
   //motor_target_last = motor_target;
-
 }
-
 
 // Wiggle the motor to clear barnacles
 void wiggle_motor(){
