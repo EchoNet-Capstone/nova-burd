@@ -5,9 +5,8 @@
  long Corrected_time = 0;
  TimerSysTime_t sysTimeCurrent;
 
-long InternalClock() {
-
-  sysTimeCurrent = TimerGetSysTime( );
+long InternalClock(){
+  sysTimeCurrent = TimerGetSysTime();
   Corrected_time = (long)sysTimeCurrent.Seconds;
 
   // How to set the clock
