@@ -3,12 +3,10 @@
 #include "globals.hpp"
 #include "LoRa_APP.h"
 
-
- char lora_rx_packet[BUFFER_SIZE];
- int16_t Rssi,rxSize;
+char lora_rx_packet[BUFFER_SIZE];
+int16_t Rssi,rxSize;
  
-void OnTxDone()
-{
+void OnTxDone(){
   rgb_led(0, 0, 16);                                                        // Flash blue LED to indicate packet has been sent
   Radio.Sleep( );
   if (debug){
@@ -17,9 +15,7 @@ void OnTxDone()
   //state=RX;
 }
 
-
-void OnTxTimeout()
-{
+void OnTxTimeout(){
     rgb_led(16, 0, 0);                                                        // Flash red LED to indicate failed packet
     Radio.Sleep( );
     if (debug){
@@ -28,8 +24,7 @@ void OnTxTimeout()
 }
 
 
-void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
-{
+void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr ){
     Rssi=rssi;
     rxSize=size;
     memcpy(lora_rx_packet, payload, size );
