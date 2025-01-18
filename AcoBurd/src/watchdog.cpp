@@ -1,4 +1,3 @@
-
 #include "watchdog.hpp"
 #include "Arduino.h"
 #include <cytypes.h>
