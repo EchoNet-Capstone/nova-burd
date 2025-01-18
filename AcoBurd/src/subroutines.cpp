@@ -117,7 +117,6 @@ uint16_t sampleBatteryVoltage() {
   return volts;
 }
 
-
 void reed_switch_debounce() {
   long time_delta;
 
@@ -125,13 +124,12 @@ void reed_switch_debounce() {
   reed_switch2 = !digitalRead(reed_switch_input2);                                                                        // Signal is inverted
   time_delta = InternalClock() - get_reed_switch_first_press();
 
-  if ( (reed_switch1 || reed_switch2) && (get_release_timer() < InternalClock() ) ) 
+  if ((reed_switch1 || reed_switch2) && (get_release_timer() < InternalClock())){
     set_release_timer(InternalClock());            // Don't let release_timer have old time
-
-
+  }
+   
   // If magnet is present
   if ( reed_switch1 || reed_switch2 ) {
-
     waiting_to_be_retrieved = 0;                                                                                          // User has interacted - not waiting to be retrieved
 
     if ( time_delta > reed_switch_calibrate ) {
@@ -155,54 +153,53 @@ void reed_switch_debounce() {
 
     }
     else if ( time_delta > reed_switch_short_press ) {
-
       input_slowdown_toggle = !input_slowdown_toggle;                                                                     // Slow down adding time
 
       if (reed_switch1 && input_slowdown_toggle) {
-        if (get_release_timer() < ( 60 + InternalClock()))
+        if (get_release_timer() < ( 60 + InternalClock())){
           set_release_timer(InternalClock() + release_timer_first_press_1);
-        else 
+        }
+        else {
           set_release_timer(get_release_timer() + release_timer_add_1);
+        }
       }
-
       else if (reed_switch2 && input_slowdown_toggle) {
-        if (get_release_timer() < ( 60 + InternalClock()))
+        if (get_release_timer() < ( 60 + InternalClock())){
           set_release_timer(InternalClock() + release_timer_first_press_2);
-        else 
+        }
+        else{
           set_release_timer(get_release_timer() + release_timer_add_2);
+        }
       }
-
       // Reset the wiggle timer
       set_wiggle_timer(InternalClock() + wiggle_interval);
     }
   }
-
 }
 
-
 void am_i_waiting_to_be_recovered() {
-  if ( abs(get_motor_position()) < (open_position + 1000) ) 
+  if(abs(get_motor_position()) < (open_position + 1000)){
     release_is_open = 1;
-  else if ( abs(get_motor_position()) > (closed_position - 1000) ) 
+  }
+  else if(abs(get_motor_position()) > (closed_position - 1000)){
     release_is_open = 0;
+  }
 
   if ( reed_switch1 || reed_switch2 ){
     waiting_to_be_retrieved = 0;
   }
-  else if ( (release_is_open == 1) && (release_last_position == 0) ) waiting_to_be_retrieved = 1;
+  else if((release_is_open == 1) && (release_last_position == 0)){
+    waiting_to_be_retrieved = 1;
+  }
 
   release_last_position = release_is_open;
   last_reed_switch_state = ( reed_switch1 || reed_switch2 );                                                                                   // Save state for next time
 }
 
-
-
-
 void debug_subroutine(void) {
   Serial.printf("Main Clock: %ld Time Until Release: %ld Encoder Time: %ld Encoder Power: %d Vext: %d\n"
   , InternalClock(), time_until_release, get_encoder_timer(), digitalRead(motor_driver_power), digitalRead(Vext));
 }
-
 
 // gets and sets
 void set_battery_percent(int new_battery_percent){
