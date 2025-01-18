@@ -104,29 +104,8 @@
 #define motor_quad_a GPIO3                    // Motor encoder Yellow
 #define motor_quad_b GPIO4                    // Motor encoder White
 
-
 #define gps_power GPIO14                      // Power control for Air530 GPS Module - active low
 
-
-// Variables
-
-
-
-
-
-
-
-
- //long gps_timer;
- //
- //long led_timer;
- //long last_gpio_interrupt;
-
-
-
- long InternalClock(void);
-
-
-
+long InternalClock(void);
 
 #endif

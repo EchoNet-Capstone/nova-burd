@@ -1,11 +1,10 @@
-
-// This is code from the arduino for watchdog timers
-// that is being moved into the scope,
-// this is done to break up the header file into 
-// a header and source file so it is 
-// compatable with platform.io
-
-
+/*
+This is code from the arduino for watchdog timers
+that is being moved into the scope,
+this is done to break up the header file into 
+a header and source file so it is 
+compatable with platform.io
+*/
 #ifndef WATCHDOG_H
 #define WATCHDOG_H
 
@@ -23,7 +22,6 @@
 #define wdt_isr__INTC_SET_PD_REG CYREG_CM0P_ISPR
 
 /* Interrupt Controller Constants */
-
 /* Address of the INTC.VECT[x] register that contains the Address of the wdt_isr ISR. */
 #define wdt_isr_INTC_VECTOR            ((reg32 *) wdt_isr__INTC_VECT)
 

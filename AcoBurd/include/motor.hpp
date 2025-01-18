@@ -1,7 +1,6 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
-
 void motor_sleep(void);
 void motor_wake_up(void);
 void motor_off(void);
@@ -41,7 +40,5 @@ int get_motor_last_position2(void);
 
 void set_motor_last_position3(int new_motor_last_position3);
 int get_motor_last_position3(void);
-
-
 
 #endif

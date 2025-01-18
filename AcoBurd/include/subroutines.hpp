@@ -18,7 +18,6 @@ void set_motor_state(void);
 long get_release_timer(void);
 void set_release_timer(long new_release_timer);
 
-
 long get_battery_timer(void); // no use - remove later
 void set_battery_timer(long new_battery_timer);
 long get_time_until_release(void);
@@ -30,7 +29,6 @@ long get_display_timer();
 void set_display_timer(long new_display);
 
 // ahh p2?
-
 void set_battery_percent(int new_battery_percent);
 int get_battery_percent(void);
 
@@ -69,9 +67,5 @@ bool get_gps_lock(void);
 
 void set_input_slowdown_toggle(bool new_input_slowdown_toggle);
 bool get_input_slowdown_toggle(void);
-
-
-
-
 
 #endif

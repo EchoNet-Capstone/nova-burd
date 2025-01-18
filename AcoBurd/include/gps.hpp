@@ -1,7 +1,6 @@
 #ifndef GPS_H
 #define GPS_H
 
-
 void gps_wake(void);
 void gps_sleep(void);
 void update_gps(void);
