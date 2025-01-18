@@ -160,7 +160,6 @@ void led_flasher(){
   //}
 }
 
-
 // Bootup company logo
 void logo(){
   VextON();// oled power on;
