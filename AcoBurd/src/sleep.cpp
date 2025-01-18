@@ -86,7 +86,7 @@ void TimerWakeUp(){
 
 void go_to_sleep(){
   // Prevent CPU sleep if GPS is active
-  if (get_gps_enabled() == 1){
+  if(get_gps_enabled() == 1){
     set_sleep_inhibit(1);
   }
   else{
@@ -111,9 +111,9 @@ void go_to_sleep(){
 
   // If allowed to sleep, then set timer
   if(!get_sleep_inhibit()){
-    Radio.Sleep( );                                                 // Power down radio if sleep is allowed
-    TimerSetValue( &wakeUp, timetillwakeup );
-    TimerStart( &wakeUp );
+    Radio.Sleep();                                                 // Power down radio if sleep is allowed
+    TimerSetValue(&wakeUp, timetillwakeup);
+    TimerStart(&wakeUp);
   }
   else{
     delay(timetillwakeup);                                          // Just wait around for a while if sleep is inhibited
