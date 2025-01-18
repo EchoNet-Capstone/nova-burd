@@ -2,8 +2,8 @@
 #include "GPS_Air530Z.h"
 
 // Global timer routine
- long Corrected_time = 0;
- TimerSysTime_t sysTimeCurrent;
+long Corrected_time = 0;
+TimerSysTime_t sysTimeCurrent;
 
 long InternalClock(){
   sysTimeCurrent = TimerGetSysTime();
