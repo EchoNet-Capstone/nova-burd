@@ -1,44 +1,45 @@
-#include "Arduino.h"
-#include "innerWdt.h"
-#include <Wire.h>
-#include "HT_SSD1306Wire.h"
-#include "CubeCell_NeoPixel.h"
-#include "LoRaWan_APP.h"
-//#include "LoRa_APP.h"
-#include "GPS_Air530.h"
-#include "GPS_Air530Z.h"
-#include "globals.h"
-#include "motor.h"
-#include "subroutines.h"
-#include "display.h"
-#include "radio.h"
-#include "sleep.h"
-#include "gps.h"
+#include "globals.hpp"
+#include "motor.hpp"
+#include "subroutines.hpp"
+#include "display.hpp"
+#include "radio.hpp"
+#include "sleep.hpp"
+#include "gps.hpp"
+#include "watchdog.hpp"
+#include "LoRa_APP.h"
 
+static RadioEvents_t RadioEvents;
+int packet_number = 0;                        // Used for testing only to count how many TX packets
 
+long lora_timer;
 
-void setup() {
+// Needed for watchdog timer for some reason
+bool autoFeed = false;
+
+void setup(){
   // put your setup code here, to run once:
-  if (debug) Serial.begin(115200);
+  if(debug){
+    Serial.begin(115200);
+  }
   TimerReset(0);
   boardInitMcu();                                                                                         // Hopefully reset onboard timers
 
-  battery_volts = sampleBatteryVoltage();                                                                 // Initial battery state measurement
-
   delay(100);
 
-  if (debug) Serial.printf("Booting up...\n");
+  if(debug){
+    Serial.printf("Booting up...\n");
+  }
 
   // Disable interrupts for bootup
   noInterrupts();
 
   // Userkey interrupt
   //pinMode(INT_GPIO, INPUT);
-  if (hall_effect) {
+  if(hall_effect){
     pinMode(reed_switch_input1, INPUT);
     pinMode(reed_switch_input2, INPUT);
   }
-  else {
+  else{
     pinMode(reed_switch_input1, INPUT_PULLUP);                                                               // Internal pull-up is 4.7k --maybe
     pinMode(reed_switch_input2, INPUT_PULLUP);
   }
@@ -106,68 +107,77 @@ void setup() {
 
   VextOFF();
 
-  TimerInit( &wakeUp, TimerWakeUp );
+  init_sleep();
+
   go_to_sleep();
 }
 
+void loop(){
+  if(debug){
+    Serial.printf("Loop Started\n");
+  }
 
-void loop() {
-  if (debug) Serial.printf("Loop Started\n");
-
-  long release_delta = release_timer - InternalClock();         // Calculate difference from clock to set release time
+  long release_delta = get_release_timer() - InternalClock();         // Calculate difference from clock to set release time
 
   feedInnerWdt();                                               // Pet the watchdog - interrupt generated every 1.4 seconds.  Two consecutive interrupts causes a reboot (2.8s)
 
-  if (lowpower) {
+  if(is_low_power()){
     //if (debug) Serial.printf("lowPowerHandler\n");
-    lowPowerHandler();                                          //note that lowPowerHandler() runs six times before the mcu goes into lowpower mode;
+    lowPowerHandler();                                          //note that lowPowerHandler() runs six times before the mcu goes into low_power mode;
   }
-
   // Release is opened and closed in TimerWakeUp interrupt routine
 
   // Time until release
-  time_until_release = release_timer - InternalClock();
-  if (time_until_release < 0) time_until_release = 0;
-
+  set_time_until_release(get_release_timer() - InternalClock());
+  if(get_time_until_release() < 0){
+    set_time_until_release(0);
+  }
+    
   // Update battery samples
-  if (battery_timer < InternalClock() ) {
+  if(get_battery_timer() < InternalClock()) {
     //Serial.printf("Sampling battery voltage.\n");
-    battery_volts = sampleBatteryVoltage();
-    battery_timer = InternalClock() + battery_interval;
+
+    set_battery_timer(InternalClock() + battery_interval);
   }
 
   // Wiggle motor to break barnacles if release is closed
-  if ( (wiggle_timer < InternalClock() ) && ( release_is_open == 0 ) ) {
-
+  if((get_wiggle_timer() < InternalClock()) && (get_release_is_open() == 0)) {
     // If we're more than wiggle_deadband seconds from opening the release, then allow a wiggle
-    if ( wiggle_timer < (release_timer - wiggle_deadband) ) {
+    if(get_wiggle_timer() < (get_release_timer() - wiggle_deadband)){
       wiggle_motor();
     }
 
-    wiggle_timer = InternalClock() + wiggle_interval;
+    set_wiggle_timer(InternalClock() + wiggle_interval);
   }
 
   // Enable GPS if release is waiting to be retrieved
-  if ( gps_enable && waiting_to_be_retrieved && ( ( InternalClock() - last_gps_fix ) > gps_interval ) ) {
+  if(gps_enable && get_waiting_to_be_retrieved() && ((InternalClock() - get_last_gps_fix()) > gps_interval)) {
     //Serial.printf("Waking GPS.\n");
     gps_wake();                                               // This will only wake if GPS is asleep
-    if (Air530.available() > 0) {
-      if (debug) Serial.printf("GPS Available.\n");
+
+    if (is_air_available() > 0) {
+      if (debug){
+        Serial.printf("GPS Available.\n");
+      }
+
       update_gps();
     }
   }
-  else gps_sleep();
-
-
+  else{
+    gps_sleep();
+  }
+  
   // Power down encoder and motor driver if it's been a while since motor has been energized
-  if (encoder_timer < InternalClock() ) {
+  if(get_encoder_timer() < InternalClock()){
     motor_sleep();
   }
 
-
   // Send a LoRa packet
-  if ( lora_enable && waiting_to_be_retrieved && ( lora_timer < InternalClock() ) ) {
-    if (debug) Serial.printf("Sending LoRa packet.\n");
+  if(lora_enable && get_waiting_to_be_retrieved() && ( lora_timer < InternalClock())){
+    if (debug){
+      Serial.printf("Sending LoRa packet.\n");
+    }
+
     oled_wake();                                                                                     // Need to power up Vext to supply power to LoRa radio
     //sprintf(txpacket, "%s %f %s %f", "Lat:", gps_latitude, "Long:", gps_longitude);                  // Save packet in txpacket
     //Radio.Send( (uint8_t *)lora_tx_packet, strlen(lora_tx_packet) );                                           // send the package out
@@ -182,20 +192,21 @@ void loop() {
     //lora_timer = InternalClock() + lora_interval;                                                  // Increment this even if not tranmitting.  That way the LoRa radio won't transmit immediately upon activation (let float to surface) THIS BREAKS THINGS
   }
 
-
   // Draw OLED display
   int loop_counter = 0;
-  timer_tap_multiplier1 = 0;                                                                          // Reset timer tap counter
-  timer_tap_multiplier2 = 0;                                                                          // Reset timer tap counter
+  set_timer_tap_multiplier1(0);                                                                          // Reset timer tap counter
+  set_timer_tap_multiplier2(0);                                                                          // Reset timer tap counter
 
-  while ( (display_timer > InternalClock() ) || (abs(release_delta) < 10) ) {
-    release_delta = release_timer - InternalClock();                                                 // Re-calculate difference from clock to set release time or it'll get stuck in display loop
+  while((get_display_timer() > InternalClock()) || (abs(release_delta) < 10)) {
+    release_delta = get_release_timer() - InternalClock();                                                 // Re-calculate difference from clock to set release time or it'll get stuck in display loop
 
     //VextON();                                                                                      // Power up Vext
     TimerWakeUp();                                                                                   // Call timer routine because it stops working when display loop is active
-    display_active = 1;
+    set_display_active(1);
 
-    if ( loop_counter > 5 ) reed_switch_debounce();                                                  // Check reed switch input
+    if(loop_counter > 5){
+      reed_switch_debounce();
+    }                                                  // Check reed switch input
 
     update_display();
     delay(500);                                                                                      // This delay controls how fast time is added
@@ -203,22 +214,30 @@ void loop() {
   }
 
   // Display notification screen if Waiting to be retrieved
-  if ( (waiting_to_be_retrieved == 1) && (display_active == 0) ) {
+  if((get_waiting_to_be_retrieved() == 1) && (get_display_active() == 0)){
     waiting_screen();
     delay(500);
   }
-
 
   // Flash LED or turn it off if not needed
   //if ( (waiting_to_be_retrieved == 1) && (display_active == 0) ) led_flasher();
   //else rgbpixel.clear(); // Set all pixel colors to 'off'
 
   //Make sure Vext is off
-  if ( (waiting_to_be_retrieved == 0) && (display_active == 0) ) VextOFF();
+  if((get_waiting_to_be_retrieved == 0) && (get_display_active == 0)){
+    VextOFF();
+  }
 
-  if (debug) debug_subroutine();
-  Radio.IrqProcess( );                                                                               // I have no idea what this does - something about being able to call an interrupt on completion of LoRa TX
-  if (debug) Serial.printf("Loop Ended, going to sleep.\n");
+  if(debug){
+    debug_subroutine();
+  }
+
+  // I have no idea what this does - something about being able to call an interrupt on completion of LoRa TX
+  Radio.IrqProcess();  
+                                                                               
+  if(debug){
+    Serial.printf("Loop Ended, going to sleep.\n");
+  }
+
   go_to_sleep();
-
 }

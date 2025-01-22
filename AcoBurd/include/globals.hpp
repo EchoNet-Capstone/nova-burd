@@ -1,3 +1,17 @@
+#ifndef GLOBALS_H
+#define GLOBALS_H
+
+// PREVIOUS INCLUDES DO NOT DELETE
+// #include <Arduino.h>
+// #include "watchdog.hpp"
+// #include <Wire.h>
+// #include "HT_SSD1306Wire.h"
+// #include "CubeCell_NeoPixel.h"
+// #include "LoRaWan_APP.h"
+// #include "LoRa_APP.h"
+// #include "GPS_Air530.h"
+// #include "GPS_Air530Z.h"
+
 // Do not use pins ADC1, GPIO1, GPIO2, GPIO8, GPIO10, GPIO12, GPIO13, GPIO14, GPIO15, GPIO16, GPIO19, GPIO20, 
 // Note:  AB-02S uses ASR6502 chip, not ASR6501.  ASR6502 has three working ADC channels. 
 //
@@ -15,18 +29,13 @@
 //  OUTPUT ,                 brief Strong Drive
 //  OUTPUT_PULLUP_PULLDOWN , brief Resistive Pull Up/Down
 
-SSD1306Wire  oled(0x3c, 500000, SDA, SCL, GEOMETRY_128_64, GPIO10); // addr , freq , SDA, SCL, resolution , rst
-
-// Configure RGB LED
-CubeCell_NeoPixel rgbpixel(1, RGB, NEO_GRB + NEO_KHZ800);
-
-#define unit_id 1                                             // Set individual hardware number
-#define debug false                                           // Debug mode
-#define leak_detect true                                      // Leak Detection
-#define lora_enable false                                     // LoRa Radio
-#define gps_enable false                                      // GPS
-#define led_enable false                                      // LED Strobe
-#define hall_effect true                                      // Hall effect inputs or reed switches
+#define unit_id 1                             // Set individual hardware number
+#define debug false                           // Debug mode
+#define leak_detect true                      // Leak Detection
+#define lora_enable false                     // LoRa Radio
+#define gps_enable false                      // GPS
+#define led_enable false                      // LED Strobe
+#define hall_effect true                      // Hall effect inputs or reed switches
 
 // Various Calibrations
 #define battery_full 4050                     // Voltage for full battery - was 4200 (this resulted in full battery being 95%, 4140 is actual measured full voltage
@@ -78,18 +87,6 @@ CubeCell_NeoPixel rgbpixel(1, RGB, NEO_GRB + NEO_KHZ800);
 #define RX_TIMEOUT_VALUE                            1000
 #define BUFFER_SIZE                                 64 // Define the payload size here
 
-int lora_packet_len = 0;
-char lora_tx_packet[BUFFER_SIZE];
-char lora_rx_packet[BUFFER_SIZE];
-int16_t Rssi,rxSize;
-static RadioEvents_t RadioEvents;
-int packet_number = 0;                        // Used for testing only to count how many TX packets
-
-// Interrupt Timer Configuration
-#define timetillwakeup 1000                   // Cannot be longer than 1.4 seconds due to WDT
-static TimerEvent_t wakeUp;
-uint8_t lowpower=1;
-
 // Interface GPIOs
 #define INT_GPIO USER_KEY
 #define reed_switch_input1 GPIO1
@@ -107,83 +104,8 @@ uint8_t lowpower=1;
 #define motor_quad_a GPIO3                    // Motor encoder Yellow
 #define motor_quad_b GPIO4                    // Motor encoder White
 
-// GPS Configuration
-//Air530Class Air530;                         //if GPS module is Air530, use this
-Air530ZClass Air530;                          //if GPS module is Air530Z, use this
 #define gps_power GPIO14                      // Power control for Air530 GPS Module - active low
 
+long InternalClock(void);
 
-// Variables
-int motor_position = 0;
-int motor_target = 0;
-int motor_target_last = 0;
-bool last_quad_a_state = 0;
-bool last_quad_b_state = 0;
-bool is_motor_running = 0;
-int motor_last_position1;
-int motor_last_position2;
-int motor_last_position3;
-
-uint16_t battery_volts = 0;
-int battery_percent = 0;
-
-bool sleep_inhibit = 1;                        // Default to staying awake on boot
-bool display_active = 0;
-bool reed_switch1 = 0;
-bool reed_switch2 = 0;
-bool last_reed_switch_state = 0;
-bool waiting_to_be_retrieved = 0;
-bool release_is_open = 0;
-bool release_last_position = 0;
-bool is_led_activated = 0;
-bool gps_enabled = 0;
-bool gps_lock = 0;
-bool input_slowdown_toggle = 0;
-
-long reed_switch_first_press = 0;
-long reed_switch_release_time = 0;
-int timer_tap_multiplier1 = 0;
-int timer_tap_multiplier2 = 0;
-int wait_screen_delay = 0;
-
-long display_timer;
-long encoder_timer;
-long release_timer;
-long release_timer1;
-long release_timer2;
-long battery_timer;
-long time_until_release;
-long gps_timer;
-long lora_timer;
-long last_gps_fix = -3600;                                         // Initial value hack needed to aquire GPS fix on bootup
-long wiggle_timer;
-long led_timer;
-long last_gpio_interrupt;
-
-// GPS Globals
-float gps_latitude = 0;
-float gps_longitude = 0;
-int gps_time = 0;
-int gps_time_hours = 0;
-int gps_time_minutes = 0;
-
-// Needed for watchdog timer for some reason
-bool autoFeed = false;
-
-// Global timer routine
-long Corrected_time = 0;
-TimerSysTime_t sysTimeCurrent;
-
-long InternalClock() {
-
-  sysTimeCurrent = TimerGetSysTime( );
-  Corrected_time = (long)sysTimeCurrent.Seconds;
-
-  // How to set the clock
-  //TimerSysTime_t newSysTime ;         // Make a new variable of type TimerSysTime_t (.Seconds and .SubSeconds)
-  //newSysTime.Seconds = 1000;          // Store 1000 in .Seconds
-  //newSysTime.SubSeconds = 50;         // Store 50 in .SubSeconds
-  //TimerSetSysTime( newSysTime );      // Update time from variable newSysTime
-
-  return Corrected_time;
-}
+#endif
