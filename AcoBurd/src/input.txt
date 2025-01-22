@@ -1,5 +1,0 @@
- long reed_switch_first_press = 0;
- long reed_switch_release_time = 0;
- int timer_tap_multiplier1 = 0;
- int timer_tap_multiplier2 = 0;
- int wait_screen_delay = 0;
