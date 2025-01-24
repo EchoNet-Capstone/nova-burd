@@ -47,14 +47,6 @@
 #define wiggle_interval 259200                // 86400 seconds in a day, 3 * 86400 = 259200
 #define wiggle_deadband 259200                // If release will occur in next x seconds, then don't wiggle
 
-// Timer Add Configuration
-#define release_timer_add_1 7200              // Time to add for each magnet tap
-#define release_timer_add_2 86400             // Time to add for each magnet tap
-#define release_timer_first_press_1 120        // First tap starts clock at this number
-#define release_timer_first_press_2 172830      // First tap starts clock at this number (add an extra 30 seconds for readability)
-#define display_timeout 20                    // Must be bigger than reset timer (15s)
-#define encoder_timeout 10
-
 // Motor and Gearbox Configuration
 #define gearbox_ratio 499
 #define pulses_per_motor_rotation 11

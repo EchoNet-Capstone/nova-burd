@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "my_clock.h"
 #include "watchdog.h"
+#include "timers.h"
 #include "LoRa_APP.h"
 #include <Arduino.h>
 

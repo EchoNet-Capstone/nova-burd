@@ -1,5 +1,6 @@
 #include "display.h"
 #include "my_clock.h"
+#include "timers.h"
 #include "subroutines.h"
 #include "globals.h"
 #include "HT_SSD1306Wire.h"

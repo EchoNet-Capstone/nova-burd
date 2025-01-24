@@ -11,9 +11,6 @@ void motor_run_to_position(int target);
 void wiggle_motor(void);
 
 // AHHHHH
-void set_wiggle_timer(long new_wiggle_timer);
-long get_wiggle_timer(void);
-
 void set_motor_position(int new_motor_position);
 int get_motor_position(void);
 

@@ -1,6 +1,7 @@
 #include "motor.h"
 #include "globals.h"
 #include "my_clock.h"
+#include "timers.h"
 #include "subroutines.h"
 #include "watchdog.h"
 #include "Arduino.h"
@@ -14,7 +15,6 @@ bool is_motor_running;
 int motor_last_position1;
 int motor_last_position2;
 int motor_last_position3;
-long wiggle_timer;
 
 void set_motor_position(int new_motor_position){
   motor_position = new_motor_position;
@@ -78,14 +78,6 @@ void set_motor_last_position3(int new_motor_last_position3){
 
 int get_motor_last_position3(void){
   return motor_last_position3;
-}
-
-void set_wiggle_timer(long new_wiggle_timer){
-  wiggle_timer = new_wiggle_timer; 
-}
-
-long get_wiggle_timer(){
-  return wiggle_timer;
 }
 
 // Motor Power Save

@@ -2,19 +2,11 @@
 #include "subroutines.h"
 #include "motor.h"
 #include "my_clock.h"
+#include "timers.h"
 #include "globals.h"
 #include "watchdog.h"
 #include "sleep.h"
 #include <Arduino.h>
-
-// timer vars
-long display_timer;
-long encoder_timer;
-long release_timer;
-long release_timer1;
-long release_timer2;
-long battery_timer;
-long time_until_release;
 
 // battery
 int battery_percent = 0;
@@ -36,14 +28,6 @@ void VextON(){
   digitalWrite(Vext, LOW);
 }
 
-long get_encoder_timer(){
-  return encoder_timer;
-}
-
-void set_encoder_timer(long new_encoder){
-  encoder_timer = new_encoder;
-}
-
 void VextOFF(){
   pinMode(Vext, OUTPUT);
   digitalWrite(Vext, HIGH);
@@ -57,38 +41,6 @@ void set_motor_state(){
   else{
     motor_run_to_position(open_position);
   }
-}
-
-long get_release_timer(){
-  return release_timer;
-}
-
-void set_release_timer(long new_release_timer){
-  release_timer = new_release_timer;
-}
-
-long get_battery_timer(){
-  return battery_timer;
-}
-
-void set_battery_timer(long new_battery_timer){
-   battery_timer = new_battery_timer;
-}
-
-long get_time_until_release(){
-  return time_until_release;
-}
-
-void set_time_until_release(long new_time_until_release){
-  time_until_release = new_time_until_release;
-}
-
-long get_display_timer(){
-  return display_timer;
-}
-
-void set_display_timer(long new_display){
-  display_timer = new_display;
 }
 
 // Measure battery voltage
@@ -201,7 +153,7 @@ void am_i_waiting_to_be_recovered(){
 
 void debug_subroutine(void){
   Serial.printf("Main Clock: %ld Time Until Release: %ld Encoder Time: %ld Encoder Power: %d Vext: %d\n"
-  , InternalClock(), time_until_release, get_encoder_timer(), digitalRead(motor_driver_power), digitalRead(Vext));
+  , InternalClock(), get_time_until_release(), get_encoder_timer(), digitalRead(motor_driver_power), digitalRead(Vext));
 }
 
 // gets and sets

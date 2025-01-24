@@ -7,6 +7,7 @@
 #include "sleep.h"
 #include "gps.h"
 #include "watchdog.h"
+#include "timers.h"
 #include "LoRa_APP.h"
 
 static RadioEvents_t RadioEvents;

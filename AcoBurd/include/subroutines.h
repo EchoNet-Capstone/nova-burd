@@ -14,20 +14,6 @@ void debug_subroutine(void);
 
 void set_motor_state(void);
 
-// timers
-long get_release_timer(void);
-void set_release_timer(long new_release_timer);
-
-long get_battery_timer(void); // no use - remove later
-void set_battery_timer(long new_battery_timer);
-long get_time_until_release(void);
-void set_time_until_release(long new_time_until_release);
-
-long get_encoder_timer(void);
-void set_encoder_timer(long new_encoder);
-long get_display_timer();
-void set_display_timer(long new_display);
-
 // ahh p2?
 void set_battery_percent(int new_battery_percent);
 int get_battery_percent(void);
