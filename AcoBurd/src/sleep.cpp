@@ -1,9 +1,10 @@
-#include "sleep.hpp"
-#include "subroutines.hpp"
-#include "display.hpp"
-#include "motor.hpp"
-#include "globals.hpp"
-#include "watchdog.hpp"
+#include "sleep.h"
+#include "subroutines.h"
+#include "display.h"
+#include "motor.h"
+#include "globals.h"
+#include "my_clock.h"
+#include "watchdog.h"
 #include "LoRa_APP.h"
 #include <Arduino.h>
 

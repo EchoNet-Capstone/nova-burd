@@ -1,6 +1,6 @@
-#include "radio.hpp"
-#include "display.hpp"
-#include "globals.hpp"
+#include "radio.h"
+#include "display.h"
+#include "globals.h"
 #include "LoRa_APP.h"
 
 char lora_rx_packet[BUFFER_SIZE];

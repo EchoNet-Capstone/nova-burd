@@ -3,7 +3,7 @@
 
 // PREVIOUS INCLUDES DO NOT DELETE
 // #include <Arduino.h>
-// #include "watchdog.hpp"
+// #include "watchdog.h"
 // #include <Wire.h>
 // #include "HT_SSD1306Wire.h"
 // #include "CubeCell_NeoPixel.h"
@@ -105,7 +105,5 @@
 #define motor_quad_b GPIO4                    // Motor encoder White
 
 #define gps_power GPIO14                      // Power control for Air530 GPS Module - active low
-
-long InternalClock(void);
 
 #endif

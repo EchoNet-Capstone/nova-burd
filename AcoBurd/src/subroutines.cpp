@@ -1,9 +1,10 @@
 #include "stdio.h"
-#include "subroutines.hpp"
-#include "motor.hpp"
-#include "globals.hpp"
-#include "watchdog.hpp"
-#include "sleep.hpp"
+#include "subroutines.h"
+#include "motor.h"
+#include "my_clock.h"
+#include "globals.h"
+#include "watchdog.h"
+#include "sleep.h"
 #include <Arduino.h>
 
 // timer vars

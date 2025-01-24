@@ -1,4 +1,4 @@
-#include "watchdog.hpp"
+#include "watchdog.h"
 #include "Arduino.h"
 #include <cytypes.h>
 #include <cyfitter.h>

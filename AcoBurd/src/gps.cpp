@@ -1,9 +1,10 @@
 #include <stdio.h>
-#include "gps.hpp"
-#include "globals.hpp"
-#include "watchdog.hpp"
+#include "gps.h"
+#include "globals.h"
+#include "my_clock.h"
+#include "watchdog.h"
 #include "GPS_Air530Z.h"
-#include "subroutines.hpp"
+#include "subroutines.h"
 
 // GPS Configuration
 //Air530Class Air530;                         //if GPS module is Air530, use this

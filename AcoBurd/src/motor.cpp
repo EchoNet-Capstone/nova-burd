@@ -1,7 +1,8 @@
-#include "motor.hpp"
-#include "globals.hpp"
-#include "subroutines.hpp"
-#include "watchdog.hpp"
+#include "motor.h"
+#include "globals.h"
+#include "my_clock.h"
+#include "subroutines.h"
+#include "watchdog.h"
 #include "Arduino.h"
 
 int motor_position;

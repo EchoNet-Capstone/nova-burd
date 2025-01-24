@@ -1,11 +1,12 @@
-#include "display.hpp"
-#include "subroutines.hpp"
-#include "globals.hpp"
+#include "display.h"
+#include "my_clock.h"
+#include "subroutines.h"
+#include "globals.h"
 #include "HT_SSD1306Wire.h"
 #include "CubeCell_NeoPixel.h"
-#include "sleep.hpp"
+#include "sleep.h"
 
-SSD1306Wire  oled(0x3c, 500000, SDA, SCL, GEOMETRY_128_64, GPIO10); // addr , freq , SDA, SCL, resolution , rst
+SSD1306Wire oled(0x3c, 500000, SDA, SCL, GEOMETRY_128_64, GPIO10); // addr , freq , SDA, SCL, resolution , rst
 
 // Configure RGB LED
 CubeCell_NeoPixel rgbpixel(1, RGB, NEO_GRB + NEO_KHZ800);
