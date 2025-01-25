@@ -29,69 +29,12 @@
 //  OUTPUT ,                 brief Strong Drive
 //  OUTPUT_PULLUP_PULLDOWN , brief Resistive Pull Up/Down
 
-#define unit_id 1                             // Set individual hardware number
-#define debug false                           // Debug mode
-#define leak_detect true                      // Leak Detection
-#define lora_enable false                     // LoRa Radio
-#define gps_enable false                      // GPS
-#define led_enable false                      // LED Strobe
-#define hall_effect true                      // Hall effect inputs or reed switches
-
-// Various Calibrations
-#define gps_interval 3600                     // Time between GPS updates
-#define lora_interval 60                      // Time between LoRa transmits
-#define wiggle_interval 259200                // 86400 seconds in a day, 3 * 86400 = 259200
-#define wiggle_deadband 259200                // If release will occur in next x seconds, then don't wiggle
-
-// Motor and Gearbox Configuration
-#define gearbox_ratio 499
-#define pulses_per_motor_rotation 11
-#define motor_deadband 50
-#define open_position 0
-
-//#define closed_position (0.490 * gearbox_ratio * pulses_per_motor_rotation)                    // Silver AliExpress Motors - 2695 counts per rev
-#define closed_position (0.550 * gearbox_ratio * pulses_per_motor_rotation)                    // Red Mark Pololu Motors
-
-// LoRa pin definitions
-#define LORA_IO1
-#define LORA_IO2
-#define LORA_RESET
-#define LORA_SEL
-#define LORA_SCK CLK1
-#define LORA_MOSI MOSI1
-#define LORA_MISO MISO1
-#define LORA_IO0
-
-// LoRa config
-#define RF_FREQUENCY                                915000000 // Hz
-#define TX_OUTPUT_POWER                             14        // dBm
-#define LORA_BANDWIDTH                              0         // [0: 125 kHz, 1: 250 kHz, 2: 500 kHz, 3: Reserved]
-#define LORA_SPREADING_FACTOR                       12        // [SF7..SF12]
-#define LORA_CODINGRATE                             1         // [1: 4/5, 2: 4/6, 3: 4/7, 4: 4/8]
-#define LORA_PREAMBLE_LENGTH                        8         // Same for Tx and Rx
-#define LORA_SYMBOL_TIMEOUT                         0         // Symbols
-#define LORA_FIX_LENGTH_PAYLOAD_ON                  false
-#define LORA_IQ_INVERSION_ON                        false
-#define RX_TIMEOUT_VALUE                            1000
-#define BUFFER_SIZE                                 64 // Define the payload size here
-
-// Interface GPIOs
-#define INT_GPIO USER_KEY
-#define reed_switch_input1 GPIO1
-#define reed_switch_input_int INT_GPIO        // Don't use this - causes tons of random interrupts
-#define reed_switch_input2 GPIO2
-#define reed_switch_calibrate 25
-#define reed_switch_super_long_press 60
-#define reed_switch_long_press 15
-#define reed_switch_short_press 1
-
-// Motor and Encoder GPIO Setup
-#define motor_driver_power GPIO7              // To motor driver Vcc AND motor encoder blue wire (encoder power)
-#define motor_driver_a GPIO5                  // Motor driver ENABLE (Must be HIGH)
-#define motor_driver_b GPIO6                  // Motor driver PHASE (Direction)
-#define motor_quad_a GPIO3                    // Motor encoder Yellow
-#define motor_quad_b GPIO4                    // Motor encoder White
-
-#define gps_power GPIO14                      // Power control for Air530 GPS Module - active low
+#define UNIT_ID 1                             // Set individual hardware number
+#define DEBUG false                           // Debug mode
+#define LEAK_DETECT true                      // Leak Detection
+#define LORA_ENABLE false                     // LoRa Radio
+#define GPS_ENABLE false                      // GPS
+#define LED_ENABLE false                      // LED Strobe
+#define HALL_EFFECT true                      // Hall effect inputs or reed switches
 
 #endif

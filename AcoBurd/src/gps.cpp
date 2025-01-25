@@ -1,34 +1,16 @@
 #include <stdio.h>
+#include <GPS_Air530Z.h>
+
 #include "gps.h"
 #include "globals.h"
+#include "device_state.h"
 #include "my_clock.h"
 #include "watchdog.h"
-#include "GPS_Air530Z.h"
-#include "subroutines.h"
+#include "burd_radio.h"
 
 // GPS Configuration
 //Air530Class Air530;                         //if GPS module is Air530, use this
 Air530ZClass Air530;                          //if GPS module is Air530Z, use this
-
-// GPS Globals
-float gps_latitude = 0;
-float gps_longitude = 0;
-int gps_time = 0;
-int gps_time_hours = 0;
-int gps_time_minutes = 0;
-
-long last_gps_fix = -3600;                                         // Initial value hack needed to aquire GPS fix on bootup
-
-int lora_packet_len = 0;
-char lora_tx_packet[BUFFER_SIZE];
-
-long get_last_gps_fix(){
-  return last_gps_fix;
-}
-
-void set_last_gps_fix(long new_last_gps_fix){
-  last_gps_fix = new_last_gps_fix;
-}
 
 int is_air_available(){
   return Air530.available();
@@ -74,7 +56,7 @@ void update_gps(){
     return;
   }
 
-  if(debug){
+  if(DEBUG){
     Serial.println(NMEA);
   }
 
@@ -95,11 +77,11 @@ void update_gps(){
   String gps_hdop_string = NMEA.substring(commas[7] + 1, commas[8]);
   String gps_altitude_string = NMEA.substring(commas[8] + 1, commas[9]);
 
-  gps_time = gps_time_string.toInt();
-  gps_time_hours = gps_time / 10000;
-  gps_time_minutes = (gps_time - (gps_time_hours * 10000) ) / 100;
+  int gps_time = gps_time_string.toInt();
+  int gps_time_hours = gps_time / 10000;
+  int gps_time_minutes = (gps_time - (gps_time_hours * 10000) ) / 100;
 
-  gps_latitude = gps_latitude_string.toFloat();
+  float gps_latitude = gps_latitude_string.toFloat();
 
   if(gps_north_south_string == "S"){
     gps_latitude = -gps_latitude;
@@ -112,7 +94,7 @@ void update_gps(){
 
   gps_latitude = (float)gps_latitude_degrees + gps_latitude_minutes;
 
-  gps_longitude = gps_longitude_string.toFloat();
+  float gps_longitude = gps_longitude_string.toFloat();
 
   if(gps_east_west_string == "W"){
     gps_longitude = -gps_longitude;
@@ -127,12 +109,14 @@ void update_gps(){
 
   float gps_hdop = gps_hdop_string.toFloat();
 
-  lora_packet_len = sprintf(lora_tx_packet, "%05d, %f, %f, %i%%\n", unit_id, gps_latitude, gps_longitude, get_battery_percent());
+  char lora_tx_packet[LORA_BUFFER_SIZE];
+
+  int lora_packet_len = sprintf(lora_tx_packet, "%05d, %f, %f, %i%%\n", UNIT_ID, gps_latitude, gps_longitude, get_battery_percent());
 
   //sprintf(gps_latitude_temp_string, "%s %f", "Lat:", gps_latitude);
 
   //snprintf(txpacket, sizeof txpacket, "%s%s%s%s", str1, str2, str3, str4);
-  if(debug){
+  if(DEBUG){
     Serial.printf("GPS Time: %02d:%02d", gps_time_hours, gps_time_minutes);
     Serial.printf(" Lat: ");
     Serial.print(gps_latitude, 6);
@@ -148,7 +132,7 @@ void update_gps(){
     set_last_gps_fix(InternalClock());
   }
     
-  if(debug){
+  if(DEBUG){
     Serial.println();
   }
 }

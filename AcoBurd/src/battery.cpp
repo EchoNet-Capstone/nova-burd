@@ -1,12 +1,10 @@
+#include <stdint.h>
+#include <Arduino.h>
+
 #include "battery.h"
 #include "timers.h"
 #include "my_clock.h"
-#include <stdint.h>
-
-#include <Arduino.h>
-
-// battery
-int battery_percent = 0;
+#include "device_state.h"
 
 void VextON(){
   pinMode(Vext, OUTPUT);
@@ -19,7 +17,14 @@ void VextOFF(){
 }
 
 // Measure battery voltage
-uint16_t sampleBatteryVoltage(){
+void sampleBatteryVoltage(){
+  if(get_battery_timer() >= InternalClock()){
+    //Not time yet
+    return;
+  }
+
+  set_battery_timer(InternalClock() + BATTERY_INTERVAL);
+
   noInterrupts();
   VextON();
 
@@ -27,28 +32,17 @@ uint16_t sampleBatteryVoltage(){
 
   interrupts();                                                                         // Reenable interrupts after sample
 
-  battery_percent = (int)((100 * (volts - battery_empty)) / battery_usable_volts);
-  if(battery_percent > 100){
-    battery_percent = 100;
+  set_battery_percent((int)((100 * (volts - BATTERY_EMPTY)) / BATTERY_USABLE_VOLTS));
+  if(get_battery_percent() > 100){
+    set_battery_percent(100);
   }
 
-  if(battery_percent < 0){
-    battery_percent = 0;
+  if(get_battery_percent() < 0){
+    set_battery_percent(100);
   }
 
-  if(battery_percent < low_battery){\
+  if(get_battery_percent() < LOW_BATTERY){\
     // Release trap if battery gets low
     set_release_timer(InternalClock());
   }             
-
-  return volts;
-}
-
-// gets and sets
-void set_battery_percent(int new_battery_percent){
-  battery_percent = new_battery_percent;
-}
-
-int get_battery_percent(void){
-  return battery_percent;
 }

@@ -1,11 +1,13 @@
+#include <HT_SSD1306Wire.h>
+#include <CubeCell_NeoPixel.h>
+
 #include "display.h"
 #include "my_clock.h"
 #include "timers.h"
-#include "subroutines.h"
+#include "device_state.h"
 #include "globals.h"
-#include "HT_SSD1306Wire.h"
-#include "CubeCell_NeoPixel.h"
-#include "sleep.h"
+#include "battery.h"
+#include "user_input.h"
 
 SSD1306Wire oled(0x3c, 500000, SDA, SCL, GEOMETRY_128_64, GPIO10); // addr , freq , SDA, SCL, resolution , rst
 
@@ -56,8 +58,8 @@ void update_display(){
   if(get_time_until_release > 0){
     int reset_countdown = 0;
 
-    if (get_reed_switch1() || get_reed_switch2()  ) reset_countdown = reed_switch_long_press - (InternalClock() - get_reed_switch_first_press());
-    else reset_countdown = reed_switch_long_press;
+    if (get_reed_switch1() || get_reed_switch2()  ) reset_countdown = REED_SWITCH_LONG_PRESS - (InternalClock() - get_reed_switch_first_press());
+    else reset_countdown = REED_SWITCH_LONG_PRESS;
 
     oled.drawString(5, 15, "Hold magnet " + (String)reset_countdown + " seconds");
     oled.drawString(14, 24, "to reset timer to zero.");
@@ -116,7 +118,7 @@ void update_display(){
   }
   else{
     oled.drawString(8, 16, "Hold magnet for at least ");
-    oled.drawString(12, 25, (String)reed_switch_short_press + " second to set timer.");
+    oled.drawString(12, 25, (String)REED_SWITCH_SHORT_PRESS + " second to set timer.");
 
     oled.setFont(ArialMT_Plain_16);
     oled.drawString(0, 45, "RELEASE OPEN");
@@ -155,7 +157,6 @@ void led_flasher(){
   rgb_led(0, 255, 0);
   delay(20);
   rgb_led(0, 0, 0);
-  set_is_led_activated(1);
 
   //if (gps_lock == 1){
   //  rgb_led(0, 0, 32);
