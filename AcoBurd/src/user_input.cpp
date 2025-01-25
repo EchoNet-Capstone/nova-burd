@@ -11,14 +11,15 @@
 
 GET_SET_DEF(bool, input_slowdown_toggle, false);
 
-void user_input_init(void){ 
+void user_input_init(void){
   //pinMode(INT_GPIO, INPUT);
   if(HALL_EFFECT){
     pinMode(REED_SWITCH_INPUT1, INPUT);
     pinMode(REED_SWITCH_INPUT2, INPUT);
   }
   else{
-    pinMode(REED_SWITCH_INPUT1, INPUT_PULLUP);                                                               // Internal pull-up is 4.7k --maybe
+    // Internal pull-up is 4.7k --maybe
+    pinMode(REED_SWITCH_INPUT1, INPUT_PULLUP);
     pinMode(REED_SWITCH_INPUT2, INPUT_PULLUP);
   }
 
@@ -35,9 +36,10 @@ void reed_switch_debounce(){
 
   if((get_reed_switch1() || get_reed_switch2()) && (get_release_timer() < InternalClock())){
     // Don't let release_timer have old time
-    set_release_timer(InternalClock());            
+
+    set_release_timer(InternalClock());
   }
-   
+
   // If magnet is present
   if(get_reed_switch1() || get_reed_switch2()){
     // User has interacted - not waiting to be retrieved
@@ -52,7 +54,8 @@ void reed_switch_debounce(){
           feedInnerWdt();
         }                                                  // Pet the watchdog while stuck in calibrate loop, stop if super long press to allow reboot
         delay(80);
-        set_motor_position(0);                                                                                               // If calibrate is active, reset motor position to zero
+        // If calibrate is active, reset motor position to zero
+        set_motor_position(0);
         motor_off();
         interrupts();
         delay(500);
@@ -60,10 +63,12 @@ void reed_switch_debounce(){
       }
     }
     else if(time_delta > REED_SWITCH_LONG_PRESS){
-      set_release_timer(InternalClock());                                                                                    // Reset timer if long press
+      // Reset timer if long press
+      set_release_timer(InternalClock());
     }
     else if(time_delta > REED_SWITCH_SHORT_PRESS){
-      set_input_slowdown_toggle(!input_slowdown_toggle);                                                                     // Slow down adding time
+      // Slow down adding time
+      set_input_slowdown_toggle(!input_slowdown_toggle);
 
       if(get_reed_switch1() && input_slowdown_toggle){
         if (get_release_timer() < ( 60 + InternalClock())){

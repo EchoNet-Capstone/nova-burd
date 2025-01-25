@@ -7,7 +7,7 @@
 GET_SET_DEF(int, battery_percent, 0);
 GET_SET_DEF(bool, display_active, false);
 
-// GPS Globals 
+// GPS Globals
 GET_SET_DEF(bool, gps_enabled, false);
 GET_SET_DEF(bool, gps_lock, false);
 // Initial value hack needed to aquire GPS fix on bootup
@@ -45,5 +45,6 @@ void am_i_waiting_to_be_recovered(){
     set_waiting_to_be_retrieved(true);
   }
 
-  set_release_last_position(get_release_is_open());                                                                              // Save state for next time
+  // Save state for next time
+  set_release_last_position(get_release_is_open());
 }

@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <GPS_Air530Z.h>
+#include <Arduino.h>
 
 #include "gps.h"
+#include "timers.h"
 #include "globals.h"
 #include "device_state.h"
 #include "my_clock.h"
@@ -9,8 +11,22 @@
 #include "burd_radio.h"
 
 // GPS Configuration
-//Air530Class Air530;                         //if GPS module is Air530, use this
-Air530ZClass Air530;                          //if GPS module is Air530Z, use this
+//if GPS module is Air530, use this
+//Air530Class  Air530; 
+//if GPS module is Air530Z, use this
+Air530ZClass Air530;  
+
+void gps_init(){
+  //Setup GPS Power Control
+  // This is controlled by Air530 library
+  pinMode(GPS_POWER, OUTPUT);
+  gps_wake();
+  Air530.begin();
+  //Air530.reset();
+  // Disable GPS module on boot
+  gps_sleep();
+  Serial.printf("GPS Initialized\n");
+}
 
 int is_air_available(){
   return Air530.available();
@@ -18,9 +34,11 @@ int is_air_available(){
 
 void gps_wake(){
   if(get_gps_enabled() == 0){
-    //digitalWrite(gps_power, LOW);                                           // This is controlled by Air530 library?
+    // This is controlled by Air530 library?
+    //digitalWrite(gps_power, LOW);
     //Air530.begin(9600);
-    //Air530.setPPS(3, 200);                                                  // Doesn't seem to do anything
+    // Doesn't seem to do anything
+    //Air530.setPPS(3, 200);
     //Air530.setmode(MODE_GPS);
     //Air530.sendcmd("$PGKC115,1,1,1,1*2B\r\n"); // mode: gps, glonass, beidou, galileo [0: off, 1: on]
     //Air530.setNMEA(NMEA_GGA | NMEA_RMC | NMEA_VTG);
@@ -29,7 +47,8 @@ void gps_wake(){
   }
 
   set_gps_enabled(1);
-  //sleep_inhibit = 1;                                                        // Keep CPU awake if GPS is in use
+  // Keep CPU awake if GPS is in use
+  //sleep_inhibit = 1;
 }
 
 void gps_sleep(){
@@ -38,21 +57,43 @@ void gps_sleep(){
   }
 
   set_gps_enabled(0);
-  //sleep_inhibit = 0;                                                        // Allow CPU to go to sleep if GPS is not in use
+  // Allow CPU to go to sleep if GPS is not in use
+  //sleep_inhibit = 0;
+}
+
+void gps_service(){
+  // Enable GPS if release is waiting to be retrieved
+  if(GPS_ENABLE && get_waiting_to_be_retrieved() && ((InternalClock() - get_last_gps_fix()) > GPS_INTERVAL)) {
+    // Serial.printf("Waking GPS.\n");
+    // This will only wake if GPS is asleep
+    gps_wake();
+
+    if (is_air_available() > 0) {
+      if (DEBUG){
+        Serial.printf("GPS Available.\n");
+      }
+
+      update_gps();
+    }
+  }
+  else{
+    gps_sleep();
+  }
 }
 
 void update_gps(){
-  feedInnerWdt();           // Pet the watchdog
+  // Pet the watchdog
+  feedInnerWdt();
 
   while(Air530.available() > 0){
     Air530.encode(Air530.read());
   }
 
-  //String NMEA = Air530.getNMEA();
-  //String NMEA = Air530.getGSA();
+  // String NMEA = Air530.getNMEA();
+  // String NMEA = Air530.getGSA();
   String NMEA = Air530.getGGA();
 
-  if (NMEA == "0"){                                
+  if (NMEA == "0"){
     return;
   }
 
@@ -85,8 +126,8 @@ void update_gps(){
 
   if(gps_north_south_string == "S"){
     gps_latitude = -gps_latitude;
-  } 
-    
+  }
+
   gps_latitude = gps_latitude / 100;
 
   int gps_latitude_degrees = (int)gps_latitude;
@@ -131,7 +172,7 @@ void update_gps(){
   if((gps_hdop > 0.1 ) && (gps_hdop < 1.5)){
     set_last_gps_fix(InternalClock());
   }
-    
+
   if(DEBUG){
     Serial.println();
   }

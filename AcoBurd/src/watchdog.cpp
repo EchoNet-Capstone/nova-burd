@@ -43,7 +43,7 @@ void wdt_isr_Stop(void){
 CY_ISR(wdt_isr_Interrupt){
   #ifdef wdt_isr_INTERRUPT_INTERRUPT_CALLBACK
       wdt_isr_Interrupt_InterruptCallback();
-  #endif /* wdt_isr_INTERRUPT_INTERRUPT_CALLBACK */ 
+  #endif /* wdt_isr_INTERRUPT_INTERRUPT_CALLBACK */
 
   /*  Place your Interrupt code here. */
   /* `#START wdt_isr_Interrupt` */
@@ -62,7 +62,7 @@ cyisraddress wdt_isr_GetVector(void){
 void wdt_isr_SetPriority(uint8 priority){
   uint8 interruptState;
   uint32 priorityOffset = ((wdt_isr__INTC_NUMBER % 4u) * 8u) + 6u;
-    
+
   interruptState = CyEnterCriticalSection();
     *wdt_isr_INTC_PRIOR = (*wdt_isr_INTC_PRIOR & (uint32)(~wdt_isr__INTC_PRIOR_MASK)) |
                                     ((uint32)priority << priorityOffset);
@@ -114,7 +114,7 @@ void innerWdtEnable(bool feed){
   {
     /* Start the WDT */
     wdt_isr_StartEx(feedInnerWdt);
-    
+
     /* Make sure that interrupt is forwarded to the CPU */
     CySysWdtUnmaskInterrupt();
   }

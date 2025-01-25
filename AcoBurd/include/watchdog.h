@@ -1,8 +1,8 @@
 /*
 This is code from the arduino for watchdog timers
 that is being moved into the scope,
-this is done to break up the header file into 
-a header and source file so it is 
+this is done to break up the header file into
+a header and source file so it is
 compatable with platform.io
 */
 #ifndef WATCHDOG_H

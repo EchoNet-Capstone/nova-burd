@@ -17,7 +17,7 @@ void VextOFF(){
 }
 
 // Measure battery voltage
-void sampleBatteryVoltage(){
+void battery_service(){
   if(get_battery_timer() >= InternalClock()){
     //Not time yet
     return;
@@ -30,7 +30,8 @@ void sampleBatteryVoltage(){
 
   uint16_t volts = getBatteryVoltage();
 
-  interrupts();                                                                         // Reenable interrupts after sample
+  // Reenable interrupts after sample
+  interrupts();
 
   set_battery_percent((int)((100 * (volts - BATTERY_EMPTY)) / BATTERY_USABLE_VOLTS));
   if(get_battery_percent() > 100){
@@ -44,5 +45,10 @@ void sampleBatteryVoltage(){
   if(get_battery_percent() < LOW_BATTERY){\
     // Release trap if battery gets low
     set_release_timer(InternalClock());
-  }             
+  }
+
+  //Make sure Vext is off
+  if((get_waiting_to_be_retrieved() == false) && (get_display_active() == false)){
+    VextOFF();
+  }
 }

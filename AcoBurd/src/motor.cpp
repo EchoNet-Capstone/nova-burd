@@ -24,12 +24,60 @@ void motor_init(void){
   digitalWrite(MOTOR_DRIVER_POWER, LOW);
   digitalWrite(MOTOR_DRIVER_A, LOW);
   digitalWrite(MOTOR_DRIVER_B, LOW);
+
+  // ROTATE SHAFT ON BOOT!!!
+  motor_run_to_position(CLOSED_POSITION);
+  delay(5000);
+  motor_run_to_position(OPEN_POSITION);
+}
+
+// Wiggle the motor to clear barnacles
+void check_wiggle(){
+  // Wiggle motor to break barnacles if release is closed
+  if((get_wiggle_timer() >= InternalClock()) || (get_release_is_open() == false)) {
+    return;
+  }
+
+  // If we're more than wiggle_deadband seconds from opening the release, then allow a wiggle
+  if(get_wiggle_timer() >= (get_release_timer() - WIGGLE_DEADBAND)){
+    return;
+  }
+
+  set_wiggle_timer(InternalClock() + WIGGLE_INTERVAL);
+
+  int motor_temporary_position = get_motor_position();
+
+  motor_run_to_position(motor_temporary_position + 250);
+  delay(1000);
+  // Pet the watchdog
+  feedInnerWdt();
+  motor_run_to_position(motor_temporary_position - 250);
+  delay(1300);
+  // Pet the watchdog
+  feedInnerWdt();
+  motor_run_to_position(motor_temporary_position);
+  delay(1000);
+  // Pet the watchdog
+  feedInnerWdt();
+
+  // Need to reset this here because it gets called on boot - this causes this subroutine to run twice
+  set_wiggle_timer(InternalClock() + WIGGLE_INTERVAL);
+}
+
+void motor_service(void){
+  check_wiggle();
+
+  // Power down encoder and motor driver if it's been a while since motor has been energized
+  if(get_encoder_timer() < InternalClock()){
+    motor_sleep();
+  }
 }
 
 void set_motor_state(){
   if(get_release_timer() > InternalClock()){
     motor_run_to_position(CLOSED_POSITION);
-    set_waiting_to_be_retrieved(false);                                                        // If there is time on the clock, not waiting to be recovered
+    // If there is time on the clock, not waiting to be recovered
+    set_waiting_to_be_retrieved(false);
   }
   else{
     motor_run_to_position(OPEN_POSITION);
@@ -103,33 +151,16 @@ void motor_run_to_position(int target){
   }
   else if(motor_target < get_motor_position()){
     // Activate display
-    set_display_timer(InternalClock() + DISPLAY_TIMEOUT);                                              
+
+    set_display_timer(InternalClock() + DISPLAY_TIMEOUT);
     motor_wake_up();
     motor_forward();
   }
   else if(motor_target > get_motor_position()){
     // Activate display
-    set_display_timer(InternalClock() + DISPLAY_TIMEOUT);                                               
+
+    set_display_timer(InternalClock() + DISPLAY_TIMEOUT);
     motor_wake_up();
     motor_reverse();
   }
 }
-
-// Wiggle the motor to clear barnacles
-void wiggle_motor(){
-  int motor_temporary_position = get_motor_position();
-  
-  motor_run_to_position(motor_temporary_position + 250);
-  delay(1000);
-  feedInnerWdt();           // Pet the watchdog
-  motor_run_to_position(motor_temporary_position - 250);
-  delay(1300);
-  feedInnerWdt();           // Pet the watchdog
-  motor_run_to_position(motor_temporary_position);
-  delay(1000);
-  feedInnerWdt();           // Pet the watchdog
-
-  // Need to reset this here because it gets called on boot - this causes this subroutine to run twice
-  set_wiggle_timer(InternalClock() + WIGGLE_INTERVAL);                       
-}
-

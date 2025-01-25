@@ -1,6 +1,9 @@
 #include <LoRa_APP.h>
 
 #include "burd_radio.h"
+#include "device_state.h"
+#include "my_clock.h"
+#include "timers.h"
 #include "display.h"
 #include "globals.h"
 
@@ -26,8 +29,30 @@ void radio_init(void){
   Radio.Sleep();
 }
 
+void radio_service(){
+  // Send a LoRa packet
+  if(LORA_ENABLE && get_waiting_to_be_retrieved() && (get_lora_timer() < InternalClock())){
+    if (DEBUG){
+      Serial.printf("Sending LoRa packet.\n");
+    }
+
+    // Need to power up Vext to supply power to LoRa radio
+    oled_wake();
+
+    // Use this for testing only
+    set_lora_timer(InternalClock() + LORA_INTERVAL);
+  }
+  else {
+    // Put LoRa to sleep if we're not sending a packet
+    Radio.Sleep();
+    // Increment this even if not tranmitting.  That way the LoRa radio won't transmit immediately upon activation (let float to surface) THIS BREAKS THINGS
+    //lora_timer = InternalClock() + lora_interval;
+  }
+}
+
 void OnTxDone(){
-  rgb_led(0, 0, 16);                                                        // Flash blue LED to indicate packet has been sent
+  // Flash blue LED to indicate packet has been sent
+  rgb_led(0, 0, 16);
   Radio.Sleep( );
   if (DEBUG){
     Serial.print("LoRa TX sent......");
@@ -36,7 +61,8 @@ void OnTxDone(){
 }
 
 void OnTxTimeout(){
-  rgb_led(16, 0, 0);                                                        // Flash red LED to indicate failed packet
+  // Flash red LED to indicate failed packet
+  rgb_led(16, 0, 0);
   Radio.Sleep( );
   if (DEBUG){
     Serial.print("LoRa TX Timeout......");

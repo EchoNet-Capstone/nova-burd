@@ -9,10 +9,14 @@ long InternalClock(){
   Corrected_time = (long)sysTimeCurrent.Seconds;
 
   // How to set the clock
-  //TimerSysTime_t newSysTime ;         // Make a new variable of type TimerSysTime_t (.Seconds and .SubSeconds)
-  //newSysTime.Seconds = 1000;          // Store 1000 in .Seconds
-  //newSysTime.SubSeconds = 50;         // Store 50 in .SubSeconds
-  //TimerSetSysTime( newSysTime );      // Update time from variable newSysTime
+  // Make a new variable of type TimerSysTime_t (.Seconds and .SubSeconds)
+  //TimerSysTime_t newSysTime ;
+  // Store 1000 in .Seconds
+  //newSysTime.Seconds = 1000;
+  // Store 50 in .SubSeconds
+  //newSysTime.SubSeconds = 50;
+  // Update time from variable newSysTime
+  //TimerSetSysTime( newSysTime );
 
   return Corrected_time;
 }

@@ -5,6 +5,7 @@
 #include "my_clock.h"
 #include "timers.h"
 #include "device_state.h"
+#include "sleep.h"
 #include "globals.h"
 #include "battery.h"
 #include "user_input.h"
@@ -26,10 +27,146 @@ void oled_wake(){
   oled.wakeup();
 }
 
+void display_service(){
+  int loop_counter = 0;
+  // Reset timer tap counter
+  set_timer_tap_multiplier1(0);
+  // Reset timer tap counter
+  set_timer_tap_multiplier2(0);
+
+  // Calculate difference from clock to set release time
+  long release_delta = get_release_timer() - InternalClock();
+
+  while((get_display_timer() > InternalClock()) || (abs(release_delta) < 10)) {
+    // Re-calculate difference from clock to set release time or it'll get stuck in display loop
+    release_delta = get_release_timer() - InternalClock();
+
+    // Power up Vext
+    //VextON();
+    // Call timer routine because it stops working when display loop is active
+    TimerWakeUp();
+    set_display_active(1);
+
+    if(loop_counter > 5){
+      // Check reed switch input
+      reed_switch_debounce();
+    }
+
+    update_display();
+    // This delay controls how fast time is added
+    delay(500);
+    loop_counter++;
+  }
+
+  // Display notification screen if Waiting to be retrieved
+  if((get_waiting_to_be_retrieved() == true) && (get_display_active() == false)){
+    waiting_screen();
+    delay(500);
+  }
+}
+
+void draw_days(int release_days){
+  if(release_days < 10){
+    oled.drawString(0, 40, "  " + (String)release_days);
+    oled.drawString(1, 40, "  " + (String)release_days);
+  }
+  else if(release_days < 100){
+    oled.drawString(0, 40, " " + (String)release_days);
+    oled.drawString(1, 40, " " + (String)release_days);
+  }
+  else{
+    oled.drawString(0, 40, (String)release_days);
+    oled.drawString(1, 40, (String)release_days);
+  }
+}
+
+void draw_hours(int release_hours){
+  if(release_hours < 10){
+    oled.drawString(42, 40, " " + (String)release_hours);
+    oled.drawString(43, 40, " " + (String)release_hours);
+  }
+  else{
+    oled.drawString(42, 40, (String)release_hours);
+    oled.drawString(43, 40, (String)release_hours);
+  }
+}
+
+void draw_minutes(int release_minutes){
+  if(release_minutes < 10){
+    oled.drawString(74, 40, "0" + (String)release_minutes);
+    oled.drawString(75, 40, "0" + (String)release_minutes);
+  }
+  else{
+    oled.drawString(74, 40, (String)release_minutes);
+    oled.drawString(75, 40, (String)release_minutes);
+  }
+}
+
+void draw_seconds(int release_seconds){
+  if(release_seconds < 10){
+    oled.drawString(107, 40, "0" + (String)release_seconds);
+    oled.drawString(108, 40, "0" + (String)release_seconds);
+  }
+  else{
+    oled.drawString(107, 40, (String)release_seconds);
+    oled.drawString(108, 40, (String)release_seconds);
+  }
+
+}
+
+void draw_main_view(int release_days, int release_hours, int release_minutes, int release_seconds){
+  int reset_countdown = 0;
+
+  if (get_reed_switch1() || get_reed_switch2()){
+    reset_countdown = REED_SWITCH_LONG_PRESS - (InternalClock() - get_reed_switch_first_press());
+  }
+  else{
+    reset_countdown = REED_SWITCH_LONG_PRESS;
+  }
+
+  oled.drawString(5, 15, "Hold magnet " + (String)reset_countdown + " seconds");
+  oled.drawString(14, 24, "to reset timer to zero.");
+
+  oled.setFont(ArialMT_Plain_16);
+
+  draw_days(release_days);
+
+  draw_hours(release_hours);
+
+  draw_minutes(release_minutes);
+
+  draw_seconds(release_seconds);
+
+  // Reset font back to small
+  oled.setFont(ArialMT_Plain_10);
+  oled.drawString(0, 54, "DAYS    HRS    MIN     SEC");
+}
+
+void draw_secondary_view(){
+  oled.drawString(8, 16, "Hold magnet for at least ");
+  oled.drawString(12, 25, (String)REED_SWITCH_SHORT_PRESS + " second to set timer.");
+
+  oled.setFont(ArialMT_Plain_16);
+  oled.drawString(0, 45, "RELEASE OPEN");
+  oled.drawString(1, 45, "RELEASE OPEN");
+}
+
+void draw_gps_string(){
+  if(get_gps_lock() == 1){
+    oled.drawString(85, 0, "GPS Lock");
+  }
+  else if(get_gps_enabled() == 1){
+    oled.drawString(85, 0, "GPS On");
+  }
+  else{
+    oled.drawString(85, 0, "GPS Off");
+  }
+}
+
 void update_display(){
   // Time until release
   set_time_until_release(get_release_timer() - InternalClock());
-  
+
   if(get_time_until_release() < 0){
     set_time_until_release(0);
   }
@@ -45,91 +182,18 @@ void update_display(){
   oled.setFont(ArialMT_Plain_10);
   oled.drawString(0, 0, "Battery: " + (String)get_battery_percent() + "%");
 
-  if(get_gps_lock() == 1){
-    oled.drawString(85, 0, "GPS Lock");
-  }
-  else if(get_gps_enabled() == 1){
-    oled.drawString(85, 0, "GPS On");
-  }
-  else{
-    oled.drawString(85, 0, "GPS Off");
-  }
+  draw_gps_string();
 
-  if(get_time_until_release > 0){
-    int reset_countdown = 0;
-
-    if (get_reed_switch1() || get_reed_switch2()  ) reset_countdown = REED_SWITCH_LONG_PRESS - (InternalClock() - get_reed_switch_first_press());
-    else reset_countdown = REED_SWITCH_LONG_PRESS;
-
-    oled.drawString(5, 15, "Hold magnet " + (String)reset_countdown + " seconds");
-    oled.drawString(14, 24, "to reset timer to zero.");
-
-    //oled.drawString(0, 31, "Release Countdown:");
-    //oled.drawString(0, 31, "Uptime: " + (String)InternalClock() );
-
-    oled.setFont(ArialMT_Plain_16);
-
-    // Draw Days
-    if(release_days < 10){
-      oled.drawString(0, 40, "  " + (String)release_days);
-      oled.drawString(1, 40, "  " + (String)release_days);
-    }
-    else if(release_days < 100){
-      oled.drawString(0, 40, " " + (String)release_days);
-      oled.drawString(1, 40, " " + (String)release_days);
-    }
-    else{
-      oled.drawString(0, 40, (String)release_days);
-      oled.drawString(1, 40, (String)release_days);
-    }
-
-    // Draw Hours
-    if(release_hours < 10){
-      oled.drawString(42, 40, " " + (String)release_hours);
-      oled.drawString(43, 40, " " + (String)release_hours);
-    }
-    else{
-      oled.drawString(42, 40, (String)release_hours);
-      oled.drawString(43, 40, (String)release_hours);
-    }
-
-    // Draw Minutes
-    if(release_minutes < 10){
-      oled.drawString(74, 40, "0" + (String)release_minutes);
-      oled.drawString(75, 40, "0" + (String)release_minutes);
-    }
-    else{
-      oled.drawString(74, 40, (String)release_minutes);
-      oled.drawString(75, 40, (String)release_minutes);
-    }
-
-    // Draw Seconds
-    if(release_seconds < 10){
-      oled.drawString(107, 40, "0" + (String)release_seconds);
-      oled.drawString(108, 40, "0" + (String)release_seconds);
-    }
-    else{
-      oled.drawString(107, 40, (String)release_seconds);
-      oled.drawString(108, 40, (String)release_seconds);
-    }
-
-    oled.setFont(ArialMT_Plain_10);                                       // Reset font back to small
-    oled.drawString(0, 54, "DAYS    HRS    MIN     SEC");
+  if(get_time_until_release() > 0){
+    draw_main_view(release_days, release_hours, release_minutes, release_seconds);
   }
   else{
-    oled.drawString(8, 16, "Hold magnet for at least ");
-    oled.drawString(12, 25, (String)REED_SWITCH_SHORT_PRESS + " second to set timer.");
-
-    oled.setFont(ArialMT_Plain_16);
-    oled.drawString(0, 45, "RELEASE OPEN");
-    oled.drawString(1, 45, "RELEASE OPEN");
+    draw_secondary_view();
   }
 
-  oled.setFont(ArialMT_Plain_10);                                       // Reset font back to small
-  // Is release open?
-  //if ( release_is_open == 1 ) oled.drawString(20, 54, "RELEASE OPEN");
-  //else oled.drawString(15, 54, "RELEASE CLOSED");
-
+  // Reset font back to small
+  oled.setFont(ArialMT_Plain_10);
+  
   oled.display();
 }
 
@@ -139,13 +203,15 @@ void rgb_led(uint8_t red, uint8_t green, uint8_t blue){
     rgbpixel.begin(); // INITIALIZE RGB strip object (REQUIRED)
     rgbpixel.clear(); // Set all pixel colors to 'off'
     rgbpixel.setPixelColor(0, rgbpixel.Color(red, green, blue));
-    rgbpixel.show();   // Send the updated pixel colors to the hardware.
+    // Send the updated pixel colors to the hardware.
+    rgbpixel.show();
   }
   else{
     rgbpixel.begin(); // INITIALIZE RGB strip object (REQUIRED)
     rgbpixel.setPixelColor(0, rgbpixel.Color(red, green, blue));
     //rgbpixel.clear(); // Set all pixel colors to 'off'
-    rgbpixel.show();   // Send the updated pixel colors to the hardware.
+    // Send the updated pixel colors to the hardware.
+    rgbpixel.show();
   }
 }
 

@@ -8,10 +8,9 @@
 #define BATTERY_USABLE_VOLTS (BATTERY_FULL - BATTERY_EMPTY)
 #define LOW_BATTERY 5                         // Low battery condition in percent
 
-
 void VextON(void);
 void VextOFF(void);
 
-void sampleBatteryVoltage(void);
+void battery_service(void);
 
 #endif

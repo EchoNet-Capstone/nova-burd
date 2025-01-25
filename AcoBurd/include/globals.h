@@ -12,8 +12,8 @@
 // #include "GPS_Air530.h"
 // #include "GPS_Air530Z.h"
 
-// Do not use pins ADC1, GPIO1, GPIO2, GPIO8, GPIO10, GPIO12, GPIO13, GPIO14, GPIO15, GPIO16, GPIO19, GPIO20, 
-// Note:  AB-02S uses ASR6502 chip, not ASR6501.  ASR6502 has three working ADC channels. 
+// Do not use pins ADC1, GPIO1, GPIO2, GPIO8, GPIO10, GPIO12, GPIO13, GPIO14, GPIO15, GPIO16, GPIO19, GPIO20,
+// Note:  AB-02S uses ASR6502 chip, not ASR6501.  ASR6502 has three working ADC channels.
 //
 // GPIO12 GPS Green LED
 // GPIO13 SK6812 LED

@@ -28,6 +28,8 @@
 #define LORA_BUFFER_SIZE                            64          // Define the payload size here
 
 void radio_init(void);
+void radio_service(void);
+
 void OnTxDone(void);
 void OnTxTimeout(void);
 void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr);
