@@ -38,10 +38,6 @@
 #define hall_effect true                      // Hall effect inputs or reed switches
 
 // Various Calibrations
-#define battery_full 4050                     // Voltage for full battery - was 4200 (this resulted in full battery being 95%, 4140 is actual measured full voltage
-#define battery_empty 3350                    // Voltage for empty battery - 3300 for nearly empty at 0C (https://www.richtek.com/Design%20Support/Technical%20Document/AN024)
-#define low_battery 5                         // Low battery condition in percent
-#define battery_interval 180                  // Time between battery samples
 #define gps_interval 3600                     // Time between GPS updates
 #define lora_interval 60                      // Time between LoRa transmits
 #define wiggle_interval 259200                // 86400 seconds in a day, 3 * 86400 = 259200

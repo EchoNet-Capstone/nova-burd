@@ -9,12 +9,9 @@
 #include "LoRa_APP.h"
 #include <Arduino.h>
 
-// Interrupt Timer Configuration
-#define timetillwakeup 1000                   // Cannot be longer than 1.4 seconds due to WDT
-
 TimerEvent_t wakeUp;
 bool low_power;
-
+bool sleep_inhibit = true;                        // Default to staying awake on boot
 long reed_switch_first_press = 0;
 long reed_switch_release_time = 0;
 int timer_tap_multiplier1 = 0;
@@ -55,6 +52,14 @@ void set_wait_screen_delay(int new_wait_screen_delay){
 
 int get_wait_screen_delay(void){
   return wait_screen_delay;
+}
+
+void set_sleep_inhibit(bool new_sleep_inhibit){
+  sleep_inhibit = new_sleep_inhibit;
+}
+
+bool get_sleep_inhibit(void){
+  return sleep_inhibit;
 }
 
 void init_sleep(){

@@ -8,6 +8,7 @@
 #include "gps.h"
 #include "watchdog.h"
 #include "timers.h"
+#include "battery.h"
 #include "LoRa_APP.h"
 
 static RadioEvents_t RadioEvents;
@@ -23,6 +24,7 @@ void setup(){
   if(debug){
     Serial.begin(115200);
   }
+  
   TimerReset(0);
   boardInitMcu();                                                                                         // Hopefully reset onboard timers
 

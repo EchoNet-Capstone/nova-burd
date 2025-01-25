@@ -8,9 +8,6 @@
 #include "sleep.h"
 #include <Arduino.h>
 
-// battery
-int battery_percent = 0;
-bool sleep_inhibit = 1;                        // Default to staying awake on boot
 bool display_active = 0;
 bool reed_switch1 = 0;
 bool reed_switch2 = 0;
@@ -23,15 +20,6 @@ bool gps_enabled = 0;
 bool gps_lock = 0;
 bool input_slowdown_toggle = 0;
 
-void VextON(){
-  pinMode(Vext, OUTPUT);
-  digitalWrite(Vext, LOW);
-}
-
-void VextOFF(){
-  pinMode(Vext, OUTPUT);
-  digitalWrite(Vext, HIGH);
-}
 
 void set_motor_state(){
   if(get_release_timer() > InternalClock()){
@@ -41,34 +29,6 @@ void set_motor_state(){
   else{
     motor_run_to_position(open_position);
   }
-}
-
-// Measure battery voltage
-uint16_t sampleBatteryVoltage(){
-  noInterrupts();
-  VextON();
-
-  uint16_t volts = getBatteryVoltage();
-
-  interrupts();                                                                         // Reenable interrupts after sample
-
-  uint16_t battery_usable_volts = battery_full - battery_empty;
-
-  battery_percent = (int)((100 * (volts - battery_empty)) / battery_usable_volts);
-  if(battery_percent > 100){
-    battery_percent = 100;
-  }
-
-  if(battery_percent < 0){
-    battery_percent = 0;
-  }
-
-  if(battery_percent < low_battery){\
-    // Release trap if battery gets low
-    set_release_timer(InternalClock());
-  }             
-
-  return volts;
 }
 
 void reed_switch_debounce() {
@@ -156,21 +116,6 @@ void debug_subroutine(void){
   , InternalClock(), get_time_until_release(), get_encoder_timer(), digitalRead(motor_driver_power), digitalRead(Vext));
 }
 
-// gets and sets
-void set_battery_percent(int new_battery_percent){
-  battery_percent = new_battery_percent;
-}
-
-int get_battery_percent(void){
-  return battery_percent;
-}
-void set_sleep_inhibit(bool new_sleep_inhibit){
-  sleep_inhibit = new_sleep_inhibit;
-}
-
-bool get_sleep_inhibit(void){
-  return sleep_inhibit;
-}
 void set_display_active(bool new_display_active){
   display_active = new_display_active;
 }
