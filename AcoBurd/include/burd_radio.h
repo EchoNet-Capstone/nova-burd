@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-
 // LoRa pin definitions
 #define LORA_IO1
 #define LORA_IO2

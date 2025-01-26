@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <LoRa_APP.h>
 
-#include "globals.h"
 #include "motor.h"
 #include "my_clock.h"
 #include "subroutines.h"
@@ -68,7 +67,6 @@ void loop(){
 
   //note that lowPowerHandler() runs six times before the mcu goes into low_power mode;
   if(get_low_power()){
-
     lowPowerHandler();
   }
 

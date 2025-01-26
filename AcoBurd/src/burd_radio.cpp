@@ -5,7 +5,6 @@
 #include "my_clock.h"
 #include "timers.h"
 #include "display.h"
-#include "globals.h"
 
 static RadioEvents_t radio_events;
 

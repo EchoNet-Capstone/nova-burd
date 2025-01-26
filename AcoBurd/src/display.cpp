@@ -6,7 +6,6 @@
 #include "timers.h"
 #include "device_state.h"
 #include "sleep.h"
-#include "globals.h"
 #include "battery.h"
 #include "user_input.h"
 

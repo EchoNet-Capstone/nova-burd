@@ -4,7 +4,6 @@
 #include "display.h"
 #include "timers.h"
 #include "motor.h"
-#include "globals.h"
 #include "sleep.h"
 #include "device_state.h"
 #include "my_clock.h"

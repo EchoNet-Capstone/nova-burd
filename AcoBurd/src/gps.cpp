@@ -5,7 +5,6 @@
 #include "gps.h"
 #include "gps_data_class.h"
 #include "timers.h"
-#include "globals.h"
 #include "device_state.h"
 #include "my_clock.h"
 #include "watchdog.h"

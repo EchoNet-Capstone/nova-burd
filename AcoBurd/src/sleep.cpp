@@ -5,7 +5,6 @@
 #include "subroutines.h"
 #include "display.h"
 #include "motor.h"
-#include "globals.h"
 #include "device_state.h"
 #include "battery.h"
 #include "my_clock.h"

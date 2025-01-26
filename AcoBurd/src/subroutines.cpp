@@ -5,7 +5,6 @@
 #include "my_clock.h"
 #include "device_state.h"
 #include "timers.h"
-#include "globals.h"
 #include "motor.h"
 
 void debug_subroutine(void){

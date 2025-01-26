@@ -1,7 +1,6 @@
 #include <Arduino.h>
 
 #include "motor.h"
-#include "globals.h"
 #include "my_clock.h"
 #include "get_set_macros.h"
 #include "timers.h"
