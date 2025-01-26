@@ -27,44 +27,6 @@ void oled_wake(){
   oled.wakeup();
 }
 
-void display_service(){
-  int loop_counter = 0;
-  // Reset timer tap counter
-  set_timer_tap_multiplier1(0);
-  // Reset timer tap counter
-  set_timer_tap_multiplier2(0);
-
-  // Calculate difference from clock to set release time
-  long release_delta = get_release_timer() - InternalClock();
-
-  while((get_display_timer() > InternalClock()) || (abs(release_delta) < 10)) {
-    // Re-calculate difference from clock to set release time or it'll get stuck in display loop
-    release_delta = get_release_timer() - InternalClock();
-
-    // Power up Vext
-    //VextON();
-    // Call timer routine because it stops working when display loop is active
-    TimerWakeUp();
-    set_display_active(1);
-
-    if(loop_counter > 5){
-      // Check reed switch input
-      reed_switch_debounce();
-    }
-
-    update_display();
-    // This delay controls how fast time is added
-    delay(500);
-    loop_counter++;
-  }
-
-  // Display notification screen if Waiting to be retrieved
-  if((get_waiting_to_be_retrieved() == true) && (get_display_active() == false)){
-    waiting_screen();
-    delay(500);
-  }
-}
-
 void draw_days(int release_days){
   if(release_days < 10){
     oled.drawString(0, 40, "  " + (String)release_days);
@@ -193,7 +155,7 @@ void update_display(){
 
   // Reset font back to small
   oled.setFont(ArialMT_Plain_10);
-  
+
   oled.display();
 }
 

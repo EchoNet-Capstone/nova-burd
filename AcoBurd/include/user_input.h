@@ -13,6 +13,7 @@
 #define REED_SWITCH_SHORT_PRESS 1
 
 void user_input_init(void);
+void interaction_service(void);
 void reed_switch_debounce(void);
 
 #endif

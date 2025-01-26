@@ -6,7 +6,6 @@
 void oled_sleep(void);
 void oled_wake(void);
 
-void display_service(void);
 void update_display(void);
 void rgb_led(uint8_t red, uint8_t green, uint8_t blue);
 void led_flasher();

@@ -76,14 +76,13 @@ void loop(){
 
   battery_service();
 
-
   motor_service();
 
   gps_service();
 
   radio_service();
 
-  display_service();
+  interaction_service();
 
   if(DEBUG){
     debug_subroutine();
