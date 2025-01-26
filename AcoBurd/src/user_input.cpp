@@ -9,7 +9,7 @@
 #include "my_clock.h"
 #include "watchdog.h"
 
-GET_SET_DEF(bool, input_slowdown_toggle, false);
+GET_SET_FUNC_DEF(bool, input_slowdown_toggle, false);
 
 void user_input_init(void){
   //pinMode(INT_GPIO, INPUT);

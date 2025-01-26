@@ -7,8 +7,8 @@
 #include "device_state.h"
 #include "watchdog.h"
 
-GET_SET_DEF(int, motor_target, 0);
-GET_SET_DEF(bool, is_motor_running, false);
+GET_SET_FUNC_DEF(int, motor_target, 0);
+GET_SET_FUNC_DEF(bool, is_motor_running, false);
 
 void motor_init(void){
   // Setup motor quadrature and interrupt
