@@ -32,7 +32,7 @@ void radio_service(){
   // Send a LoRa packet
   if(LORA_ENABLE && get_waiting_to_be_retrieved() && (get_lora_timer() < InternalClock())){
     if (DEBUG){
-      Serial.printf("Sending LoRa packet.\n");
+      Serial.printf("Sending LoRa packet.\r\n");
     }
 
     // Need to power up Vext to supply power to LoRa radio
@@ -54,7 +54,7 @@ void OnTxDone(){
   rgb_led(0, 0, 16);
   Radio.Sleep( );
   if (DEBUG){
-    Serial.print("LoRa TX sent......");
+    Serial.print("LoRa TX sent......\r\n");
   }
   //state=RX;
 }
@@ -64,7 +64,7 @@ void OnTxTimeout(){
   rgb_led(16, 0, 0);
   Radio.Sleep( );
   if (DEBUG){
-    Serial.print("LoRa TX Timeout......");
+    Serial.print("LoRa TX Timeout......\r\n");
   }
 }
 

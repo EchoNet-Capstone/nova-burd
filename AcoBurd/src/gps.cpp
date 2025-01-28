@@ -29,7 +29,7 @@ void gps_init(){
 
   // Disable GPS module on boot
   gps_sleep();
-  Serial.printf("GPS Initialized\n");
+  Serial.printf("GPS Initialized\r\n");
 }
 
 int is_air_available(){
@@ -70,13 +70,13 @@ void gps_sleep(){
 void gps_service(){
   // Enable GPS if release is waiting to be retrieved
   if(GPS_ENABLE && get_waiting_to_be_retrieved() && ((InternalClock() - get_last_gps_fix()) > GPS_INTERVAL)) {
-    // Serial.printf("Waking GPS.\n");
+    // Serial.printf("Waking GPS.\r\n");
     // This will only wake if GPS is asleep
     gps_wake();
 
     if (is_air_available() > 0) {
       if (DEBUG){
-        Serial.printf("GPS Available.\n");
+        Serial.printf("GPS Available.\r\n");
       }
 
       update_gps();

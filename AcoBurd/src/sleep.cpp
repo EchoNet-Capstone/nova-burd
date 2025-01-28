@@ -20,7 +20,7 @@ void init_sleep(){
 
 void TimerWakeUp(){
   if(DEBUG){
-    Serial.printf("Woke up at %ld s.  Countdown timer %ld.\n", InternalClock(), get_release_timer());
+    Serial.printf("Woke up at %ld s.  Countdown timer %ld.\r\n", InternalClock(), get_release_timer());
   }
 
   set_low_power(false);
@@ -96,7 +96,7 @@ void gpio_interrupt(){
   // Disable interrupts or motor won't spin
   noInterrupts();
   if(DEBUG){
-    Serial.printf("GPIO Interrupt at %d ms.\n", InternalClock() );
+    Serial.printf("GPIO Interrupt at %ld s.\r\n", InternalClock() );
   }
 
   // new press, record first time of key press

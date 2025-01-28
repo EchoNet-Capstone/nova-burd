@@ -85,6 +85,7 @@ void draw_main_view(int release_days, int release_hours, int release_minutes, in
     reset_countdown = REED_SWITCH_LONG_PRESS;
   }
 
+
   oled.drawString(5, 15, "Hold magnet " + (String)reset_countdown + " seconds");
   oled.drawString(14, 24, "to reset timer to zero.");
 

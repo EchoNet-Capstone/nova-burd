@@ -8,6 +8,6 @@
 #include "motor.h"
 
 void debug_subroutine(void){
-  Serial.printf("Main Clock: %ld Time Until Release: %ld Encoder Time: %ld Encoder Power: %d Vext: %d\n"
+  Serial.printf("Main Clock: %ld Time Until Release: %ld Encoder Time: %ld Encoder Power: %d Vext: %d\r\n"
   , InternalClock(), get_time_until_release(), get_encoder_timer(), digitalRead(MOTOR_DRIVER_POWER), digitalRead(Vext));
 }
