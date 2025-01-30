@@ -15,9 +15,15 @@ void setup(){
 
   if (Serial1.availableForWrite()) {
     Serial.println("Serial1 Available, transmitting");
-    // Serial1.write("$B04HEYO");
+    // Serial1.write("$B05HELLO");
     char *hw = "hello world";
-    // broadcast(Serial1, hw, 10);
+    set_address(Serial1, 1);
+
+    delay(300);
+    query_status(Serial1);
+
+    delay(1000);
+    ping(Serial1, 2);
   }
 
 }
