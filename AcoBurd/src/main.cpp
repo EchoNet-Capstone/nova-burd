@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "packet_handler.hpp"
+#include "modem_api.hpp"
 
 
 String packetBuffer = "";
@@ -14,9 +14,6 @@ void setup(){
 
 
   if (Serial1.availableForWrite()) {
-    Serial.println("Serial1 Available, transmitting");
-    // Serial1.write("$B05HELLO");
-    char *hw = "hello world";
     set_address(Serial1, 1);
 
     delay(300);

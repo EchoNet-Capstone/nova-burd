@@ -1,5 +1,5 @@
-#ifndef PACKET_HANDLER_H
-#define PACKET_HANDLER_H
+#ifndef MODEM_API_H
+#define MODEM_API_H
 
 #include "Arduino.h"
 #include "globals.hpp"
@@ -14,10 +14,6 @@ void parse_status_query_packet(String packetBuffer);
 void parse_broadcast_packet(String packetBuffer);
 void parse_unicast_packet(String packetBuffer);
 void packet_recieved(String packetBuffer);
-
-
-
-
 
 
 #endif

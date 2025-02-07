@@ -1,13 +1,16 @@
-#include "packet_handler.hpp"
+#include "modem_api.hpp"
+#include "floc.hpp"
 
 // Supported Modem Commands (Link Quality Indicator OFF)
 //  Query Status                                DONE
 //  Set Address                                 DONE
 //  Broadcast Message                           DONE
-//  Unicast Message with Ack                    TBD
+//  Unicast Message with Ack                    DONE
 //  Ping                                        DONE
-//  Unicast Message                             TBD
+//  Unicast Message                             DONE
 //  Battery Voltage and Noise Measurement*      TBD
+//  Error
+//  Timeout
 
 void print_packet(String packetBuffer, String packet_type) {
     Serial.println("Packet recieved.\n\tType : " + packet_type + "\n\tPacket data : " + packetBuffer);
@@ -60,6 +63,11 @@ void parse_broadcast_packet(String packetBuffer) {
         Serial.printf("Broadcast packet received.\r\n\tPacket src addr : %03ld\r\n\tPacket Bytes : %ld\r\n\tPacket data : ", src_addr, bytes);
         Serial.print(packetData + "\r\n");
     }
+
+    char *broadcastBuffer = (char*)malloc(PACKET_BUFFER_SIZE);
+    packetData.toCharArray(broadcastBuffer, PACKET_BUFFER_SIZE);
+    floc_broadcast_received(broadcastBuffer);
+    free(broadcastBuffer);
 }
 
 void parse_unicast_packet(String packetBuffer) {
@@ -72,19 +80,20 @@ void parse_unicast_packet(String packetBuffer) {
     }
 }
 
+// Also handles ack packets from Unicast with ack command
 void parse_ping_packet(String packetBuffer) {
     long ping_addr = packetBuffer.substring(PING_ADDR_START, PING_ADDR_END).toInt();
     long ping_propogation_counter = packetBuffer.substring(PING_PROPOGATION_COUNTER_START, PING_PROPOGATION_COUNTER_END).toInt();
     float meter_range = static_cast<float>(ping_propogation_counter) * SOUND_SPEED * 3.125e-5;
 
     if (debug) {
-        Serial.printf("Ping packet received.\r\n\tPing addr : %03ld\r\n\tPing range (m) : %f\r\n", ping_addr, meter_range);
+        Serial.printf("Ping (or ACK) packet received.\r\n\tAddr : %03ld\r\n\tRange (m) : %f\r\n", ping_addr, meter_range);
     }
 }
 
 void packet_recieved(String packetBuffer) {
-    Serial.printf("Packet length %d\nPacket data : ", packetBuffer.length());
-    Serial.print(packetBuffer + "\n");
+    // Serial.printf("Packet length %d\nPacket data : ", packetBuffer.length());
+    // Serial.print(packetBuffer + "\n");
     
     if (packetBuffer.length() < 1) {
         // Should never happen over serial connection.
@@ -92,7 +101,7 @@ void packet_recieved(String packetBuffer) {
     }
 
     if (packetBuffer.charAt(0) == 'E') {
-        if (debug) Serial1.printf("Error packet received.\r\n");
+        if (debug) Serial.printf("Error packet received.\r\n");
         return;
     }
 
@@ -106,24 +115,44 @@ void packet_recieved(String packetBuffer) {
             case 'B':
                 if (packetBuffer.length() == BROADCAST_LOCAL_ECHO_LENGTH) {
                     if (debug) {
-                        Serial.printf("Broadcast of %02ld bytes confirmed.\r\n", 
+                        Serial.printf("Broadcast of %02ld bytes sent.\r\n", 
                         packetBuffer.substring(BROADCAST_LOCAL_ECHO_BYTE_LENGTH_START, 
                                                BROADCAST_LOCAL_ECHO_BYTE_LENGTH_END).toInt());
                     }
                 }
                 break;
             case 'M':
+                if (packetBuffer.length() == UNICAST_LOCAL_ECHO_LENGTH) {
+                    if (debug) {
+                        Serial.printf("Unicast (with ACK) of %02ld bytes to address %03ld sent.\r\n",
+                        packetBuffer.substring(UNICAST_LOCAL_ECHO_BYTE_LENGTH_START, 
+                                               UNICAST_LOCAL_ECHO_BYTE_LENGTH_END).toInt(),
+                        packetBuffer.substring(UNICAST_LOCAL_ECHO_DEST_ADDR_START, 
+                                               UNICAST_LOCAL_ECHO_DEST_ADDR_END).toInt());
+                    }
+
+                }
                 break;
             case 'P':
                 if (packetBuffer.length() == PING_LOCAL_ECHO_LENGTH) {
                     if (debug) {
-                        Serial.printf("Ping to modem %03ld bytes confirmed.\r\n", 
+                        Serial.printf("Ping to modem %03ld sent.\r\n", 
                         packetBuffer.substring(PING_LOCAL_ECHO_DEST_ADDR_START, 
                                                PING_LOCAL_ECHO_DEST_ADDR_END).toInt());
                     }
                 }
                 break;
             case 'U':
+                if (packetBuffer.length() == UNICAST_LOCAL_ECHO_LENGTH) {
+                    if (debug) {
+                        Serial.printf("Unicast of %02ld bytes to address %03ld sent.\r\n",
+                        packetBuffer.substring(UNICAST_LOCAL_ECHO_BYTE_LENGTH_START, 
+                                               UNICAST_LOCAL_ECHO_BYTE_LENGTH_END).toInt(),
+                        packetBuffer.substring(UNICAST_LOCAL_ECHO_DEST_ADDR_START, 
+                                               UNICAST_LOCAL_ECHO_DEST_ADDR_END).toInt());
+                    }
+
+                }
                 break;
             case 'V':
                 break;
@@ -155,6 +184,13 @@ void packet_recieved(String packetBuffer) {
             case 'R':
                 if (packetBuffer.length() == PING_PACKET_LENGTH) {
                     parse_ping_packet(packetBuffer);
+                }
+                break;
+            case 'T':
+                if (packetBuffer.length() == TIMEOUT_PACKET_LENGTH) {
+                    if (debug) {
+                        Serial.println("Timeout.");
+                    }
                 }
                 break;
             case 'U':
