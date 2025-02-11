@@ -1,5 +1,4 @@
 #include "modem_api.hpp"
-#include "floc.hpp"
 
 // Supported Modem Commands (Link Quality Indicator OFF)
 //  Query Status                                DONE
@@ -11,6 +10,8 @@
 //  Battery Voltage and Noise Measurement*      TBD
 //  Error
 //  Timeout
+
+uint8_t modem_id = 0;
 
 void print_packet(String packetBuffer, String packet_type) {
     Serial.println("Packet recieved.\n\tType : " + packet_type + "\n\tPacket data : " + packetBuffer);
@@ -24,8 +25,13 @@ void set_address(HardwareSerial connection, int8_t addr) {
     connection.printf("$A%03d", addr);
 }
 
+uint8_t get_modem_address() {
+    return modem_id;
+}
+
 void broadcast(HardwareSerial connection, char *data, int8_t bytes) {
-    connection.printf("$B%02d%s", bytes, data);
+    connection.printf("$B%02d", bytes);
+    connection.print(data);
 }
 
 void ping(HardwareSerial connection, int8_t addr) {
@@ -51,6 +57,8 @@ void parse_set_address_packet(String packetBuffer) {
     if (debug) {
         Serial.printf("Set address packet received.\r\n\tNew Device addr : %03ld\r\n", new_addr);
     }
+
+    modem_id = new_addr;
 }
 
 void parse_broadcast_packet(String packetBuffer) {
@@ -66,7 +74,7 @@ void parse_broadcast_packet(String packetBuffer) {
 
     char *broadcastBuffer = (char*)malloc(PACKET_BUFFER_SIZE);
     packetData.toCharArray(broadcastBuffer, PACKET_BUFFER_SIZE);
-    floc_broadcast_received(broadcastBuffer);
+    floc_broadcast_received(broadcastBuffer, bytes);
     free(broadcastBuffer);
 }
 

@@ -15,10 +15,7 @@
 #define TIMEOUT_PACKET_LENGTH 3
 
 #define PACKET_BUFFER_SIZE 128
-#define TTL_MASK 0xF
-#define COMMAND_TYPE 0x1
-#define ACK_TYPE 0x2
-#define RESPONSE_TYPE 0x3
+#define TTL_START 3
 
 // Starts inclusive, ends exclusive
 

@@ -19,8 +19,32 @@ void setup(){
     delay(300);
     query_status(Serial1);
 
-    delay(1000);
+    delay(300);
     ping(Serial1, 2);
+
+    delay(300);
+    struct command_header *temp = (struct command_header *)malloc(sizeof(struct command_header));
+    temp->ttl = 5;
+    temp->type = COMMAND_TYPE;
+    temp->dest_addr = 2;
+    temp->src_addr = 1;
+    temp->pid = 4;
+    temp->size = 3;
+    Serial1.print("$B05");
+    /*Serial1.write(temp->ttl << 4 | temp->type);
+    Serial1.write(temp->dest_addr);
+    Serial1.write(temp->src_addr);
+    Serial1.write(temp->pid);
+    Serial1.write(temp->size);*/
+
+    char *struct_ptr = (char *)temp;
+    /*for (int i = 0; i < sizeof(struct command_header); i++) {
+      Serial1.write(*struct_ptr++);
+    }*/
+
+    Serial1.print(struct_ptr);
+
+
   }
 
 }
