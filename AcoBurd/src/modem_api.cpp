@@ -1,4 +1,6 @@
 #include "modem_api.hpp"
+#include "display.hpp"
+#include "floc.hpp"
 
 // Supported Modem Commands (Link Quality Indicator OFF)
 //  Query Status                                DONE
@@ -40,7 +42,7 @@ void ping(HardwareSerial connection, int8_t addr) {
 
 void parse_status_query_packet(String packetBuffer) {
     long node_addr = packetBuffer.substring(STATUS_QUERY_NODE_ADDR_START, STATUS_QUERY_NODE_ADDR_END).toInt();
-    long supply_voltage_meas = packetBuffer.substring(STATUS_QUERY_SUPPLY_VOLTAGE_START, STATUS_QUERY_SUPPLY_VOLTAGE_END).toInt(); // TODO : This is returning 0, debug?
+    long supply_voltage_meas = packetBuffer.substring(STATUS_QUERY_SUPPLY_VOLTAGE_START, STATUS_QUERY_SUPPLY_VOLTAGE_END).toInt();
     float supply_voltage = static_cast<float>(supply_voltage_meas) * 15.0f / 65536.0f;
     String release_version = packetBuffer.substring(STATUS_QUERY_RELEASE_START, STATUS_QUERY_RELEASE_END);
     String build_date_time = packetBuffer.substring(STATUS_QUERY_BUILD_DATE_START, STATUS_QUERY_BUILD_DATE_END);
@@ -49,6 +51,8 @@ void parse_status_query_packet(String packetBuffer) {
         Serial.printf("Status query packet received.\r\n\tDevice addr : %03ld\r\n\tDevice Supply Voltage : %f\r\n\tDevice Release Version : ", node_addr, supply_voltage);
         Serial.print(release_version + "\r\n\tDevice Build Date + Time [BYYYY-MM-DDThh:mm:ss] : " + build_date_time + "\r\n");
     }
+
+    floc_status_send(packetBuffer);
 }
 
 void parse_set_address_packet(String packetBuffer) {
@@ -59,6 +63,7 @@ void parse_set_address_packet(String packetBuffer) {
     }
 
     modem_id = new_addr;
+    display_modem_id(modem_id);
 }
 
 void parse_broadcast_packet(String packetBuffer) {
@@ -100,8 +105,6 @@ void parse_ping_packet(String packetBuffer) {
 }
 
 void packet_recieved(String packetBuffer) {
-    // Serial.printf("Packet length %d\nPacket data : ", packetBuffer.length());
-    // Serial.print(packetBuffer + "\n");
     
     if (packetBuffer.length() < 1) {
         // Should never happen over serial connection.
@@ -213,7 +216,7 @@ void packet_recieved(String packetBuffer) {
                 Serial.println("\tFull packet : " + packetBuffer);
         }
     } else {
-        // Packet does not follow modem response structure (start with $ or #)
+        // Packet does not follow modem response structure (starts with $ or #)
         if (debug) print_packet(packetBuffer, "Unknown prefix");
         return;
     }

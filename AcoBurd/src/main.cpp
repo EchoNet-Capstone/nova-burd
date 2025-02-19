@@ -1,10 +1,12 @@
 #include <Arduino.h>
 #include "modem_api.hpp"
+#include "display.hpp"
 
 
 String packetBuffer = "";
 
 void setup(){
+  oled_initialize();
   
   // Debug messages to USB connection
   Serial.begin(115200);
@@ -31,16 +33,8 @@ void setup(){
     temp->pid = 4;
     temp->size = 3;
     Serial1.print("$B05");
-    /*Serial1.write(temp->ttl << 4 | temp->type);
-    Serial1.write(temp->dest_addr);
-    Serial1.write(temp->src_addr);
-    Serial1.write(temp->pid);
-    Serial1.write(temp->size);*/
 
     char *struct_ptr = (char *)temp;
-    /*for (int i = 0; i < sizeof(struct command_header); i++) {
-      Serial1.write(*struct_ptr++);
-    }*/
 
     Serial1.print(struct_ptr);
 

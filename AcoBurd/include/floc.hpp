@@ -41,6 +41,7 @@ struct response_header {
     uint8_t dest_addr;
     uint8_t src_addr;
     uint8_t pid;
+    uint8_t request_pid;
     uint8_t size;
 }__attribute__((packed));
 
@@ -52,6 +53,8 @@ void parse_floc_response_packet(char *broadcastBuffer);
 void floc_broadcast_received(char *broadcastBuffer, uint8_t size);
 void floc_unicast_received(char *unicastBuffer, uint8_t size);
 void floc_acknowledgement_send(HardwareSerial connection, uint8_t dest_addr, uint8_t ack_pid);
+void floc_status_queue(HardwareSerial connection, uint8_t dest_addr);
+void floc_status_send(String status);
 
 
 #endif
