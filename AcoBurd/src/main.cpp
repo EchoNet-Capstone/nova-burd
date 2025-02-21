@@ -2,6 +2,7 @@
 #include "modem_api.hpp"
 #include "display.hpp"
 
+// #define MASTER_NODE
 
 String packetBuffer = "";
 
@@ -14,14 +15,16 @@ void setup(){
   // Serial connection to modem
   Serial1.begin(9600, SERIAL_8N1);
 
-
+#ifdef MASTER_NODE
   if (Serial1.availableForWrite()) {
+    // Master node address will be 1
     set_address(Serial1, 1);
 
     delay(300);
     query_status(Serial1);
 
     delay(300);
+    // If there is a slave node, ping address 2
     ping(Serial1, 2);
 
     delay(300);
@@ -32,15 +35,27 @@ void setup(){
     temp->src_addr = 1;
     temp->pid = 4;
     temp->size = 3;
-    Serial1.print("$B05");
 
     char *struct_ptr = (char *)temp;
-
+    // structure acoustic broadcast command
+    Serial1.print("$B05");
+    // Send command data as packet in broadcast
     Serial1.print(struct_ptr);
 
 
   }
+#else
+  if (Serial1.availableForWrite()) {
+    set_address(Serial1, 2);
 
+    delay(300);
+    query_status(Serial1);
+
+    delay(300);
+    // If there is a master node, ping address 1
+    ping(Serial1, 1);
+  }
+#endif
 }
 
 void loop(){
