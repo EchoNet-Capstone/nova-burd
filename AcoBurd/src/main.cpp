@@ -1,12 +1,14 @@
 #include <Arduino.h>
 #include "modem_api.hpp"
 #include "display.hpp"
+#include "motor.h"
 
 // #define MASTER_NODE
 
 String packetBuffer = "";
 
 void setup(){
+  noInterrupts();
   oled_initialize();
   
   // Debug messages to USB connection
@@ -16,6 +18,7 @@ void setup(){
   Serial1.begin(9600, SERIAL_8N1);
 
 #ifdef MASTER_NODE
+
   if (Serial1.availableForWrite()) {
     // Master node address will be 1
     set_address(Serial1, 1);
@@ -45,6 +48,9 @@ void setup(){
 
   }
 #else
+
+  motor_init();
+
   if (Serial1.availableForWrite()) {
     set_address(Serial1, 2);
 
@@ -56,6 +62,7 @@ void setup(){
     ping(Serial1, 1);
   }
 #endif
+  interrupts();
 }
 
 void loop(){

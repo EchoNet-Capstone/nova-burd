@@ -1,4 +1,5 @@
 #include "floc.hpp"
+#include "motor.h"
 
 
 uint8_t packet_id = 0;
@@ -10,6 +11,7 @@ void parse_floc_command_packet(char *broadcastBuffer, uint8_t size) {
     struct command_header *header = (struct command_header *)broadcastBuffer;
 
     // Code to release buoy goes here
+    motor_run_to_position(CLOSED_POSITION);
 
     floc_acknowledgement_send(Serial1, header->src_addr, header->pid);
 }
