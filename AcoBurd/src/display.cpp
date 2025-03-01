@@ -45,6 +45,10 @@ void display_modem_id(int modem_id){
     oled.display();
 }
 
+void display_modem_packet_data(String packetBuffer) {
+    oled.drawString(0, 20, "  Packet : " + packetBuffer);
+}
+
 /*
 void update_display(){
   // Time until release

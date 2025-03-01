@@ -1,7 +1,7 @@
 #ifndef DEVICE_STATE_H
 #define DEVICE_STATE_H
 
-#include "get_set_macros.h"
+#include "get_set_macros.hpp"
 
 #define UNIT_ID 1                             // Set individual hardware number
 #define DEBUG false                           // Debug mode

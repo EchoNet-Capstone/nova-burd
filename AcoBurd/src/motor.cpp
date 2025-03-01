@@ -1,11 +1,11 @@
 #include <Arduino.h>
 
-#include "motor.h"
-#include "my_clock.h"
-#include "get_set_macros.h"
-#include "timers.h"
-#include "device_state.h"
-#include "watchdog.h"
+#include "motor.hpp"
+#include "my_clock.hpp"
+#include "get_set_macros.hpp"
+#include "timers.hpp"
+#include "device_state.hpp"
+#include "watchdog.hpp"
 
 GET_SET_FUNC_DEF(int, motor_target, 0);
 GET_SET_FUNC_DEF(bool, is_motor_running, false);
@@ -28,7 +28,6 @@ void motor_init(void){
   //motor_run_to_position(CLOSED_POSITION);
   //delay(5000);
   motor_run_to_position(OPEN_POSITION);
-  if (1) Serial.println("meteor init :)");
   delay(5000);
 }
 
@@ -118,7 +117,6 @@ void motor_forward(){
 
 // Motor encoder interrupt
 void motor_quadrature_interrupt(){
-  if (1) Serial.println("meteor interrupt :O");
   if(digitalRead(MOTOR_QUAD_B)){
     set_motor_position(get_motor_position() + 1);
   }

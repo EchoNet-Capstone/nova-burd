@@ -1,6 +1,4 @@
-#include "modem_api.hpp"
-#include "display.hpp"
-#include "floc.hpp"
+#include "heltec_serial_api.hpp"
 
 // Supported Modem Commands (Link Quality Indicator OFF)
 //  Query Status                                DONE
@@ -18,6 +16,8 @@ uint8_t modem_id = 0;
 void print_packet(String packetBuffer, String packet_type) {
     Serial.println("Packet recieved.\n\tType : " + packet_type + "\n\tPacket data : " + packetBuffer);
 }
+
+// BEGIN MODEM SERIAL CONNECTION FUNCTIONS -----------------
 
 void query_status(HardwareSerial connection) {
     connection.print("$?");
@@ -104,7 +104,7 @@ void parse_ping_packet(String packetBuffer) {
     }
 }
 
-void packet_recieved(String packetBuffer) {
+void packet_received_modem(String packetBuffer) {
     
     if (packetBuffer.length() < 1) {
         // Should never happen over serial connection.
@@ -212,12 +212,52 @@ void packet_recieved(String packetBuffer) {
                 break;
 
             default:
-                Serial.printf("Unhandled packet type.\n\tPrefix : %c\r\n", packetBuffer.charAt(1));
-                Serial.println("\tFull packet : " + packetBuffer);
+                if (debug) {
+                    Serial.printf("Unhandled packet type [modem].\n\tPrefix : %c\r\n", packetBuffer.charAt(1));
+                    Serial.println("\tFull packet : " + packetBuffer);
+                }
         }
     } else {
         // Packet does not follow modem response structure (starts with $ or #)
-        if (debug) print_packet(packetBuffer, "Unknown prefix");
+        if (debug) print_packet(packetBuffer, "Unknown prefix [modem packet]");
+        return;
+    }
+}
+
+// BEGIN NeST SERIAL CONNECTION FUNCTIONS -----------------
+
+void packet_received_nest(String packetBuffer) {
+    
+    if (packetBuffer.length() < 3) {
+        // Need a prefix character, a casting type, and at least one byte of data e.g. $BX for a broadcast with data 'X'
+        return;
+    }
+
+    if (packetBuffer.charAt(0) == '$') {
+        char *buffer = (char *)malloc(packetBuffer.length());
+        packetBuffer.toCharArray(buffer, packetBuffer.length());
+        
+        char *transmission_data_start = buffer + 2;
+
+        switch (packetBuffer.charAt(1)) {
+            // Broadcast the data received on the serial line
+            case 'B':
+                broadcast(MODEM_SERIAL_CONNECTION, transmission_data_start, packetBuffer.length() - 2);
+                display_modem_packet_data(packetBuffer);
+                break;
+            case 'U':
+                // TODO : need to extract dst from packet in order to send packet
+                // May not need to implement, depending on networking strategy
+                break;
+            default:
+                if (debug) {
+                    Serial.printf("Unhandled packet type [NeST] : prefix [%c]\r\n", packetBuffer.charAt(1));
+                    Serial.println("Full packet : " + packetBuffer);
+                }
+        }
+    } else {
+        // Packet does not follow nest prefix structure (starts with $)
+        if (debug) print_packet(packetBuffer, "Unknown prefix [NeST packet]");
         return;
     }
 }

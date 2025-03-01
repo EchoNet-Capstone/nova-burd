@@ -1,8 +1,8 @@
 #include <stdlib.h>
 
-#include "get_set_macros.h"
-#include "device_state.h"
-#include "motor.h"
+#include "get_set_macros.hpp"
+#include "device_state.hpp"
+#include "motor.hpp"
 
 GET_SET_FUNC_DEF(int, battery_percent, 0);
 GET_SET_FUNC_DEF(bool, display_active, false);

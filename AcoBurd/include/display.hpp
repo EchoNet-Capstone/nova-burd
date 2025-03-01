@@ -8,5 +8,6 @@ void oled_sleep(void);
 void oled_wake(void);
 void oled_initialize(void);
 void display_modem_id(int modem_id);
+void display_modem_packet_data(String packetBuffer);
 
 #endif

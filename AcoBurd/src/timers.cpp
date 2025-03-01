@@ -1,6 +1,6 @@
-#include "timers.h"
-#include "get_set_macros.h"
-#include "my_clock.h"
+#include "timers.hpp"
+#include "get_set_macros.hpp"
+#include "my_clock.hpp"
 
 // timer vars
 GET_SET_FUNC_DEF(long, lora_timer, 0);

@@ -1,5 +1,5 @@
 #include "floc.hpp"
-#include "motor.h"
+#include "motor.hpp"
 
 
 uint8_t packet_id = 0;
@@ -13,7 +13,7 @@ void parse_floc_command_packet(char *broadcastBuffer, uint8_t size) {
     // Code to release buoy goes here
     motor_run_to_position(CLOSED_POSITION);
 
-    floc_acknowledgement_send(Serial1, header->src_addr, header->pid);
+    floc_acknowledgement_send(Serial1, header->common.src_addr, header->pid);
 }
 
 void parse_floc_acknowledgement_packet(char *broadcastBuffer) {
@@ -67,10 +67,10 @@ void floc_acknowledgement_send(HardwareSerial connection, uint8_t dest_addr, uin
 
     struct ack_header *acknowledgement = (struct ack_header *)malloc(sizeof(struct ack_header));
 
-    acknowledgement->ttl = TTL_START; 
-    acknowledgement->type = ACK_TYPE;
-    acknowledgement->dest_addr = dest_addr;
-    acknowledgement->src_addr = get_modem_address();
+    acknowledgement->common.ttl = TTL_START; 
+    acknowledgement->common.type = ACK_TYPE;
+    acknowledgement->common.dest_addr = dest_addr;
+    acknowledgement->common.src_addr = get_modem_address();
     acknowledgement->pid = packet_id++;
     acknowledgement->ack_pid = ack_pid;
 
@@ -94,10 +94,10 @@ void floc_status_send(String status) {
     int status_packet_size = sizeof(struct response_header) + status.length();
     struct response_header *response = (struct response_header *)malloc(status_packet_size);
 
-    response->ttl = TTL_START; 
-    response->type = RESPONSE_TYPE;
-    response->dest_addr = status_response_dest_addr;
-    response->src_addr = get_modem_address();
+    response->common.ttl = TTL_START; 
+    response->common.type = RESPONSE_TYPE;
+    response->common.dest_addr = status_response_dest_addr;
+    response->common.src_addr = get_modem_address();
     response->pid = packet_id++;
     response->request_pid = status_request_pid;
     response->size = status_packet_size;

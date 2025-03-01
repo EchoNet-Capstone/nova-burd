@@ -1,9 +1,10 @@
-#ifndef MODEM_API_H
-#define MODEM_API_H
+#ifndef HELTEC_SERIAL_API_H
+#define HELTEC_SERIAL_API_H
 
 #include "Arduino.h"
 #include "globals.hpp"
 #include "floc.hpp"
+#include "display.hpp"
 
 
 void print_packet(String packetBuffer, String packet_type);
@@ -15,7 +16,8 @@ void ping(HardwareSerial connection, int8_t addr);
 void parse_status_query_packet(String packetBuffer);
 void parse_broadcast_packet(String packetBuffer);
 void parse_unicast_packet(String packetBuffer);
-void packet_recieved(String packetBuffer);
+void packet_received_modem(String packetBuffer);
+void packet_received_nest(String packetBuffer);
 
 
 #endif

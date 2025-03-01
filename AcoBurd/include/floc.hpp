@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 #include "globals.hpp"
-#include "modem_api.hpp"
+#include "heltec_serial_api.hpp"
 
 #define COMMAND_TYPE 0x1
 #define ACK_TYPE 0x2
@@ -18,28 +18,19 @@ struct header_common {
 }__attribute__((packed));
 
 struct command_header {
-    uint8_t ttl : 4,
-            type : 4;
-    uint8_t dest_addr;
-    uint8_t src_addr;
+    struct header_common common;
     uint8_t pid;
     uint8_t size;
 }__attribute__((packed));
 
 struct ack_header {
-    uint8_t ttl : 4,
-            type : 4;
-    uint8_t dest_addr;
-    uint8_t src_addr;
+    struct header_common common;
     uint8_t pid;
     uint8_t ack_pid; // pid of the packet being acknowledged
 }__attribute__((packed));
 
 struct response_header {
-    uint8_t ttl : 4,
-            type : 4;
-    uint8_t dest_addr;
-    uint8_t src_addr;
+    struct header_common common;
     uint8_t pid;
     uint8_t request_pid;
     uint8_t size;
