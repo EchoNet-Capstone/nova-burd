@@ -33,7 +33,7 @@ void setup(){
   delay(100);
 
   if(debug){
-    Serial.printf("Booting up...\n");
+    Serial.printf("Booting up...\r\n");
   }
 
   noInterrupts();
@@ -51,25 +51,27 @@ void setup(){
 
   oled_initialize();
 
+  interrupts();
+
 #ifdef MASTER_NODE
 
   if (MODEM_SERIAL_CONNECTION.availableForWrite()) {
     // Master node address will be 1
     set_address(MODEM_SERIAL_CONNECTION, 1);
 
-    delay(300);
+    delay(500);
     query_status(MODEM_SERIAL_CONNECTION);
 
-    delay(300);
+    delay(500);
     // If there is a slave node, ping address 2
     ping(MODEM_SERIAL_CONNECTION, 2);
 
-    delay(300);
+    delay(500);
     struct command_header *temp = (struct command_header *)malloc(sizeof(struct command_header));
-    temp->ttl = 5;
-    temp->type = COMMAND_TYPE;
-    temp->dest_addr = 2;
-    temp->src_addr = 1;
+    temp->common.ttl = 5;
+    temp->common.type = COMMAND_TYPE;
+    temp->common.dest_addr = 2;
+    temp->common.src_addr = 1;
     temp->pid = 4;
     temp->size = 3;
 
@@ -93,47 +95,37 @@ void setup(){
     ping(MODEM_SERIAL_CONNECTION, 1);
   }
 #endif
-  // interrupts();
-  NEST_SERIAL_CONNECTION.println("finished setup...");
 }
 
 void loop(){
 
 #ifdef RECV_SERIAL_NEST
     if (NEST_SERIAL_CONNECTION.available() > 0) {
-        display_modem_packet_data((String)"hi");
-        Serial.println("heyyy");
-        char c = NEST_SERIAL_CONNECTION.read();  // Read one character from nest serial connection
+        char nest_char = NEST_SERIAL_CONNECTION.read();  // Read one character from modem
+        packetBuffer_nest += nest_char;
 
         // Check for <CR><LF> sequence
-        if (c == '\n' && packetBuffer_nest.endsWith("\r")) {
-            // Remove the <CR> from the buffer
-            packetBuffer_nest.remove(packetBuffer_nest.length() - 1);
-            
-            // Full packet received
-            packet_received_nest(packetBuffer_nest);
-            packetBuffer_nest = "";  // Clear the buffer
-        } else {
-            // Append character to the buffer
-            packetBuffer_nest += c;
+        int end_sequence = packetBuffer_nest.indexOf("\r\n");
+        if (end_sequence > -1) {
+            String current_packet_nest = packetBuffer_nest.substring(0, end_sequence);
+            packetBuffer_nest = packetBuffer_nest.substring(end_sequence + 2);
+
+            packet_received_nest(current_packet_nest);
         }
     }
 #endif
 
-    /*if (MODEM_SERIAL_CONNECTION.available() > 0) {
-        char c = MODEM_SERIAL_CONNECTION.read();  // Read one character from modem
+    if (MODEM_SERIAL_CONNECTION.available() > 0) {
+        char modem_char = MODEM_SERIAL_CONNECTION.read();  // Read one character from modem
+        packetBuffer_modem += modem_char;
 
         // Check for <CR><LF> sequence
-        if (c == '\n' && packetBuffer_modem.endsWith("\r")) {
-            // Remove the <CR> from the buffer
-            packetBuffer_modem.remove(packetBuffer_modem.length() - 1);
-            
-            // Full packet received
-            packet_received_modem(packetBuffer_modem);
-            packetBuffer_modem = "";  // Clear the buffer
-        } else {
-            // Append character to the buffer
-            packetBuffer_modem += c;
+        int end_sequence = packetBuffer_modem.indexOf("\r\n");
+        if (end_sequence > -1) {
+            String current_packet_modem = packetBuffer_modem.substring(0, end_sequence);
+            packetBuffer_modem = packetBuffer_modem.substring(end_sequence + 2);
+
+            packet_received_modem(current_packet_modem);
         }
-    }*/
+    }
 }

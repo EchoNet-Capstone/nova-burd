@@ -169,8 +169,10 @@ void packet_received_modem(String packetBuffer) {
                 break;
 
             default:
-                Serial.printf("Unhandled packet type : prefix [%c]\r\n", packetBuffer.charAt(1));
-                Serial.println("Full packet : " + packetBuffer);
+                if (debug) {
+                    Serial.printf("Unhandled packet type [modem].\r\n\tPrefix : %c\r\n", packetBuffer.charAt(1));
+                    Serial.println("\tFull packet : " + packetBuffer);
+                }
         }
     } else if (packetBuffer.charAt(0) == '#') {
         switch (packetBuffer.charAt(1)) {
@@ -213,7 +215,7 @@ void packet_received_modem(String packetBuffer) {
 
             default:
                 if (debug) {
-                    Serial.printf("Unhandled packet type [modem].\n\tPrefix : %c\r\n", packetBuffer.charAt(1));
+                    Serial.printf("Unhandled packet type [modem].\r\n\tPrefix : %c\r\n", packetBuffer.charAt(1));
                     Serial.println("\tFull packet : " + packetBuffer);
                 }
         }
@@ -234,8 +236,8 @@ void packet_received_nest(String packetBuffer) {
     }
 
     if (packetBuffer.charAt(0) == '$') {
-        char *buffer = (char *)malloc(packetBuffer.length());
-        packetBuffer.toCharArray(buffer, packetBuffer.length());
+        char *buffer = (char *)malloc(packetBuffer.length() + 1);
+        packetBuffer.toCharArray(buffer, packetBuffer.length() + 1);
         
         char *transmission_data_start = buffer + 2;
 

@@ -47,6 +47,7 @@ void display_modem_id(int modem_id){
 
 void display_modem_packet_data(String packetBuffer) {
     oled.drawString(0, 20, "  Packet : " + packetBuffer);
+    oled.display();
 }
 
 /*

@@ -1,7 +1,7 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#define debug false
+#define debug true
 
 #define NEST_SERIAL_CONNECTION Serial
 #define MODEM_SERIAL_CONNECTION Serial1
