@@ -1,4 +1,4 @@
-#include "heltec_serial_api.hpp"
+#include "nmv3_api.hpp"
 
 // Supported Modem Commands (Link Quality Indicator OFF)
 //  Query Status                                DONE

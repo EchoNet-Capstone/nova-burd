@@ -5,7 +5,7 @@
 #include "globals.hpp"
 
 #ifdef ON_DEVICE
-#include "heltec_serial_api.hpp"
+#include "nmv3_api.hpp"
 #include <Arduino.h>
 #include "motor.hpp"
 #endif // ON_DEVICE
