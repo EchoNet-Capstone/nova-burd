@@ -2,6 +2,7 @@
 #define GLOBALS_H
 
 #define debug true
+#define ON_DEVICE
 
 #define NEST_SERIAL_CONNECTION Serial
 #define MODEM_SERIAL_CONNECTION Serial1

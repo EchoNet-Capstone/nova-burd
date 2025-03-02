@@ -1,112 +1,205 @@
 #include "floc.hpp"
-#include "motor.hpp"
 
 
 uint8_t packet_id = 0;
-int status_response_dest_addr = -1, status_request_pid = -1; // Address that has requested modem status info
+
+uint16_t status_response_dest_addr = -1; // Address that has requested modem status info
+uint8_t status_request_pid = -1; 
+
+uint8_t use_packet_id() {
+    return packet_id++;
+}
+
+uint16_t get_network_id() { 
+    // TODO : implement network id functionality
+    return 0;
+}
 
 void parse_floc_command_packet(char *broadcastBuffer, uint8_t size) {
     if (debug) Serial.println("Command packet received");
 
-    struct command_header *header = (struct command_header *)broadcastBuffer;
+    if (size < sizeof(FlocHeader_t) + sizeof(CommandHeader_t)) {
+        if (debug) printf("Invalid Command Packet: Too small\n");
+        return;
+    }
 
-    // Code to release buoy goes here
-    motor_run_to_position(CLOSED_POSITION);
+    // Extract the common header
+    FlocHeader_t *header = reinterpret_cast<FlocHeader_t*>(broadcastBuffer);
 
-    floc_acknowledgement_send(Serial1, header->common.src_addr, header->pid);
+    // Extract the command header
+    CommandHeader_t *commandHeader = reinterpret_cast<CommandHeader_t*>(broadcastBuffer + sizeof(FlocHeader_t));
+
+    // Extract command type and size
+    CommandType_e commandType = commandHeader->command_type;
+    uint8_t dataSize = commandHeader->size;
+
+    // Validate data size
+    if (size < sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + dataSize) {
+        if (debug) printf("Invalid Command Packet: Incomplete data\n");
+        return;
+    }
+
+    // Extract command data
+    uint8_t *commandData = reinterpret_cast<uint8_t*>(broadcastBuffer + sizeof(FlocHeader_t) + sizeof(CommandHeader_t));
+
+    // Handle the command based on the type
+    switch (commandType) {
+        case COMMAND_TYPE_1:
+            // TODO : Code to release buoy goes here
+            if (debug) Serial.println("Command packet received.");
+
+            floc_acknowledgement_send(TTL_START, header->pid, header->src_addr, get_modem_address());
+
+            break;
+        case COMMAND_TYPE_2:
+            // TODO : Process COMMAND_TYPE_2 here
+            break;
+        default:
+            printf("Unknown Command Type: %d\n", commandType);
+            break;
+    }
 }
 
 void parse_floc_acknowledgement_packet(char *broadcastBuffer) {
-    if (debug) Serial.println("Acknowledgement packet received");
+    if (sizeof(FlocHeader_t) + sizeof(AckHeader_t) > FLOC_MAX_SIZE) {
+        if (debug) printf("Invalid ACK Packet: Too small\n");
+        return;
+    }
 
-    struct ack_header *header = (struct ack_header *)broadcastBuffer;
+    // Extract the common header
+    FlocHeader_t *header = reinterpret_cast<FlocHeader_t*>(broadcastBuffer);
 
+    // Extract ACK header
+    AckHeader_t *ackHeader = reinterpret_cast<AckHeader_t*>(broadcastBuffer + sizeof(FlocHeader_t));
+
+    uint8_t ack_pid = ackHeader->ack_pid;
+
+    if (debug) {
+        printf("ACK Packet Received:\n");
+        printf("  Acknowledged Packet ID: %d\n", ack_pid);
+    }
+
+    // TODO : Handle ACK processing (e.g., mark packet as acknowledged)
 }
 
 void parse_floc_response_packet(char *broadcastBuffer) {
-    if (debug) Serial.println("Response packet received");
-
-    struct response_header *header = (struct response_header *)broadcastBuffer;
-
-}
-
-void floc_broadcast_received(char *broadcastBuffer, uint8_t size) {
-
-    struct header_common *common = (struct header_common *)broadcastBuffer;
-    
-    int8_t type = common->type;
-    printf("Type is %d\r\n", type);
-
-    if (common->dest_addr == get_modem_address()) {
-        // The packet is addressed to this node
-
-        switch (type) {
-            case COMMAND_TYPE:
-                parse_floc_command_packet(broadcastBuffer, size);
-                break;
-            case ACK_TYPE:
-                parse_floc_acknowledgement_packet(broadcastBuffer);
-                break;
-            case RESPONSE_TYPE:
-                parse_floc_response_packet(broadcastBuffer);
-                break;
-        }
-    } else {
-        // Packet is not addressed to this node
-
-        // TODO : Mesh network rebroadcasting to be handled here
+    if (sizeof(FlocHeader_t) + sizeof(ResponseHeader_t) > FLOC_MAX_SIZE) {
+        if (debug) printf("Invalid Response Packet: Too small\n");
+        return;
     }
 
+    // Extract the common header
+    FlocHeader_t *header = reinterpret_cast<FlocHeader_t*>(broadcastBuffer);
+
+    // Extract Response header
+    ResponseHeader_t *responseHeader = reinterpret_cast<ResponseHeader_t*>(broadcastBuffer + sizeof(FlocHeader_t));
+
+    uint8_t request_pid = responseHeader->request_pid;
+    uint8_t dataSize = responseHeader->size;
+
+    if (sizeof(FlocHeader_t) + sizeof(ResponseHeader_t) + dataSize > FLOC_MAX_SIZE) {
+        if (debug) printf("Invalid Response Packet: Incomplete data\n");
+        return;
+    }
+
+    // Extract response data
+    uint8_t *responseData = reinterpret_cast<uint8_t*>(broadcastBuffer + sizeof(FlocHeader_t) + sizeof(ResponseHeader_t));
+
+    if (debug) {
+        printf("Response Packet Received:\n");
+        printf("  Request Packet ID: %d\n", request_pid);
+        printf("  Data Size: %d\n", dataSize);
+    }
+    
+    // TODO : Handle response data processing
+}
+
+
+void floc_broadcast_received(char *broadcastBuffer, uint8_t size) {
+    if (size < sizeof(FlocHeader_t)) {
+        // Packet is too small to contain a valid header
+        return;
+    }
+
+    // Extract the common header
+    FlocHeader_t *header = reinterpret_cast<FlocHeader_t*>(broadcastBuffer);
+
+    uint8_t ttl = header->ttl;
+    uint8_t type = header->type;
+    uint16_t nid = header->nid;
+    uint8_t pid = header->pid;
+    uint16_t dest_addr = header->dest_addr;
+    uint16_t src_addr = header->src_addr;
+
+    // Determine the type of the packet
+    switch (type) {
+        case FLOC_DATA_TYPE:
+            // Handle data packet if needed
+            break;
+        case FLOC_COMMAND_TYPE:
+            parse_floc_command_packet(broadcastBuffer, size);
+            break;
+        case FLOC_ACK_TYPE:
+            parse_floc_acknowledgement_packet(broadcastBuffer);
+            break;
+        case FLOC_RESPONSE_TYPE:
+            parse_floc_response_packet(broadcastBuffer);
+            break;
+        default:
+            // Unknown packet type
+            break;
+    }
 }
 
 void floc_unicast_received(char *unicastBuffer, uint8_t size) {
     // May not be used
 }
 
-void floc_acknowledgement_send(HardwareSerial connection, uint8_t dest_addr, uint8_t ack_pid) {
+void floc_acknowledgement_send(uint8_t ttl, uint8_t ack_pid, uint16_t dest_addr, uint16_t src_addr) {
+    // Construct the packet
+    FlocPacket_t packet;
+    packet.header.ttl = ttl;
+    packet.header.type = FLOC_ACK_TYPE;
+    packet.header.nid = get_network_id();
+    packet.header.pid = use_packet_id();
+    packet.header.res = 0;
+    packet.header.dest_addr = dest_addr;
+    packet.header.src_addr = src_addr;
 
-    struct ack_header *acknowledgement = (struct ack_header *)malloc(sizeof(struct ack_header));
+    packet.payload.ack.header.ack_pid = ack_pid;
 
-    acknowledgement->common.ttl = TTL_START; 
-    acknowledgement->common.type = ACK_TYPE;
-    acknowledgement->common.dest_addr = dest_addr;
-    acknowledgement->common.src_addr = get_modem_address();
-    acknowledgement->pid = packet_id++;
-    acknowledgement->ack_pid = ack_pid;
-
-    char *broadcastPacket = (char *)acknowledgement;
-
-    //Serial.print(broadcastPacket);
-    broadcast(connection, broadcastPacket, sizeof(struct ack_header));
+    broadcast(MODEM_SERIAL_CONNECTION, reinterpret_cast<char*>(&packet), sizeof(FlocHeader_t) + sizeof(AckHeader_t));
 }
+
 
 void floc_status_queue(HardwareSerial connection, uint8_t dest_addr) {
     status_response_dest_addr = dest_addr;
     query_status(connection);
 }
 
-// TODO : Is there a way to dynamically send the HardwareSerial structure to this function?
-void floc_status_send(String status) {
-    if (status_response_dest_addr < 0) {
-        return; // No requests for this modem's status have been received
+void floc_status_send(String status, uint8_t ttl) {
+    // Ensure the status message fits within the response packet
+    uint8_t statusSize = status.length();
+    if (statusSize > MAX_RESPONSE_DATA_SIZE) {
+        if (debug) printf("Error, status message too large.\n");
+        return;
     }
 
-    int status_packet_size = sizeof(struct response_header) + status.length();
-    struct response_header *response = (struct response_header *)malloc(status_packet_size);
+    // Construct the packet
+    FlocPacket_t packet;
+    packet.header.ttl = ttl;
+    packet.header.type = FLOC_RESPONSE_TYPE;
+    packet.header.nid = get_network_id();
+    packet.header.pid = use_packet_id();
+    packet.header.res = 0;
+    packet.header.dest_addr = status_response_dest_addr;
+    packet.header.src_addr = get_modem_address();
 
-    response->common.ttl = TTL_START; 
-    response->common.type = RESPONSE_TYPE;
-    response->common.dest_addr = status_response_dest_addr;
-    response->common.src_addr = get_modem_address();
-    response->pid = packet_id++;
-    response->request_pid = status_request_pid;
-    response->size = status_packet_size;
+    packet.payload.response.header.request_pid = packet.header.pid;
+    packet.payload.response.header.size = statusSize;
 
-    status_response_dest_addr = -1; // Clear status request
+    // Copy the status string into the response data
+    memcpy(packet.payload.response.data, status.c_str(), statusSize);
 
-    char *broadcastPacket = (char *)response;
-    char *status_start = broadcastPacket + sizeof(response_header);
-    status.toCharArray(status_start, status.length());
-
-    broadcast(Serial1, broadcastPacket, status_packet_size);
+    broadcast(MODEM_SERIAL_CONNECTION, reinterpret_cast<char*>(&packet), sizeof(FlocHeader_t) + sizeof(ResponseHeader_t) + statusSize);
 }

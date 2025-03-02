@@ -5,10 +5,10 @@
 #include "watchdog.hpp"
 
 // Defined if the serial port (not serial1) is used to receive data from the NeST
-#define RECV_SERIAL_NEST
+//#define RECV_SERIAL_NEST
 
 // Testing define
-// #define MASTER_NODE
+#define MASTER_NODE
 
 // Packet buffer for data received from the ship terminal (NeST) serial line
 String packetBuffer_nest = "";
@@ -67,21 +67,37 @@ void setup(){
     ping(MODEM_SERIAL_CONNECTION, 2);
 
     delay(500);
-    struct command_header *temp = (struct command_header *)malloc(sizeof(struct command_header));
-    temp->common.ttl = 5;
-    temp->common.type = COMMAND_TYPE;
-    temp->common.dest_addr = 2;
-    temp->common.src_addr = 1;
-    temp->pid = 4;
-    temp->size = 3;
+    // Allocate memory for the command packet
+    FlocPacket_t *temp = (FlocPacket_t *)malloc(sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3); // 3 bytes of command data
 
-    char *struct_ptr = (char *)temp;
-    // structure acoustic broadcast command
-    MODEM_SERIAL_CONNECTION.print("$B05");
+    // Populate the common header
+    temp->header.ttl = 5;
+    temp->header.type = FLOC_COMMAND_TYPE;  // Corrected type from COMMAND_TYPE
+    temp->header.nid = 1;  // Example NID
+    temp->header.pid = 4;
+    temp->header.res = 0;
+    temp->header.dest_addr = 2;
+    temp->header.src_addr = 1;
+
+    // Populate the command-specific header
+    temp->payload.command.header.command_type = COMMAND_TYPE_1;  // Example command type
+    temp->payload.command.header.size = 3;
+
+    // Populate command data (example data)
+    temp->payload.command.data[0] = 0xA1;
+    temp->payload.command.data[1] = 0xB2;
+    temp->payload.command.data[2] = 0xC3;
+
+    const uint8_t *struct_ptr = (uint8_t *)temp;
+
+    // Structure acoustic broadcast command
+    Serial.printf("$B%02d", sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3);
+
     // Send command data as packet in broadcast
-    MODEM_SERIAL_CONNECTION.print(struct_ptr);
+    Serial.write(struct_ptr, (size_t)(sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3));
 
-
+    // Free allocated memory
+    free(temp);
   }
 #else
   if (MODEM_SERIAL_CONNECTION.availableForWrite()) {

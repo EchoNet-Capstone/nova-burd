@@ -52,7 +52,7 @@ void parse_status_query_packet(String packetBuffer) {
         Serial.print(release_version + "\r\n\tDevice Build Date + Time [BYYYY-MM-DDThh:mm:ss] : " + build_date_time + "\r\n");
     }
 
-    floc_status_send(packetBuffer);
+    floc_status_send(packetBuffer, TTL_START);
 }
 
 void parse_set_address_packet(String packetBuffer) {
@@ -105,6 +105,7 @@ void parse_ping_packet(String packetBuffer) {
 }
 
 void packet_received_modem(String packetBuffer) {
+    if (debug) Serial.println("PKT RECV : " + packetBuffer);
     
     if (packetBuffer.length() < 1) {
         // Should never happen over serial connection.
