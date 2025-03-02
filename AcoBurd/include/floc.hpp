@@ -66,7 +66,7 @@ struct DataHeader_t {
 } __attribute__((packed));
 
 struct CommandHeader_t {
-    CommandType_e command_type: COMMAND_TYPE_SIZE;
+    uint8_t command_type: COMMAND_TYPE_SIZE;
     uint8_t size;  // Size of the command data
 } __attribute__((packed));
 
@@ -109,7 +109,7 @@ struct CommandPacket_t {
 
 struct AckPacket_t {
     AckHeader_t header;
-    //  uint8_t data[MAX_ACK_DATA_SIZE]; // If you add data to acks
+    // uint8_t data[MAX_ACK_DATA_SIZE]; // If you add data to acks
 } __attribute__((packed));
 
 struct ResponsePacket_t {

@@ -28,9 +28,10 @@ void parse_floc_command_packet(char *broadcastBuffer, uint8_t size) {
 
     // Extract the command header
     CommandHeader_t *commandHeader = reinterpret_cast<CommandHeader_t*>(broadcastBuffer + sizeof(FlocHeader_t));
+    Serial.printf("actual command type : %d\r\n", (uint8_t *)commandHeader);
 
     // Extract command type and size
-    CommandType_e commandType = commandHeader->command_type;
+    uint8_t commandType = commandHeader->command_type;
     uint8_t dataSize = commandHeader->size;
 
     // Validate data size
@@ -118,6 +119,7 @@ void parse_floc_response_packet(char *broadcastBuffer) {
 void floc_broadcast_received(char *broadcastBuffer, uint8_t size) {
     if (size < sizeof(FlocHeader_t)) {
         // Packet is too small to contain a valid header
+        if (debug) Serial.println("Packet too small to contain valid header");
         return;
     }
 

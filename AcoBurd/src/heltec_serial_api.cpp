@@ -77,8 +77,8 @@ void parse_broadcast_packet(String packetBuffer) {
         Serial.print(packetData + "\r\n");
     }
 
-    char *broadcastBuffer = (char*)malloc(PACKET_BUFFER_SIZE);
-    packetData.toCharArray(broadcastBuffer, PACKET_BUFFER_SIZE);
+    char *broadcastBuffer = (char*)malloc(packetData.length() + 1);
+    packetData.toCharArray(broadcastBuffer, packetData.length() + 1);
     floc_broadcast_received(broadcastBuffer, bytes);
     free(broadcastBuffer);
 }

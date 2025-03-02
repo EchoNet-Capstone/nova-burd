@@ -5,10 +5,10 @@
 #include "watchdog.hpp"
 
 // Defined if the serial port (not serial1) is used to receive data from the NeST
-//#define RECV_SERIAL_NEST
+#define RECV_SERIAL_NEST
 
 // Testing define
-#define MASTER_NODE
+// #define MASTER_NODE
 
 // Packet buffer for data received from the ship terminal (NeST) serial line
 String packetBuffer_nest = "";
@@ -71,13 +71,13 @@ void setup(){
     FlocPacket_t *temp = (FlocPacket_t *)malloc(sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3); // 3 bytes of command data
 
     // Populate the common header
-    temp->header.ttl = 5;
+    temp->header.ttl = 2;
     temp->header.type = FLOC_COMMAND_TYPE;  // Corrected type from COMMAND_TYPE
-    temp->header.nid = 1;  // Example NID
-    temp->header.pid = 4;
+    temp->header.nid = 4;  // Example NID
+    temp->header.pid = 8;
     temp->header.res = 0;
-    temp->header.dest_addr = 2;
-    temp->header.src_addr = 1;
+    temp->header.dest_addr = 16;
+    temp->header.src_addr = 32;
 
     // Populate the command-specific header
     temp->payload.command.header.command_type = COMMAND_TYPE_1;  // Example command type
@@ -91,10 +91,10 @@ void setup(){
     const uint8_t *struct_ptr = (uint8_t *)temp;
 
     // Structure acoustic broadcast command
-    Serial.printf("$B%02d", sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3);
+    MODEM_SERIAL_CONNECTION.printf("$B%02d", sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3);
 
     // Send command data as packet in broadcast
-    Serial.write(struct_ptr, (size_t)(sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3));
+    MODEM_SERIAL_CONNECTION.write(struct_ptr, (size_t)(sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3));
 
     // Free allocated memory
     free(temp);
@@ -116,7 +116,7 @@ void setup(){
 void loop(){
 
 #ifdef RECV_SERIAL_NEST
-    if (NEST_SERIAL_CONNECTION.available() > 0) {
+    /*if (NEST_SERIAL_CONNECTION.available() > 0) {
         char nest_char = NEST_SERIAL_CONNECTION.read();  // Read one character from modem
         packetBuffer_nest += nest_char;
 
@@ -128,10 +128,26 @@ void loop(){
 
             packet_received_nest(current_packet_nest);
         }
+    }*/
+    while (NEST_SERIAL_CONNECTION.available() > 0) {
+        char nest_char = NEST_SERIAL_CONNECTION.read();
+
+        // Check for <CR><LF> sequence
+        if (nest_char == '\n' && packetBuffer_nest.endsWith("\r")) {
+            // Remove the <CR> from the buffer
+            packetBuffer_nest.remove(packetBuffer_nest.length() - 1);
+
+            packet_received_nest(packetBuffer_nest);
+            
+            packetBuffer_nest = "";  // Clear the buffer
+        } else {
+            // Append character to the buffer
+            packetBuffer_nest += nest_char;
+        }
     }
 #endif
 
-    if (MODEM_SERIAL_CONNECTION.available() > 0) {
+    /*if (MODEM_SERIAL_CONNECTION.available() > 0) {
         char modem_char = MODEM_SERIAL_CONNECTION.read();  // Read one character from modem
         packetBuffer_modem += modem_char;
 
@@ -141,7 +157,25 @@ void loop(){
             String current_packet_modem = packetBuffer_modem.substring(0, end_sequence);
             packetBuffer_modem = packetBuffer_modem.substring(end_sequence + 2);
 
+            Serial.println(current_packet_modem);
             packet_received_modem(current_packet_modem);
         }
+    }*/
+    while (MODEM_SERIAL_CONNECTION.available() > 0) {
+        char modem_char = MODEM_SERIAL_CONNECTION.read();
+
+        // Check for <CR><LF> sequence
+        if (modem_char == '\n' && packetBuffer_modem.endsWith("\r")) {
+            // Remove the <CR> from the buffer
+            packetBuffer_modem.remove(packetBuffer_modem.length() - 1);
+
+            packet_received_modem(packetBuffer_modem);
+            
+            packetBuffer_modem = "";  // Clear the buffer
+        } else {
+            // Append character to the buffer
+            packetBuffer_modem += modem_char;
+        }
     }
+
 }
