@@ -694,6 +694,7 @@ struct UnicastResponsePacket_t {
   uint8_t payload[UNICAST_RESP_PAYLOAD_MAX];
 };
 
+// Extention Packets
 struct ExtenionResponsePacket_t {
   ModemExtentionResponseTypes_e type;
   ExtenionResponsePacketVariant_u response;
