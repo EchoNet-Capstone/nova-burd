@@ -425,6 +425,7 @@ enum LinkQualityResponseTypes_e: uint8_t {
   LINK_QUAL_DISABLE_RESP_TYPE = 'D',
 };
 
+//Byte-align the structs. Pretty please. 
 #pragma pack(push, 1)
 
 // --- Modem Packet --- 
@@ -727,8 +728,8 @@ union ModemPacketVariant_u {
   ModemLocalResponsePacket_t localResponse;
   ModemResponsePacket_t response;
 };
-
 #pragma pack(pop)
+
 void print_packet(String packetBuffer, String packet_type);
 void query_status(HardwareSerial connection);
 void set_address(HardwareSerial connection, int8_t addr);
