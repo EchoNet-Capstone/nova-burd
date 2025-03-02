@@ -157,11 +157,11 @@ struct SerialFlocPacket_t {
 #ifdef ON_DEVICE
 uint16_t get_network_id();
 uint8_t use_packet_id();
-void parse_floc_command_packet(char *broadcastBuffer, uint8_t size);
-void parse_floc_acknowledgement_packet(char *broadcastBuffer);
-void parse_floc_response_packet(char *broadcastBuffer);
-void floc_broadcast_received(char *broadcastBuffer, uint8_t size);
-void floc_unicast_received(char *unicastBuffer, uint8_t size);
+void parse_floc_command_packet(FlocHeader_t* floc_header, CommandPacket_t* pkt, uint8_t size) ;
+void parse_floc_acknowledgement_packet(uint8_t *broadcastBuffer, uint8_t size);
+void parse_floc_response_packet(uint8_t *broadcastBuffer, uint8_t size);
+void floc_broadcast_received(uint8_t *broadcastBuffer, uint8_t size);
+void floc_unicast_received(uint8_t *unicastBuffer, uint8_t size);
 void floc_acknowledgement_send(uint8_t ttl, uint8_t ack_pid, uint16_t dest_addr, uint16_t src_addr);
 void floc_status_queue(HardwareSerial connection, uint8_t dest_addr);
 void floc_status_send(String status, uint8_t ttl);

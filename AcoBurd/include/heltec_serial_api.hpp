@@ -13,11 +13,11 @@ void set_address(HardwareSerial connection, int8_t addr);
 uint8_t get_modem_address();
 void broadcast(HardwareSerial connection, char *data, int8_t bytes);
 void ping(HardwareSerial connection, int8_t addr);
-void parse_status_query_packet(String packetBuffer);
-void parse_broadcast_packet(String packetBuffer);
-void parse_unicast_packet(String packetBuffer);
-void packet_received_modem(String packetBuffer);
-void packet_received_nest(String packetBuffer);
+void parse_status_query_packet(uint8_t* packetBuffer, uint8_t size);
+void parse_broadcast_packet(uint8_t* packetBuffer, uint8_t size);
+void parse_unicast_packet(uint8_t* packetBuffer, uint8_t size);
+void packet_received_modem(uint8_t* packetBuffer, uint8_t size);
+void packet_received_nest(uint8_t* packetBuffer, uint8_t size);
 
 
 #endif
