@@ -28,20 +28,20 @@
 // --- Packet Type Enums ---
 
 // The 4 types of floc packets
-enum FlocPacketType_e {
+enum FlocPacketType_e : uint8_t{
     FLOC_DATA_TYPE = 0x0,
     FLOC_COMMAND_TYPE = 0x1,
     FLOC_ACK_TYPE = 0x2,
     FLOC_RESPONSE_TYPE = 0x3
 };
 
-enum CommandType_e {  // Example
+enum CommandType_e: uint8_t {  // Example
     COMMAND_TYPE_1 = 0x1,
     COMMAND_TYPE_2 = 0x2,
     // ...
 };
 
-enum SerialFlocPacketType_e {
+enum SerialFlocPacketType_e: uint8_t {
     SERIAL_BROADCAST_TYPE = 'B',
     SERIAL_UNICAST_TYPE   = 'U',
     // ...
@@ -51,11 +51,11 @@ enum SerialFlocPacketType_e {
 
 // 1. Common Header
 struct FlocHeader_t {
-    uint8_t ttl : FLOC_TTL_SIZE, 
-            type : FLOC_TYPE_SIZE;
-    uint16_t nid;
-    uint8_t pid : FLOC_PID_SIZE, 
-            res : FLOC_RES_SIZE;
+    uint8_t ttl : FLOC_TTL_SIZE;
+    FlocPacketType_e type : FLOC_TYPE_SIZE;
+    uint16_t nid: FLOC_NID_SIZE;
+    uint8_t res : FLOC_RES_SIZE;
+    uint8_t pid : FLOC_PID_SIZE;
     uint16_t dest_addr;
     uint16_t src_addr;
 } __attribute__((packed));
@@ -66,7 +66,7 @@ struct DataHeader_t {
 } __attribute__((packed));
 
 struct CommandHeader_t {
-    uint8_t command_type: COMMAND_TYPE_SIZE;
+    CommandType_e command_type: COMMAND_TYPE_SIZE;
     uint8_t size;  // Size of the command data
 } __attribute__((packed));
 
@@ -149,7 +149,7 @@ union SerialFlocPacketVariant_u {
     SerialUnicastPacket_t unicast;
 };
 
-struct SerialFlocPacket {
+struct SerialFlocPacket_t {
     SerialFlocHeader_t header;
     SerialFlocPacketVariant_u payload;
 } __attribute__((packed));
