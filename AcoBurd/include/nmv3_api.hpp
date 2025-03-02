@@ -101,8 +101,8 @@
                                     UNICAST_CMD_PAYLOAD_MAX
 
 // Voltage and Noise Measurement
-#define VOLT_NOISE_CMD_ADDR_MAX     3
-#define VOLT_NOISE_CMD_MAX        	VOLT_NOISE_CMD_ADDR_MAX
+#define VOLT_NOISE_MSR_CMD_ADDR_MAX 3
+#define VOLT_NOISE_MSR_CMD_MAX      VOLT_NOISE_MSR_CMD_ADDR_MAX
 
 // Extenion Commands
 #define EXTEN_CMD_TYPE_MAX          1
@@ -130,8 +130,8 @@
                                                 CHN_IMP_CMD_LOCAL_RESP_ADDR_MAX
 
 // Echo Message
-#define ECHO_MSG_CMD_LOCAL_RESP_ADDR_MAX        2
-#define ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX   3
+#define ECHO_MSG_CMD_LOCAL_RESP_ADDR_MAX        3
+#define ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX   2
 #define ECHO_MSG_CMD_LOCAL_RESP_MAX      	      ECHO_MSG_CMD_LOCAL_RESP_ADDR_MAX + \
                                                 ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX
 
@@ -328,6 +328,14 @@
 // --- Postfixes ---
 #define MODEM_POSTFIX '/r/n'
 
+// --- Modem Packet Types --
+enum ModemPacketTypes_e: uint8_t {
+  MODEM_COMMAND_TYPE        = '$',
+  MODEM_LOCAL_RESPONSE_TYPE = '$', 
+  MODEM_RESPONSE_TYPE       = '#',
+  ERROR_TYPE                = 'E',
+};
+
 // --- Command Types ---
 enum ModemCommandTypes_e: uint8_t {
   QUERY_STATUS_CMD_TYPE   = '?',
@@ -344,7 +352,7 @@ enum ModemCommandTypes_e: uint8_t {
   SPEC_MSR_CMD_TYPE       = 'S',
   TEST_MSG_CMD_TYPE       = 'T',
   UNICAST_MSG_CMD_TYPE    = 'U',
-  VOLT_NOISE_CMD_TYPE     = 'V',
+  VOLT_NOISE_MSR_CMD_TYPE     = 'V',
   EXTEN_CMD_TYPE          = 'X',
 };
 
@@ -374,6 +382,8 @@ enum ModemLocalResponseTypes_e: uint8_t {
   CHN_IMP_CMD_LOCAL_RESP_TYPE    		  = 'C',
   ECHO_MSG_CMD_LOCAL_RESP_TYPE   		  = 'E',
   UNICAST_ACK_CMD_LOCAL_RESP_TYPE 	  = 'M',
+  PING_CMD_LOCAL_RESP_TYPE            = 'P',
+  CORR_ERR_CMD_LOCAL_RESP_TYPE        = 'C',
   RESET_CMD_LOCAL_RESP_TYPE      		  = 'R',
   SPEC_MSR_CMD_LOCAL_RESP_TYPE   		  = 'S',
   TEST_MSG_CMD_LOCAL_RESP_TYPE        = 'T',
@@ -415,26 +425,16 @@ enum LinkQualityResponseTypes_e: uint8_t {
 
 #pragma pack(push, 1)
 
-struct ModemPacketHeader_t {
-  uint8_t prefix;
-};
-
+// --- Modem Packet --- 
 struct ModemPacket_t {
-  ModemPacketHeader_t header;
+  ModemPacketTypes_e type;
   ModemPacketVariant_u payload;
 };
 
-union ModemPacketVariant_u {
-  ModemCommandPacket_t modemCommand;
-};
-
-struct ModemCommandPacketHeader_t {
-  ModemCommandTypes_e type;
-};
-
+// --- Modem Command Packets ---
 struct ModemCommandPacket_t {
-  ModemCommandPacketHeader_t header; 
-  ModemCommandPacketVariant_u payload;
+  ModemCommandTypes_e type; 
+  ModemCommandPacketVariant_u command;
 };
 
 struct SetAddresCommandPacket_t {
@@ -494,12 +494,13 @@ struct UnicastCommandPacket_t {
 };
 
 struct VoltageAndNoiseCommandPacket_t {
-  uint8_t addr[VOLT_NOISE_CMD_ADDR_MAX];
+  uint8_t addr[VOLT_NOISE_MSR_CMD_ADDR_MAX];
 };
 
+// Extenion Commands
 struct ExtenionCommandPacket_t{
   ModemExtentionCommandTypes_e type;
-  ExtenionCommandPacketVariant_u payload;
+  ExtenionCommandPacketVariant_u command;
 };
 
 struct SystemTimeCommandPacket_t {
@@ -526,6 +527,69 @@ union ModemCommandPacketVariant_u {
   UnicastCommandPacket_t unicast;
   VoltageAndNoiseCommandPacket_t voltageAndNoise;
   ExtenionCommandPacket_t extPacket;
+};
+
+// --- Local Response Commands ---
+struct ModemLocalResponsePacket_t {
+  ModemLocalResponseTypes_e type;
+  ModemLocalResponsePacketVariant_u response;
+};
+
+struct BroadcastLocalResponsePacket_t {
+  uint8_t dataSize[BROADCAST_CMD_LOCAL_RESP_DATA_SIZE_MAX];
+};
+
+struct ChannelImpulseLocalResponsePacket_t {
+  uint8_t magnitudeComplex;
+  uint8_t addr[CHN_IMP_CMD_LOCAL_RESP_ADDR_MAX];
+};
+
+struct EchoMessageLocalResponsePacket_t {
+  uint8_t addr[ECHO_MSG_CMD_LOCAL_RESP_ADDR_MAX];
+  uint8_t dataSize[ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX];
+};
+
+struct UnicastWithAckLocalResponsePacket_t{
+  uint8_t addr[UNICAST_ACK_CMD_LOCAL_RESP_ADDR_MAX];
+  uint8_t dataSize[UNICAST_ACK_CMD_LOCAL_RESP_DATA_SIZE_MAX];
+};
+
+struct PingLocalResponsePacket_t {
+  uint8_t addr[PING_CMD_LOCAL_RESP_ADDR_MAX];
+};
+
+struct CorrectedErrorsLocalResponsePacket_t {
+  uint8_t rS;
+};
+
+struct TestMessageLocalResponsePacket_t {
+  uint8_t addr[TEST_MSG_CMD_LOCAL_RESP_ADDR_MAX];
+};
+
+struct UnicastLocalResponsePacket_t {
+  uint8_t addr[UNICAST_CMD_LOCAL_RESP_ADDR_MAX];
+  uint8_t dataSize[UNICAST_ACK_CMD_LOCAL_RESP_DATA_SIZE_MAX];
+};
+
+struct VoltageAndNoiseLocalResponsePacket_t {
+  uint8_t addr[VOLT_NOISE_MSR_CMD_LOCAL_RESP_ADDR_MAX];
+};
+
+union ModemLocalResponsePacketVariant_u {
+  BroadcastLocalResponsePacket_t broadcast;
+  ChannelImpulseLocalResponsePacket_t channelImpulse;
+  EchoMessageLocalResponsePacket_t echoMessage;
+  UnicastWithAckLocalResponsePacket_t unicastWithAck;
+  PingLocalResponsePacket_t ping;
+  CorrectedErrorsLocalResponsePacket_t correctedErorrs;
+  TestMessageLocalResponsePacket_t testMessage;
+  UnicastLocalResponsePacket_t unicast;
+  VoltageAndNoiseLocalResponsePacket_t voltageAndNoise;
+};
+
+union ModemPacketVariant_u {
+  ModemCommandPacket_t command;
+  ModemLocalResponsePacket_t localResponse;
 };
 
 #pragma pack(pop)
