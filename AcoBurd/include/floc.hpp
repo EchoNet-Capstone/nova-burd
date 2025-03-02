@@ -25,6 +25,24 @@
 #define COMMAND_TYPE_SIZE 8
 
 #define SERIAL_FLOC_TYPE_SIZE 8
+
+// --- Calculate Maximum Data Sizes ---
+// This is the key improvement:  We calculate the maximum data sizes
+// *statically*, based on FLOC_MAX_SIZE and the sizes of the headers.
+
+#define FLOC_HEADER_COMMON_SIZE (sizeof(FlocHeader_t))
+
+#define DATA_HEADER_SIZE        (sizeof(DataHeader_t))
+#define COMMAND_HEADER_SIZE     (sizeof(CommandHeader_t))
+#define RESPONSE_HEADER_SIZE    (sizeof(ResponseHeader_t))
+#define ACK_HEADER_SIZE         (sizeof(AckHeader_t))
+
+#define MAX_DATA_DATA_SIZE      (FLOC_MAX_SIZE - FLOC_HEADER_COMMON_SIZE - DATA_HEADER_SIZE)
+#define MAX_COMMAND_DATA_SIZE   (FLOC_MAX_SIZE - FLOC_HEADER_COMMON_SIZE - COMMAND_HEADER_SIZE)
+#define MAX_RESPONSE_DATA_SIZE  (FLOC_MAX_SIZE - FLOC_HEADER_COMMON_SIZE - RESPONSE_HEADER_SIZE)
+#define MAX_ACK_DATA_SIZE       (FLOC_MAX_SIZE - FLOC_HEADER_COMMON_SIZE - ACK_HEADER_SIZE)
+// Ack packets don't have a data field in this example, but you could define a MAX_ACK_DATA_SIZE if needed.
+
 // --- Packet Type Enums ---
 
 // The 4 types of floc packets
@@ -47,9 +65,10 @@ enum SerialFlocPacketType_e: uint8_t {
     // ...
 };
 
+// --- Packet Structures ---
+#pragma pack(push, 1)
 // --- FLOC Packet Structures ---
 
-// 1. Common Header
 struct FlocHeader_t {
     uint8_t ttl : FLOC_TTL_SIZE;
     FlocPacketType_e type : FLOC_TYPE_SIZE;
@@ -58,64 +77,72 @@ struct FlocHeader_t {
     uint8_t pid : FLOC_PID_SIZE;
     uint16_t dest_addr;
     uint16_t src_addr;
-} __attribute__((packed));
+};
 
-// 2. Specific Headers
 struct DataHeader_t {
     uint8_t size;
-} __attribute__((packed));
+};
 
 struct CommandHeader_t {
     CommandType_e command_type: COMMAND_TYPE_SIZE;
     uint8_t size;  // Size of the command data
-} __attribute__((packed));
+};
 
 struct AckHeader_t {
     uint8_t ack_pid;
-} __attribute__((packed));
+};
 
 struct ResponseHeader_t {
     uint8_t request_pid;
     uint8_t size;  // Size of the response data
-} __attribute__((packed));
-
-// --- Calculate Maximum Data Sizes ---
-// This is the key improvement:  We calculate the maximum data sizes
-// *statically*, based on FLOC_MAX_SIZE and the sizes of the headers.
-
-#define FLOC_HEADER_COMMON_SIZE (sizeof(FlocHeader_t))
-
-#define DATA_HEADER_SIZE        (sizeof(DataHeader_t))
-#define COMMAND_HEADER_SIZE     (sizeof(CommandHeader_t))
-#define RESPONSE_HEADER_SIZE    (sizeof(ResponseHeader_t))
-#define ACK_HEADER_SIZE         (sizeof(AckHeader_t))
-
-#define MAX_DATA_DATA_SIZE      (FLOC_MAX_SIZE - FLOC_HEADER_COMMON_SIZE - DATA_HEADER_SIZE)
-#define MAX_COMMAND_DATA_SIZE   (FLOC_MAX_SIZE - FLOC_HEADER_COMMON_SIZE - COMMAND_HEADER_SIZE)
-#define MAX_RESPONSE_DATA_SIZE  (FLOC_MAX_SIZE - FLOC_HEADER_COMMON_SIZE - RESPONSE_HEADER_SIZE)
-#define MAX_ACK_DATA_SIZE       (FLOC_MAX_SIZE - FLOC_HEADER_COMMON_SIZE - ACK_HEADER_SIZE)
-// Ack packets don't have a data field in this example, but you could define a MAX_ACK_DATA_SIZE if needed.
+};
 
 // --- Complete FLOC Packet Structures ---
 struct DataPacket_t {
     DataHeader_t header;
     uint8_t data[MAX_DATA_DATA_SIZE];
-} __attribute__((packed));
+};
 
 struct CommandPacket_t {
     CommandHeader_t header;
     uint8_t data[MAX_COMMAND_DATA_SIZE];  // Statically allocated, maximum size
-} __attribute__((packed));
+};
 
 struct AckPacket_t {
     AckHeader_t header;
     // uint8_t data[MAX_ACK_DATA_SIZE]; // If you add data to acks
-} __attribute__((packed));
+};
 
 struct ResponsePacket_t {
     ResponseHeader_t header;
     uint8_t data[MAX_RESPONSE_DATA_SIZE]; // Statically allocated, maximum size
-} __attribute__((packed));
+};
+
+struct FlocPacket_t {
+    FlocHeader_t header;
+    FlocPacketVariant_u payload;
+};
+
+// --- Serial FLOC Packet Structures ---
+struct SerialFlocHeader_t {
+    SerialFlocPacketType_e type: SERIAL_FLOC_TYPE_SIZE;
+    uint8_t                size;
+};
+
+struct SerialFlocPacket_t {
+    SerialFlocHeader_t header;
+    SerialFlocPacketVariant_u payload;
+};
+
+struct SerialUnicastPacket_t {
+    uint16_t dest_addr;
+    FlocPacketVariant_u floc_packet;
+};
+
+struct SerialBroadcastPacket_t {
+    FlocPacketVariant_u floc_packet;
+};
+#pragma pack(pop)
 
 union FlocPacketVariant_u {
     DataPacket_t     data;
@@ -124,35 +151,10 @@ union FlocPacketVariant_u {
     ResponsePacket_t response;
 };
 
-struct FlocPacket_t {
-    FlocHeader_t header;
-    FlocPacketVariant_u payload;
-} __attribute__((packed));
-
-// --- Serial FLOC Packet Structures ---
-struct SerialFlocHeader_t {
-    SerialFlocPacketType_e type: SERIAL_FLOC_TYPE_SIZE;
-    uint8_t                size;
-} __attribute__((packed));
-
-struct SerialBroadcastPacket_t {
-    FlocPacketVariant_u floc_packet;
-} __attribute__((packed));
-
-struct SerialUnicastPacket_t {
-    uint16_t dest_addr;
-    FlocPacketVariant_u floc_packet;
-} __attribute__((packed));
-
 union SerialFlocPacketVariant_u {
     SerialBroadcastPacket_t broadcast;
     SerialUnicastPacket_t unicast;
 };
-
-struct SerialFlocPacket_t {
-    SerialFlocHeader_t header;
-    SerialFlocPacketVariant_u payload;
-} __attribute__((packed));
 
 #ifdef ON_DEVICE
 uint16_t get_network_id();
