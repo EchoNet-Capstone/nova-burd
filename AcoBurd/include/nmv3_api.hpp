@@ -188,7 +188,7 @@
 #define RESP_EXTRA_TIME_MAX             RESP_EXTRA_FIELD_PRE_MAX + \
                                         RESP_EXTRA_TIME_PAYLOAD_MAX
 
-#define RESP_ALL_EXTRA_MAX          RESP_EXTRA_LQ_MAX + RESP_EXTRA_TIME_MAX
+#define RESP_ALL_EXTRA_MAX              RESP_EXTRA_LQ_MAX + RESP_EXTRA_TIME_MAX
 
 // Query Status
 #define QUERY_STATUS_RESP_FIELD_PRE_MAX       1
@@ -285,7 +285,7 @@
 #define UNICAST_RESP_MAX           UNICAT_RESP_HDR_MAX + \
                                    UNICAST_RESP_PAYLOAD_MAX
 
-// Voltage and Noise Measurement
+// Voltage and Noise Measurement (Broadcast Message)
 #define VOLT_NOISE_MSR_RESP_FIELD_PRE_MAX     1
 #define VOLT_NOISE_MSR_RESP_ADDR_MAX          3
 #define VOLT_NOISE_MSR_RESP_DATA_SIZE_MAX     2
@@ -301,10 +301,12 @@
 #define EXTEN_RESP_MAX             	EXTEN_RESP_TYPE_MAX
 
 // --- Extension Commands ---
-#define SYS_TIME_EXT_RESP_TYPE_MAX   1
-#define SYS_TIME_EXT_RESP_MAX        SYS_TIME_EXT_RESP_TYPE_MAX
-#define LINK_QUAL_EXT_RESP_TYPE_MAX  1
-#define LINK_QUAL_EXT_RESP_MAX       LINK_QUAL_EXT_RESP_TYPE_MAX
+#define SYS_TIME_EXT_RESP_STATUS_MAX  1
+#define SYS_TIME_EXT_RESP_PAYLOAD_MAX 14
+#define SYS_TIME_EXT_RESP_MAX         SYS_TIME_EXT_RESP_STATUS_MAX + \
+                                      SYS_TIME_EXT_RESP_PAYLOAD_MAX
+#define LINK_QUAL_EXT_RESP_STATUS_MAX 1
+#define LINK_QUAL_EXT_RESP_MAX        LINK_QUAL_EXT_RESP_STATUS_MAX
 
 // --- Prefixes ---
 #define ERROR_PRE                         'E'
@@ -352,7 +354,7 @@ enum ModemCommandTypes_e: uint8_t {
   SPEC_MSR_CMD_TYPE       = 'S',
   TEST_MSG_CMD_TYPE       = 'T',
   UNICAST_MSG_CMD_TYPE    = 'U',
-  VOLT_NOISE_MSR_CMD_TYPE     = 'V',
+  VOLT_NOISE_MSR_CMD_TYPE = 'V',
   EXTEN_CMD_TYPE          = 'X',
 };
 
@@ -587,9 +589,142 @@ union ModemLocalResponsePacketVariant_u {
   VoltageAndNoiseLocalResponsePacket_t voltageAndNoise;
 };
 
+// --- Modem Response Packets ---
+struct ModemResponsePacket_t {
+  ModemResponseTypes_e type;
+  ModemResponsePacketVariant_u response;
+  ResponseExtraData_t extraData;
+};
+
+// Response Extra Data (Link Quality and/or Time)
+struct ResponseExtraData_t {
+  ResponseExtraDataVariant_u data;
+};
+
+struct ResponseExtraLinkQuality_t {
+  uint8_t lqQualSep;
+  uint8_t lqQualPayload[RESP_EXTRA_LQ_QUAL_PAYLOAD_MAX];
+  uint8_t lqDoppSep;
+  uint8_t lqDoppPayload[RESP_EXTRA_LQ_DOPP_PAYLOAD_MAX];
+};
+
+struct ResponseExtraTime_t {
+  uint8_t timeSep;
+  uint8_t timePayload[RESP_EXTRA_TIME_PAYLOAD_MAX];
+};
+
+struct ResponseExtraAll_t{
+  ResponseExtraLinkQuality_t lqData;
+  ResponseExtraTime_t timeData;
+};
+
+union ResponseExtraDataVariant_u{
+  ResponseExtraLinkQuality_t linkQuality;
+  ResponseExtraTime_t time;
+  ResponseExtraAll_t all;
+};
+
+struct QueryStatusResponsePacket_t {
+  QueryStatusResponsePacketVariant_u status;
+};
+
+struct SetAddressResponsePacket_t {
+  uint8_t addr[SET_ADDRESS_RESP_ADDR_MAX];
+};
+
+struct QueryStatusResponseBuildTime_t {
+  uint8_t buildTimeYearPayload[QUERY_STATUS_RESP_BT_YEAR_PAYLOAD_MAX];
+  uint8_t buildTimeTimeSep;
+  uint8_t buildTimeTimePayload[QUERY_STATUS_RESP_BT_TIME_PAYLOAD_MAX];
+};
+
+struct QueryStatusResponseFullPacket_t {
+  uint8_t addr[QUERY_STATUS_RESP_ADDR_MAX];
+  uint8_t voltSep;
+  uint8_t voltPayload[QUERY_STATUS_RESP_VOLT_PAYLOAD_MAX];
+  uint8_t releaseSep;
+  uint8_t releasePayload[QUERY_STATUS_RESP_REL_PAYLOAD_MAX];
+  uint8_t buildTimeSep;
+  QueryStatusResponseBuildTime_t buildTime;
+};
+
+union QueryStatusResponsePacketVariant_u{
+  SetAddressResponsePacket_t setAddress;
+  QueryStatusResponseFullPacket_t fullStatus;
+};
+
+struct BroadcastMessageHeader_t {
+  uint8_t addr[BROADCAST_RESP_ADDR_MAX];
+  uint8_t dataSize[BROADCAST_RESP_DATA_SIZE_MAX];
+};
+
+struct BroadcastMessageResponsePacket_t {
+  BroadcastMessageHeader_t header;
+  BroadcastMessageResponseVariant_u message;
+};
+
+struct NoiseMeasurementResponsePacket_t {
+  uint8_t rmsSep;
+  uint8_t rmsPayload[NOISE_MSR_RESP_RMS_PAYLOAD_MAX];
+  uint8_t p2pSep;
+  uint8_t p2pPayload[NOISE_MSR_RESP_P2P_PAYLOAD_MAX];
+  uint8_t magSep;
+  uint8_t magPayload[NOISE_MSR_RESP_MAG_PAYLOAD_MAX];
+};
+
+struct VoltageAndNoiseResponsePacket_t {
+  uint8_t voltSep;
+  uint8_t voltPayload[VOLT_NOISE_MSR_RESP_VOLT_PAYLOAD_MAX];
+  NoiseMeasurementResponsePacket_t noiseMeasurmeent;
+};
+
+union BroadcastMessageResponseVariant_u {
+  uint8_t payload[BROADCAST_RESP_PAYLOAD_MAX];
+  VoltageAndNoiseResponsePacket_t voltAndNoise;
+};
+
+struct RangeDataResponsePacket_t {
+  uint8_t addr[RANGE_RESP_ADDR_MAX];
+  uint8_t rangeSep;
+  uint8_t rangePayload[RANGE_RESP_PAYLOAD_MAX];
+};
+
+struct UnicastResponsePacket_t {
+  uint8_t dataSize[UNICAST_RESP_DATA_SIZE_MAX];
+  uint8_t payload[UNICAST_RESP_PAYLOAD_MAX];
+};
+
+struct ExtenionResponsePacket_t {
+  ModemExtentionResponseTypes_e type;
+  ExtenionResponsePacketVariant_u response;
+};
+
+struct SystemTimeResponsePacket_t {
+  uint8_t status;
+  uint8_t timePayload[SYS_TIME_EXT_RESP_PAYLOAD_MAX];
+};
+
+struct LinkQualityResponsePacket_t {
+  uint8_t status;
+};
+
+union ExtenionResponsePacketVariant_u {
+  SystemTimeResponsePacket_t systemTime;
+  LinkQualityResponsePacket_t linkQuality;
+};
+
+union ModemResponsePacketVariant_u {
+  QueryStatusResponsePacket_t queryStatus;
+  BroadcastMessageResponsePacket_t broadcast;
+  RangeDataResponsePacket_t rangeData;
+  UnicastResponsePacket_t unicast;
+  ExtenionResponsePacket_t extPacket;
+};
+
 union ModemPacketVariant_u {
   ModemCommandPacket_t command;
   ModemLocalResponsePacket_t localResponse;
+  ModemResponsePacket_t response;
 };
 
 #pragma pack(pop)
