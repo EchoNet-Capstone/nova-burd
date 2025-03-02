@@ -15,24 +15,17 @@ uint16_t get_network_id() {
     return 0;
 }
 
-void parse_floc_command_packet(char *broadcastBuffer, uint8_t size) {
-    if (debug) Serial.println("Command packet received");
-
-    if (size < sizeof(FlocHeader_t) + sizeof(CommandHeader_t)) {
-        if (debug) printf("Invalid Command Packet: Too small\n");
-        return;
-    }
-
-    // Extract the common header
-    FlocHeader_t *header = reinterpret_cast<FlocHeader_t*>(broadcastBuffer);
+void parse_floc_command_packet(FlocHeader_t* floc_header, CommandPacket_t* pkt, uint8_t size) {
+    if (debug) Serial.println("Command packet received...");
 
     // Extract the command header
-    CommandHeader_t *commandHeader = reinterpret_cast<CommandHeader_t*>(broadcastBuffer + sizeof(FlocHeader_t));
-    Serial.printf("actual command type : %d\r\n", (uint8_t *)commandHeader);
+    CommandHeader_t *header = &pkt->header;
 
     // Extract command type and size
-    uint8_t commandType = commandHeader->command_type;
-    uint8_t dataSize = commandHeader->size;
+    uint8_t commandType = header->command_type;
+    uint8_t dataSize = header->size;
+    
+    Serial.printf("\tCommandPacket\r\n\t\tType: %d\r\n\t\tSize: %d\r\n", commandType, dataSize);
 
     // Validate data size
     if (size < sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + dataSize) {
@@ -41,15 +34,13 @@ void parse_floc_command_packet(char *broadcastBuffer, uint8_t size) {
     }
 
     // Extract command data
-    uint8_t *commandData = reinterpret_cast<uint8_t*>(broadcastBuffer + sizeof(FlocHeader_t) + sizeof(CommandHeader_t));
+    uint8_t* data = pkt->data;
 
     // Handle the command based on the type
     switch (commandType) {
         case COMMAND_TYPE_1:
             // TODO : Code to release buoy goes here
-            if (debug) Serial.println("Command packet received.");
-
-            floc_acknowledgement_send(TTL_START, header->pid, header->src_addr, get_modem_address());
+            floc_acknowledgement_send(TTL_START, floc_header->pid, floc_header->src_addr, get_modem_address());
 
             break;
         case COMMAND_TYPE_2:
@@ -61,7 +52,7 @@ void parse_floc_command_packet(char *broadcastBuffer, uint8_t size) {
     }
 }
 
-void parse_floc_acknowledgement_packet(char *broadcastBuffer) {
+void parse_floc_acknowledgement_packet(uint8_t *broadcastBuffer, uint8_t size) {
     if (sizeof(FlocHeader_t) + sizeof(AckHeader_t) > FLOC_MAX_SIZE) {
         if (debug) printf("Invalid ACK Packet: Too small\n");
         return;
@@ -83,7 +74,7 @@ void parse_floc_acknowledgement_packet(char *broadcastBuffer) {
     // TODO : Handle ACK processing (e.g., mark packet as acknowledged)
 }
 
-void parse_floc_response_packet(char *broadcastBuffer) {
+void parse_floc_response_packet(uint8_t *broadcastBuffer, uint8_t size) {
     if (sizeof(FlocHeader_t) + sizeof(ResponseHeader_t) > FLOC_MAX_SIZE) {
         if (debug) printf("Invalid Response Packet: Too small\n");
         return;
@@ -116,15 +107,17 @@ void parse_floc_response_packet(char *broadcastBuffer) {
 }
 
 
-void floc_broadcast_received(char *broadcastBuffer, uint8_t size) {
+void floc_broadcast_received(uint8_t *broadcastBuffer, uint8_t size) {
     if (size < sizeof(FlocHeader_t)) {
         // Packet is too small to contain a valid header
         if (debug) Serial.println("Packet too small to contain valid header");
         return;
     }
 
+    // Cast buffer to FLOC packet
+    FlocPacket_t* pkt = (FlocPacket_t *) broadcastBuffer;
     // Extract the common header
-    FlocHeader_t *header = reinterpret_cast<FlocHeader_t*>(broadcastBuffer);
+    FlocHeader_t* header = &pkt->header;
 
     uint8_t ttl = header->ttl;
     uint8_t type = header->type;
@@ -133,19 +126,39 @@ void floc_broadcast_received(char *broadcastBuffer, uint8_t size) {
     uint16_t dest_addr = header->dest_addr;
     uint16_t src_addr = header->src_addr;
 
+    if (debug) {
+        Serial.printf(
+            "FLOC Packet Header\r\n\tTTL:%d\r\n\tType: %d\r\n\tNID: %d\r\n\tPID: %d\r\n\tDST: %d\r\n\tSRC: %d\r\n",
+            ttl,
+            type,
+            nid,
+            pid,
+            dest_addr,
+            src_addr);
+    }
+
     // Determine the type of the packet
     switch (type) {
         case FLOC_DATA_TYPE:
             // Handle data packet if needed
             break;
-        case FLOC_COMMAND_TYPE:
-            parse_floc_command_packet(broadcastBuffer, size);
+        case FLOC_COMMAND_TYPE: {
+            if (size < sizeof(FlocHeader_t) + sizeof(CommandHeader_t)) {
+                if (debug) printf("Invalid Command Packet: Too small\n");
+                return;
+            }
+            CommandPacket_t* cmd_pkt = (CommandPacket_t*)malloc(sizeof(CommandPacket_t));
+            memset(cmd_pkt,0, sizeof(CommandPacket_t));
+            memcpy(cmd_pkt, &pkt->payload.command, pkt->payload.command.header.size + COMMAND_HEADER_SIZE);
+            parse_floc_command_packet(header, cmd_pkt, size);
+            free(cmd_pkt);
             break;
+        }
         case FLOC_ACK_TYPE:
-            parse_floc_acknowledgement_packet(broadcastBuffer);
+            parse_floc_acknowledgement_packet(broadcastBuffer, size);
             break;
         case FLOC_RESPONSE_TYPE:
-            parse_floc_response_packet(broadcastBuffer);
+            parse_floc_response_packet(broadcastBuffer, size);
             break;
         default:
             // Unknown packet type

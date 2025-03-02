@@ -14,7 +14,8 @@
 String packetBuffer_nest = "";
 
 // Packet buffer for data received from the acoustic modem serial line
-String packetBuffer_modem = "";
+static uint8_t packetBuffer_modem[FLOC_MAX_SIZE] = {0};
+static uint8_t packetBuffer_modem_idx = 0;
 
 
 void setup(){
@@ -130,20 +131,20 @@ void loop(){
         }
     }*/
     while (NEST_SERIAL_CONNECTION.available() > 0) {
-        char nest_char = NEST_SERIAL_CONNECTION.read();
+        // char nest_char = NEST_SERIAL_CONNECTION.read();
 
-        // Check for <CR><LF> sequence
-        if (nest_char == '\n' && packetBuffer_nest.endsWith("\r")) {
-            // Remove the <CR> from the buffer
-            packetBuffer_nest.remove(packetBuffer_nest.length() - 1);
+        // // Check for <CR><LF> sequence
+        // if (nest_char == '\n' && packetBuffer_nest.endsWith("\r")) {
+        //     // Remove the <CR> from the buffer
+        //     packetBuffer_nest.remove(packetBuffer_nest.length() - 1);
 
-            packet_received_nest(packetBuffer_nest);
+        //     packet_received_nest(packetBuffer_nest);
             
-            packetBuffer_nest = "";  // Clear the buffer
-        } else {
-            // Append character to the buffer
-            packetBuffer_nest += nest_char;
-        }
+        //     packetBuffer_nest = "";  // Clear the buffer
+        // } else {
+        //     // Append character to the buffer
+        //     packetBuffer_nest += nest_char;
+        // }
     }
 #endif
 
@@ -165,17 +166,18 @@ void loop(){
         char modem_char = MODEM_SERIAL_CONNECTION.read();
 
         // Check for <CR><LF> sequence
-        if (modem_char == '\n' && packetBuffer_modem.endsWith("\r")) {
+        if (modem_char == '\n' && packetBuffer_modem[packetBuffer_modem_idx - 1] == '\r') {
             // Remove the <CR> from the buffer
-            packetBuffer_modem.remove(packetBuffer_modem.length() - 1);
+            packetBuffer_modem[packetBuffer_modem_idx - 1] == 0;
 
-            packet_received_modem(packetBuffer_modem);
+            packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx);
             
-            packetBuffer_modem = "";  // Clear the buffer
+            memset(packetBuffer_modem, 0 , sizeof(packetBuffer_modem)); // Clear the buffer
+            packetBuffer_modem_idx = 0;
         } else {
             // Append character to the buffer
-            packetBuffer_modem += modem_char;
+            packetBuffer_modem[packetBuffer_modem_idx] = modem_char;
+            packetBuffer_modem_idx = (packetBuffer_modem_idx + 1);
         }
     }
-
 }
