@@ -41,30 +41,40 @@ void ping(HardwareSerial connection, int8_t addr) {
 }
 
 void parse_status_query_packet(uint8_t* packetBuffer, uint8_t size) {
+    char temp[6];
+    memcpy(temp, packetBuffer + STATUS_QUERY_NODE_ADDR_START, STATUS_QUERY_NODE_ADDR_END - STATUS_QUERY_NODE_ADDR_START);
+    temp[4] = '\0';
+    long node_addr = (uint8_t) atoi(temp);
+
+    memcpy(temp, packetBuffer + STATUS_QUERY_NODE_ADDR_START, STATUS_QUERY_NODE_ADDR_END - STATUS_QUERY_NODE_ADDR_START);
+    temp[5] = '\0';
+    long supply_voltage_meas = (uint8_t) atoi(temp);
     
-    long node_addr = packetBuffer.substring(STATUS_QUERY_NODE_ADDR_START, STATUS_QUERY_NODE_ADDR_END).toInt();
-    long supply_voltage_meas = packetBuffer.substring(STATUS_QUERY_SUPPLY_VOLTAGE_START, STATUS_QUERY_SUPPLY_VOLTAGE_END).toInt();
     float supply_voltage = static_cast<float>(supply_voltage_meas) * 15.0f / 65536.0f;
-    String release_version = packetBuffer.substring(STATUS_QUERY_RELEASE_START, STATUS_QUERY_RELEASE_END);
-    String build_date_time = packetBuffer.substring(STATUS_QUERY_BUILD_DATE_START, STATUS_QUERY_BUILD_DATE_END);
 
     if (debug) {
-        Serial.printf("Status query packet received.\r\n\tDevice addr : %03ld\r\n\tDevice Supply Voltage : %f\r\n\tDevice Release Version : ", node_addr, supply_voltage);
-        Serial.print(release_version + "\r\n\tDevice Build Date + Time [BYYYY-MM-DDThh:mm:ss] : " + build_date_time + "\r\n");
+        Serial.printf("Status query packet received.\r\n\tDevice addr : %03ld\r\n\tDevice Supply Voltage : %f\r\n", node_addr, supply_voltage);
     }
 
-    floc_status_send(packetBuffer);
+    floc_status_send(packetBuffer, size);
+}
+
+void parse_set_address_packet(uint8_t *packetBuffer, uint8_t size) {
+    char temp[4];
+    memcpy(temp, packetBuffer + SET_ADDRESS_ADDR_START, SET_ADDRESS_ADDR_END - SET_ADDRESS_ADDR_START);
+    temp[3] = '\0';
+    long new_addr = (uint8_t) atoi(temp);
+
+    if (debug) {
+        Serial.printf("Set address packet received.\r\n\tNew Device addr : %03ld\r\n", new_addr);
+    }
+
+    modem_id = new_addr;
+    display_modem_id(modem_id);
 }
 
 void parse_unicast_packet(uint8_t* packetBuffer, uint8_t size) {
-    // long new_addr = packetBuffer.substring(SET_ADDRESS_ADDR_START, SET_ADDRESS_ADDR_END).toInt();
-
-    // if (debug) {
-    //     Serial.printf("Set address packet received.\r\n\tNew Device addr : %03ld\r\n", new_addr);
-    // }
-
-    // modem_id = new_addr;
-    // display_modem_id(modem_id);
+    // TODO : implement?
 }
 
 void parse_broadcast_packet(uint8_t* packetBuffer, uint8_t size) {
@@ -226,7 +236,7 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 if (size == STATUS_QUERY_PACKET_LENGTH) {
                     parse_status_query_packet(packetBuffer, size);
                 } else if (size == SET_ADDRESS_PACKET_LENGTH) {
-                    //parse_set_address_packet(packetBuffer, size);
+                    parse_set_address_packet(packetBuffer, size);
                 }
                 break;
             case 'B':

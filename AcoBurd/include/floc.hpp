@@ -164,7 +164,7 @@ void floc_broadcast_received(uint8_t *broadcastBuffer, uint8_t size);
 void floc_unicast_received(uint8_t *unicastBuffer, uint8_t size);
 void floc_acknowledgement_send(uint8_t ttl, uint8_t ack_pid, uint16_t dest_addr, uint16_t src_addr);
 void floc_status_queue(HardwareSerial connection, uint8_t dest_addr);
-void floc_status_send(String status);
+void floc_status_send(uint8_t *status, uint8_t size);
 #endif // ON_DEVICE
 
 #endif
