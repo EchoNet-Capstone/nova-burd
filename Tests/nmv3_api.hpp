@@ -279,7 +279,7 @@
 // Enumerated Types
 //----------------------------------------------------------------
 
-enum ModemCommandTypes_e: uint8_t {
+typedef enum ModemCommandTypes_e: uint8_t {
   QUERY_STATUS_CMD_TYPE   = '?',
   SET_ADDRESS_CMD_TYPE    = 'A',
   BROADCAST_CMD_TYPE      = 'B',
@@ -298,24 +298,24 @@ enum ModemCommandTypes_e: uint8_t {
   EXTEN_CMD_TYPE          = 'X',
 };
 
-enum ModemExtentionCommandTypes_e: uint8_t {
+typedef enum ModemExtentionCommandTypes_e: uint8_t {
   SYS_TIME_EXT_CMD_TYPE   = 'T',
   LINK_QUAL_EXT_CMD_TYPE  = 'Q',
 };
 
-enum SystemTimeCommandTypes_e: uint8_t {
+typedef enum SystemTimeCommandTypes_e: uint8_t {
   SYS_TIME_ENABLE_CMD_TYPE   = 'E',
   SYS_TIME_DISABLE_CMD_TYPE  = 'D',
   SYS_TIME_CLEAR_CMD_TYPE    = 'C',
   SYS_TIME_GET_TIME_CMD_TYPE = 'G',
 };
 
-enum LinkQualityCommandTypes_e: uint8_t {
+typedef enum LinkQualityCommandTypes_e: uint8_t {
   LINK_QUAL_ENABLE_CMD_TYPE  = 'E',
   LINK_QUAL_DISABLE_CMD_TYPE = 'D',
 };
 
-enum ModemLocalResponseTypes_e: uint8_t {
+typedef enum ModemLocalResponseTypes_e: uint8_t {
   BROADCAST_CMD_LOCAL_RESP_TYPE     = 'B',
   CHN_IMP_CMD_LOCAL_RESP_TYPE       = 'C',
   ECHO_MSG_CMD_LOCAL_RESP_TYPE      = 'E',
@@ -329,7 +329,7 @@ enum ModemLocalResponseTypes_e: uint8_t {
   VOLT_NOISE_MSR_CMD_LOCAL_RESP_TYPE = 'V',
 };
 
-enum ModemResponseTypes_e: uint8_t {
+typedef enum ModemResponseTypes_e: uint8_t {
   QUERY_STATUS_RESP_TYPE  = 'A',
   SET_ADDRESS_RESP_TYPE   = 'A',
   BROADCAST_RESP_TYPE     = 'B',
@@ -340,19 +340,19 @@ enum ModemResponseTypes_e: uint8_t {
   UNICAST_RESP_TYPE       = 'U',
 };
 
-enum ModemExtentionResponseTypes_e: uint8_t {
+typedef enum ModemExtentionResponseTypes_e: uint8_t {
   SYS_TIME_EXT_RESP_TYPE   = 'T',
   LINK_QUAL_EXT_RESP_TYPE  = 'Q',
 };
 
-enum SystemTimeResponseTypes_e: uint8_t {
+typedef enum SystemTimeResponseTypes_e: uint8_t {
   SYS_TIME_ENABLE_RESP_TYPE   = 'E',
   SYS_TIME_DISABLE_RESP_TYPE  = 'D',
   SYS_TIME_CLEAR_RESP_TYPE    = 'C',
   SYS_TIME_GET_TIME_RESP_TYPE = 'G',
 };
 
-enum LinkQualityResponseTypes_e: uint8_t {
+typedef enum LinkQualityResponseTypes_e: uint8_t {
   LINK_QUAL_ENABLE_RESP_TYPE  = 'E',
   LINK_QUAL_DISABLE_RESP_TYPE = 'D',
 };
@@ -367,193 +367,193 @@ enum LinkQualityResponseTypes_e: uint8_t {
 //================================================================
 
 //=== Command Packet Leaf Structures ===
-struct SetAddresCommandPacket_t {
+typedef struct SetAddresCommandPacket_t {
   uint8_t addr[SET_ADDRESS_CMD_ADDR_MAX];
 };
 
-struct BroadcastMeassageHeader_t {
+typedef struct BroadcastMeassageHeader_t {
   uint8_t dataSize[BROADCAST_CMD_DATA_SIZE_MAX];
 };
 
-struct BroadcastMessageCommandPacket_t {
-  struct BroadcastMeassageHeader_t header;
+typedef struct BroadcastMessageCommandPacket_t {
+  typedef struct BroadcastMeassageHeader_t header;
   uint8_t payload[BROADCAST_CMD_PAYLOAD_MAX];
 };
 
-struct ChannelImpulseCommandPacket_t {
+typedef struct ChannelImpulseCommandPacket_t {
   uint8_t magnitudeComplex;
   uint8_t addr[CHN_IMP_CMD_ADDR_MAX];
 };
 
-struct EchoMessageCommandHeader_t {
+typedef struct EchoMessageCommandHeader_t {
   uint8_t addr[ECHO_MSG_CMD_ADDR_MAX];
   uint8_t dataSize[ECHO_MSG_CMD_DATA_SIZE_MAX];
 };
 
-struct EchoMessageCommandPacket_t {
-  struct EchoMessageCommandHeader_t header;
+typedef struct EchoMessageCommandPacket_t {
+  typedef struct EchoMessageCommandHeader_t header;
   uint8_t payload[ECHO_MSG_CMD_PAYLOAD_MAX];
 };
 
-struct UnicastWithAckCommandHeader_t {
+typedef struct UnicastWithAckCommandHeader_t {
   uint8_t addr[UNICAST_ACK_CMD_ADDR_MAX];
   uint8_t dataSize[UNICAST_ACK_CMD_DATA_SIZE_MAX];
 };
 
-struct UnicastWithAckCommandPacket_t {
-  struct UnicastWithAckCommandHeader_t header;
+typedef struct UnicastWithAckCommandPacket_t {
+  typedef struct UnicastWithAckCommandHeader_t header;
   uint8_t payload[UNICAST_ACK_CMD_PAYLOAD_MAX];
 };
 
-struct PingCommandPacket_t {
+typedef struct PingCommandPacket_t {
   uint8_t addr[PING_CMD_ADDR_MAX];
 };
 
-struct TestMsgCommandPacket_t {
+typedef struct TestMsgCommandPacket_t {
   uint8_t addr[TEST_MSG_CMD_ADDR_MAX];
 };
 
-struct UnicastCommandHeader_t {
+typedef struct UnicastCommandHeader_t {
   uint8_t addr[UNICAST_CMD_ADDR_MAX];
   uint8_t dataSize[UNICAST_CMD_DATA_SIZE_MAX];
 };
 
-struct UnicastCommandPacket_t {
-  struct UnicastCommandHeader_t header;
+typedef struct UnicastCommandPacket_t {
+  typedef struct UnicastCommandHeader_t header;
   uint8_t payload[UNICAST_CMD_PAYLOAD_MAX];
 };
 
-struct VoltageAndNoiseCommandPacket_t {
+typedef struct VoltageAndNoiseCommandPacket_t {
   uint8_t addr[VOLT_NOISE_MSR_CMD_ADDR_MAX];
 };
 
-struct SystemTimeCommandPacket_t {
+typedef struct SystemTimeCommandPacket_t {
   SystemTimeCommandTypes_e type;
 };
 
-struct LinkQualityCommandPacket_t {
+typedef struct LinkQualityCommandPacket_t {
   LinkQualityCommandTypes_e type;
 };
 
-struct ExtenionCommandPacket_t {
+typedef struct ExtenionCommandPacket_t {
   ModemExtentionCommandTypes_e type;
 };
 
 //=== Local Response Leaf Structures ===
-struct BroadcastLocalResponsePacket_t {
+typedef struct BroadcastLocalResponsePacket_t {
   uint8_t dataSize[BROADCAST_CMD_LOCAL_RESP_DATA_SIZE_MAX];
 };
 
-struct ChannelImpulseLocalResponsePacket_t {
+typedef struct ChannelImpulseLocalResponsePacket_t {
   uint8_t magnitudeComplex;
   uint8_t addr[CHN_IMP_CMD_LOCAL_RESP_ADDR_MAX];
 };
 
-struct EchoMessageLocalResponsePacket_t {
+typedef struct EchoMessageLocalResponsePacket_t {
   uint8_t addr[ECHO_MSG_CMD_LOCAL_RESP_ADDR_MAX];
   uint8_t dataSize[ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX];
 };
 
-struct UnicastWithAckLocalResponsePacket_t {
+typedef struct UnicastWithAckLocalResponsePacket_t {
   uint8_t addr[UNICAST_ACK_CMD_LOCAL_RESP_ADDR_MAX];
   uint8_t dataSize[UNICAST_ACK_CMD_LOCAL_RESP_DATA_SIZE_MAX];
 };
 
-struct PingLocalResponsePacket_t {
+typedef struct PingLocalResponsePacket_t {
   uint8_t addr[PING_CMD_LOCAL_RESP_ADDR_MAX];
 };
 
-struct CorrectedErrorsLocalResponsePacket_t {
+typedef struct CorrectedErrorsLocalResponsePacket_t {
   uint8_t rS;
 };
 
-struct TestMessageLocalResponsePacket_t {
+typedef struct TestMessageLocalResponsePacket_t {
   uint8_t addr[TEST_MSG_CMD_LOCAL_RESP_ADDR_MAX];
 };
 
-struct UnicastLocalResponsePacket_t {
+typedef struct UnicastLocalResponsePacket_t {
   uint8_t addr[UNICAST_CMD_LOCAL_RESP_ADDR_MAX];
   uint8_t dataSize[UNICAST_ACK_CMD_LOCAL_RESP_DATA_SIZE_MAX];
 };
 
-struct VoltageAndNoiseLocalResponsePacket_t {
+typedef struct VoltageAndNoiseLocalResponsePacket_t {
   uint8_t addr[VOLT_NOISE_MSR_CMD_LOCAL_RESP_ADDR_MAX];
 };
 
 //=== Response Extra Data Leaf Structures ===
-struct ResponseExtraLinkQuality_t {
+typedef struct ResponseExtraLinkQuality_t {
   uint8_t lqQualSep;
   uint8_t lqQualPayload[RESP_EXTRA_LQ_QUAL_PAYLOAD_MAX];
   uint8_t lqDoppSep;
   uint8_t lqDoppPayload[RESP_EXTRA_LQ_DOPP_PAYLOAD_MAX];
 };
 
-struct ResponseExtraTime_t {
+typedef struct ResponseExtraTime_t {
   uint8_t timeSep;
   uint8_t timePayload[RESP_EXTRA_TIME_PAYLOAD_MAX];
 };
 
-struct ResponseExtraAll_t {
-  struct ResponseExtraLinkQuality_t lqData;
-  struct ResponseExtraTime_t timeData;
+typedef struct ResponseExtraAll_t {
+  typedef struct ResponseExtraLinkQuality_t lqData;
+  typedef struct ResponseExtraTime_t timeData;
 };
 
-union ResponseExtraDataVariant_u {
-  struct ResponseExtraLinkQuality_t linkQuality;
-  struct ResponseExtraTime_t time;
-  struct ResponseExtraAll_t all;
+typedef union ResponseExtraDataVariant_u {
+  typedef struct ResponseExtraLinkQuality_t linkQuality;
+  typedef struct ResponseExtraTime_t time;
+  typedef struct ResponseExtraAll_t all;
 };
 
-struct ResponseExtraData_t {
+typedef struct ResponseExtraData_t {
   ResponseExtraDataVariant_u data;
 };
 
 //=== Response Packet Leaf Structures ===
-struct SetAddressResponsePacket_t {
+typedef struct SetAddressResponsePacket_t {
   uint8_t addr[SET_ADDRESS_RESP_ADDR_MAX];
 };
 
-struct QueryStatusResponseBuildTime_t {
+typedef struct QueryStatusResponseBuildTime_t {
   uint8_t buildTimeYearPayload[QUERY_STATUS_RESP_BT_YEAR_PAYLOAD_MAX];
   uint8_t buildTimeTimeSep;
   uint8_t buildTimeTimePayload[QUERY_STATUS_RESP_BT_TIME_PAYLOAD_MAX];
 };
 
-struct QueryStatusResponseFullPacket_t {
+typedef struct QueryStatusResponseFullPacket_t {
   uint8_t addr[QUERY_STATUS_RESP_ADDR_MAX];
   uint8_t voltSep;
   uint8_t voltPayload[QUERY_STATUS_RESP_VOLT_PAYLOAD_MAX];
   uint8_t releaseSep;
   uint8_t releasePayload[QUERY_STATUS_RESP_REL_PAYLOAD_MAX];
   uint8_t buildTimeSep;
-  struct QueryStatusResponseBuildTime_t buildTime;
+  typedef struct QueryStatusResponseBuildTime_t buildTime;
 };
 
-union QueryStatusResponsePacketVariant_u {
-  struct SetAddressResponsePacket_t setAddress;
-  struct QueryStatusResponseFullPacket_t fullStatus;
+typedef union QueryStatusResponsePacketVariant_u {
+  typedef struct SetAddressResponsePacket_t setAddress;
+  typedef struct QueryStatusResponseFullPacket_t fullStatus;
 };
 
-struct QueryStatusResponsePacket_t {
+typedef struct QueryStatusResponsePacket_t {
   union QueryStatusResponsePacketVariant_u status;
 };
 
-struct BroadcastMessageHeader_t {
+typedef struct BroadcastMessageHeader_t {
   uint8_t addr[BROADCAST_RESP_ADDR_MAX];
   uint8_t dataSize[BROADCAST_RESP_DATA_SIZE_MAX];
 };
 
-union BroadcastMessageResponseVariant_u {
+typedef union BroadcastMessageResponseVariant_u {
   uint8_t payload[BROADCAST_RESP_PAYLOAD_MAX];
   // Alternatively, you might define a VoltageAndNoiseResponsePacket_t
 };
 
-struct BroadcastMessageResponsePacket_t {
-  struct BroadcastMessageHeader_t header;
+typedef struct BroadcastMessageResponsePacket_t {
+  typedef struct BroadcastMessageHeader_t header;
   union BroadcastMessageResponseVariant_u message;
 };
 
-struct NoiseMeasurementResponsePacket_t {
+typedef struct NoiseMeasurementResponsePacket_t {
   uint8_t rmsSep;
   uint8_t rmsPayload[NOISE_MSR_RESP_RMS_PAYLOAD_MAX];
   uint8_t p2pSep;
@@ -562,38 +562,38 @@ struct NoiseMeasurementResponsePacket_t {
   uint8_t magPayload[NOISE_MSR_RESP_MAG_PAYLOAD_MAX];
 };
 
-struct VoltageAndNoiseResponsePacket_t {
+typedef struct VoltageAndNoiseResponsePacket_t {
   uint8_t voltSep;
   uint8_t voltPayload[VOLT_NOISE_MSR_RESP_VOLT_PAYLOAD_MAX];
-  struct NoiseMeasurementResponsePacket_t noiseMeasurmeent;
+  typedef struct NoiseMeasurementResponsePacket_t noiseMeasurmeent;
 };
 
-struct RangeDataResponsePacket_t {
+typedef struct RangeDataResponsePacket_t {
   uint8_t addr[RANGE_RESP_ADDR_MAX];
   uint8_t rangeSep;
   uint8_t rangePayload[RANGE_RESP_PAYLOAD_MAX];
 };
 
-struct UnicastResponsePacket_t {
+typedef struct UnicastResponsePacket_t {
   uint8_t dataSize[UNICAST_RESP_DATA_SIZE_MAX];
   uint8_t payload[UNICAST_RESP_PAYLOAD_MAX];
 };
 
-struct SystemTimeResponsePacket_t {
+typedef struct SystemTimeResponsePacket_t {
   uint8_t status;
   uint8_t timePayload[SYS_TIME_EXT_RESP_PAYLOAD_MAX];
 };
 
-struct LinkQualityResponsePacket_t {
+typedef struct LinkQualityResponsePacket_t {
   uint8_t status;
 };
 
-union ExtenionResponsePacketVariant_u {
-  struct SystemTimeResponsePacket_t systemTime;
-  struct LinkQualityResponsePacket_t linkQuality;
+typedef union ExtenionResponsePacketVariant_u {
+  typedef struct SystemTimeResponsePacket_t systemTime;
+  typedef struct LinkQualityResponsePacket_t linkQuality;
 };
 
-struct ExtenionResponsePacket_t {
+typedef struct ExtenionResponsePacket_t {
   ModemExtentionResponseTypes_e type;
   union ExtenionResponsePacketVariant_u response;
 };
@@ -603,78 +603,78 @@ struct ExtenionResponsePacket_t {
 // Union Definitions (All leaf types are now complete)
 //================================================================
 
-union ModemCommandPacketVariant_u {
-  struct SetAddresCommandPacket_t setAddress;
-  struct BroadcastMessageCommandPacket_t broadcastMessage;
-  struct ChannelImpulseCommandPacket_t channelImpulse;
-  struct EchoMessageCommandPacket_t echoMessage;
-  struct UnicastWithAckCommandPacket_t unicastWithAck;
-  struct PingCommandPacket_t ping;
-  struct TestMsgCommandPacket_t testMsg;
-  struct UnicastCommandPacket_t unicast;
-  struct VoltageAndNoiseCommandPacket_t voltageAndNoise;
-  struct ExtenionCommandPacket_t extPacket;
+typedef union ModemCommandPacketVariant_u {
+  typedef struct SetAddresCommandPacket_t setAddress;
+  typedef struct BroadcastMessageCommandPacket_t broadcastMessage;
+  typedef struct ChannelImpulseCommandPacket_t channelImpulse;
+  typedef struct EchoMessageCommandPacket_t echoMessage;
+  typedef struct UnicastWithAckCommandPacket_t unicastWithAck;
+  typedef struct PingCommandPacket_t ping;
+  typedef struct TestMsgCommandPacket_t testMsg;
+  typedef struct UnicastCommandPacket_t unicast;
+  typedef struct VoltageAndNoiseCommandPacket_t voltageAndNoise;
+  typedef struct ExtenionCommandPacket_t extPacket;
 };
 
-union ModemLocalResponsePacketVariant_u {
-  struct BroadcastLocalResponsePacket_t broadcast;
-  struct ChannelImpulseLocalResponsePacket_t channelImpulse;
-  struct EchoMessageLocalResponsePacket_t echoMessage;
-  struct UnicastWithAckLocalResponsePacket_t unicastWithAck;
-  struct PingLocalResponsePacket_t ping;
-  struct CorrectedErrorsLocalResponsePacket_t correctedErorrs;
-  struct TestMessageLocalResponsePacket_t testMessage;
-  struct UnicastLocalResponsePacket_t unicast;
-  struct VoltageAndNoiseLocalResponsePacket_t voltageAndNoise;
+typedef union ModemLocalResponsePacketVariant_u {
+  typedef struct BroadcastLocalResponsePacket_t broadcast;
+  typedef struct ChannelImpulseLocalResponsePacket_t channelImpulse;
+  typedef struct EchoMessageLocalResponsePacket_t echoMessage;
+  typedef struct UnicastWithAckLocalResponsePacket_t unicastWithAck;
+  typedef struct PingLocalResponsePacket_t ping;
+  typedef struct CorrectedErrorsLocalResponsePacket_t correctedErorrs;
+  typedef struct TestMessageLocalResponsePacket_t testMessage;
+  typedef struct UnicastLocalResponsePacket_t unicast;
+  typedef struct VoltageAndNoiseLocalResponsePacket_t voltageAndNoise;
 };
 
-union ModemResponsePacketVariant_u {
-  struct QueryStatusResponsePacket_t queryStatus;
-  struct BroadcastMessageResponsePacket_t broadcast;
-  struct RangeDataResponsePacket_t rangeData;
-  struct UnicastResponsePacket_t unicast;
-  struct ExtenionResponsePacket_t extPacket;
+typedef union ModemResponsePacketVariant_u {
+  typedef struct QueryStatusResponsePacket_t queryStatus;
+  typedef struct BroadcastMessageResponsePacket_t broadcast;
+  typedef struct RangeDataResponsePacket_t rangeData;
+  typedef struct UnicastResponsePacket_t unicast;
+  typedef struct ExtenionResponsePacket_t extPacket;
 };
 
-union ExtenionCommandPacketVariant_u {
-  struct SystemTimeCommandPacket_t systemTime;
-  struct LinkQualityCommandPacket_t linkQuality;
+typedef union ExtenionCommandPacketVariant_u {
+  typedef struct SystemTimeCommandPacket_t systemTime;
+  typedef struct LinkQualityCommandPacket_t linkQuality;
 };
 
 //================================================================
 // Container Packet Structures
 //================================================================
 
-enum ModemPacketTypes_e : uint8_t {
+typedef enum ModemPacketTypes_e : uint8_t {
   MODEM_COMMAND_TYPE        = '$',
   MODEM_LOCAL_RESPONSE_TYPE = '$',
   MODEM_RESPONSE_TYPE       = '#',
   ERROR_TYPE                = 'E'
 };
 
-struct ModemCommandPacket_t {
+typedef struct ModemCommandPacket_t {
   ModemCommandTypes_e type;
   ModemCommandPacketVariant_u command;
 };
 
-struct ModemLocalResponsePacket_t {
+typedef struct ModemLocalResponsePacket_t {
   ModemLocalResponseTypes_e type;
   ModemLocalResponsePacketVariant_u response;
 };
 
-struct ModemResponsePacket_t {
+typedef struct ModemResponsePacket_t {
   ModemResponseTypes_e type;
   ModemResponsePacketVariant_u response;
-  struct ResponseExtraData_t extraData;
+  typedef struct ResponseExtraData_t extraData;
 };
 
-union ModemPacketVariant_u {
-  struct ModemCommandPacket_t command;
-  struct ModemLocalResponsePacket_t localResponse;
-  struct ModemResponsePacket_t response;
+typedef union ModemPacketVariant_u {
+  typedef struct ModemCommandPacket_t command;
+  typedef struct ModemLocalResponsePacket_t localResponse;
+  typedef struct ModemResponsePacket_t response;
 };
 
-struct ModemPacket_t {
+typedef struct ModemPacket_t {
   ModemPacketTypes_e type;
   ModemPacketVariant_u payload;
 };

@@ -41,19 +41,19 @@ enum FlocPacketType_e : uint8_t{
   FLOC_RESPONSE_TYPE = 0x3
 };
 
-enum CommandType_e: uint8_t {  // Example
+typedef enum CommandType_e: uint8_t {  // Example
   COMMAND_TYPE_1 = 0x1,
   COMMAND_TYPE_2 = 0x2,
   // ...
 };
 
-enum SerialFlocPacketType_e: uint8_t {
+typedef enum SerialFlocPacketType_e: uint8_t {
   SERIAL_BROADCAST_TYPE = 'B',
   SERIAL_UNICAST_TYPE   = 'U',
   // ...
 };
 
-struct FlocHeader_t {
+typedef struct FlocHeader_t {
   FlocPacketType_e type : FLOC_TYPE_SIZE;
   uint8_t ttl : FLOC_TTL_SIZE;
   uint16_t nid;  // Network ID
@@ -63,84 +63,84 @@ struct FlocHeader_t {
   uint16_t src_addr;
 };
 
-struct DataHeader_t {
+typedef struct DataHeader_t {
   uint8_t size;
 };
 
-struct CommandHeader_t {
+typedef struct CommandHeader_t {
   CommandType_e command_type: COMMAND_TYPE_SIZE;
   uint8_t size;  // Size of the command data
 };
 
-struct AckHeader_t {
+typedef struct AckHeader_t {
   uint8_t ack_pid;
 };
 
-struct ResponseHeader_t {
+typedef struct ResponseHeader_t {
   uint8_t request_pid;
   uint8_t size;  // Size of the response data
 };
 
 // --- Define Packet Payload Structures ---
-struct DataPacket_t {
-  struct DataHeader_t header;
+typedef struct DataPacket_t {
+  typedef struct DataHeader_t header;
   uint8_t data[MAX_DATA_DATA_SIZE];
 };
 
-struct CommandPacket_t {
-  struct CommandHeader_t header;
+typedef struct CommandPacket_t {
+  typedef struct CommandHeader_t header;
   uint8_t data[MAX_COMMAND_DATA_SIZE];
 };
 
-struct AckPacket_t {
-  struct AckHeader_t header;
+typedef struct AckPacket_t {
+  typedef struct AckHeader_t header;
   // Optionally, add data if needed.
 };
 
-struct ResponsePacket_t {
-  struct ResponseHeader_t header;
+typedef struct ResponsePacket_t {
+  typedef struct ResponseHeader_t header;
   uint8_t data[MAX_RESPONSE_DATA_SIZE];
 };
 
 // --- Define Unions (Complete Definitions) ---
-union FlocPacketVariant_u {
-  struct DataPacket_t     data;
-  struct CommandPacket_t  command;
-  struct AckPacket_t      ack;
-  struct ResponsePacket_t response;
+typedef union FlocPacketVariant_u {
+  typedef struct DataPacket_t     data;
+  typedef struct CommandPacket_t  command;
+  typedef struct AckPacket_t      ack;
+  typedef struct ResponsePacket_t response;
 };
 
 // --- Now Define Complete Packet Structures ---
-struct FlocPacket_t {
-  struct FlocHeader_t header;
+typedef struct FlocPacket_t {
+  typedef struct FlocHeader_t header;
   union FlocPacketVariant_u payload;
 };
 
 // --- Serial FLOC Structures ---
 // Define the header first.
-struct SerialFlocHeader_t {
+typedef struct SerialFlocHeader_t {
   SerialFlocPacketType_e type : SERIAL_FLOC_TYPE_SIZE;
   uint8_t                size;
 };
 
 // Now, define the complete Serial FLOC packet payload types before using them in a union.
-struct SerialUnicastPacket_t {
+typedef struct SerialUnicastPacket_t {
   uint16_t dest_addr;
-  struct FlocPacket_t floc_packet;
+  typedef struct FlocPacket_t floc_packet;
 };
 
-struct SerialBroadcastPacket_t {
-  struct FlocPacket_t floc_packet;
+typedef struct SerialBroadcastPacket_t {
+  typedef struct FlocPacket_t floc_packet;
 };
 
 // Now define the union with complete types.
-union SerialFlocPacketVariant_u {
-  struct SerialBroadcastPacket_t broadcast;
-  struct SerialUnicastPacket_t unicast;
+typedef union SerialFlocPacketVariant_u {
+  typedef struct SerialBroadcastPacket_t broadcast;
+  typedef struct SerialUnicastPacket_t unicast;
 };
 
-struct SerialFlocPacket_t {
-  struct SerialFlocHeader_t header;
+typedef struct SerialFlocPacket_t {
+  typedef struct SerialFlocHeader_t header;
   union SerialFlocPacketVariant_u payload;
 };
 

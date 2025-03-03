@@ -29,6 +29,59 @@
 
 #define SERIAL_FLOC_TYPE_SIZE 8
 
+// --- Packet Structures ---
+#pragma pack(push, 1)
+// --- Packet Type Enums ---
+
+// The 4 types of floc packets
+enum FlocPacketType_e : uint8_t{
+    FLOC_DATA_TYPE = 0x0,
+    FLOC_COMMAND_TYPE = 0x1,
+    FLOC_ACK_TYPE = 0x2,
+    FLOC_RESPONSE_TYPE = 0x3
+  };
+  
+  typedef enum CommandType_e: uint8_t {  // Example
+    COMMAND_TYPE_1 = 0x1,
+    COMMAND_TYPE_2 = 0x2,
+    // ...
+  };
+  
+  typedef enum SerialFlocPacketType_e: uint8_t {
+    SERIAL_BROADCAST_TYPE = 'B',
+    SERIAL_UNICAST_TYPE   = 'U',
+    // ...
+  };
+
+// --- FLOC Packet Headers ---
+typedef struct FlocHeader_t {
+    uint8_t ttl : FLOC_TTL_SIZE;
+    FlocPacketType_e type : FLOC_TYPE_SIZE;
+    uint16_t nid: FLOC_NID_SIZE;
+    uint8_t res : FLOC_RES_SIZE;
+    uint8_t pid : FLOC_PID_SIZE;
+    uint16_t dest_addr;
+    uint16_t src_addr;
+};
+
+typedef struct DataHeader_t {
+    uint8_t size;
+};
+
+typedef struct CommandHeader_t {
+    CommandType_e command_type: COMMAND_TYPE_SIZE;
+    uint8_t size;  // Size of the command data
+};
+
+typedef struct AckHeader_t {
+    uint8_t ack_pid;
+};
+
+typedef struct ResponseHeader_t {
+    uint8_t request_pid;
+    uint8_t size;  // Size of the response data
+};
+
 // --- Calculate Maximum Data Sizes ---
 // This is the key improvement:  We calculate the maximum data sizes
 // *statically*, based on FLOC_MAX_SIZE and the sizes of the headers.
@@ -46,130 +99,75 @@
 #define MAX_ACK_DATA_SIZE       (FLOC_MAX_SIZE - FLOC_HEADER_COMMON_SIZE - ACK_HEADER_SIZE)
 // Ack packets don't have a data field in this example, but you could define a MAX_ACK_DATA_SIZE if needed.
 
-// --- Packet Type Enums ---
-
-// The 4 types of floc packets
-enum FlocPacketType_e : uint8_t{
-  FLOC_DATA_TYPE = 0x0,
-  FLOC_COMMAND_TYPE = 0x1,
-  FLOC_ACK_TYPE = 0x2,
-  FLOC_RESPONSE_TYPE = 0x3
-};
-
-enum CommandType_e: uint8_t {  // Example
-  COMMAND_TYPE_1 = 0x1,
-  COMMAND_TYPE_2 = 0x2,
-  // ...
-};
-
-enum SerialFlocPacketType_e: uint8_t {
-  SERIAL_BROADCAST_TYPE = 'B',
-  SERIAL_UNICAST_TYPE   = 'U',
-  // ...
-};
-
-// --- Packet Structures ---
-#pragma pack(push, 1)
-// --- FLOC Packet Structures ---
-
-struct FlocHeader_t {
-    uint8_t ttl : FLOC_TTL_SIZE;
-    FlocPacketType_e type : FLOC_TYPE_SIZE;
-    uint16_t nid: FLOC_NID_SIZE;
-    uint8_t res : FLOC_RES_SIZE;
-    uint8_t pid : FLOC_PID_SIZE;
-    uint16_t dest_addr;
-    uint16_t src_addr;
-};
-
-struct DataHeader_t {
-    uint8_t size;
-};
-
-struct CommandHeader_t {
-    CommandType_e command_type: COMMAND_TYPE_SIZE;
-    uint8_t size;  // Size of the command data
-};
-
-struct AckHeader_t {
-    uint8_t ack_pid;
-};
-
-struct ResponseHeader_t {
-    uint8_t request_pid;
-    uint8_t size;  // Size of the response data
-};
-
 // --- Complete FLOC Packet Structures ---
-struct DataPacket_t {
+typedef struct DataPacket_t {
     DataHeader_t header;
     uint8_t data[MAX_DATA_DATA_SIZE];
 };
 
-struct CommandPacket_t {
+typedef struct CommandPacket_t {
     CommandHeader_t header;
     uint8_t data[MAX_COMMAND_DATA_SIZE];  // Statically allocated, maximum size
 };
 
-struct AckPacket_t {
+typedef struct AckPacket_t {
     AckHeader_t header;
     // uint8_t data[MAX_ACK_DATA_SIZE]; // If you add data to acks
 };
 
-struct ResponsePacket_t {
+typedef struct ResponsePacket_t {
     ResponseHeader_t header;
     uint8_t data[MAX_RESPONSE_DATA_SIZE]; // Statically allocated, maximum size
 };
 
-// --- Now Define Complete Packet Structures ---
-struct FlocPacket_t {
-    FlocHeader_t header;
-    FlocPacketVariant_u payload;
-};
-
-// --- Serial FLOC Structures ---
-// Define the header first.
-struct SerialFlocHeader_t {
-    SerialFlocPacketType_e type: SERIAL_FLOC_TYPE_SIZE;
-    uint8_t                size;
-};
-
-struct SerialFlocPacket_t {
-    SerialFlocHeader_t header;
-    SerialFlocPacketVariant_u payload;
-};
-
-struct SerialUnicastPacket_t {
-    uint16_t dest_addr;
-    FlocPacketVariant_u floc_packet;
-};
-
-struct SerialBroadcastPacket_t {
-    FlocPacketVariant_u floc_packet;
-};
-#pragma pack(pop)
-
-union FlocPacketVariant_u {
+typedef union FlocPacketVariant_u {
     DataPacket_t     data;
     CommandPacket_t  command;
     AckPacket_t      ack;
     ResponsePacket_t response;
 };
 
-// Now define the union with complete types.
-union SerialFlocPacketVariant_u {
-  struct SerialBroadcastPacket_t broadcast;
-  struct SerialUnicastPacket_t unicast;
+typedef struct FlocPacket_t {
+    FlocHeader_t header;
+    FlocPacketVariant_u payload;
 };
+
+typedef struct SerialUnicastPacket_t {
+    uint16_t dest_addr;
+    FlocPacketVariant_u floc_packet;
+};
+
+typedef struct SerialBroadcastPacket_t {
+    FlocPacketVariant_u floc_packet;
+};
+
+// Now define the union with complete types.
+typedef union SerialFlocPacketVariant_u {
+  typedef struct SerialBroadcastPacket_t broadcast;
+  typedef struct SerialUnicastPacket_t unicast;
+};
+
+// --- Serial FLOC Structures ---
+// Define the header first.
+typedef struct SerialFlocHeader_t {
+    SerialFlocPacketType_e type: SERIAL_FLOC_TYPE_SIZE;
+    uint8_t                size;
+};
+
+typedef struct SerialFlocPacket_t {
+    SerialFlocHeader_t header;
+    SerialFlocPacketVariant_u payload;
+};
+#pragma pack(pop)
 
 #ifdef ON_DEVICE
 uint16_t get_network_id();
 uint8_t use_packet_id();
 void parse_floc_command_packet(FlocHeader_t* floc_header, CommandPacket_t* pkt, uint8_t size) ;
-void parse_floc_acknowledgement_packet(uint8_t *broadcastBuffer, uint8_t size);
-void parse_floc_response_packet(uint8_t *broadcastBuffer, uint8_t size);
-void floc_broadcast_received(uint8_t *broadcastBuffer, uint8_t size);
-void floc_unicast_received(uint8_t *unicastBuffer, uint8_t size);
+void parse_floc_acknowledgement_packet(uint8_t* broadcastBuffer, uint8_t size);
+void parse_floc_response_packet(uint8_t* broadcastBuffer, uint8_t size);
+void floc_broadcast_received(uint8_t* broadcastBuffer, uint8_t size);
+void floc_unicast_received(uint8_t* unicastBuffer, uint8_t size);
 void floc_acknowledgement_send(uint8_t ttl, uint8_t ack_pid, uint16_t dest_addr, uint16_t src_addr);
 void floc_status_queue(HardwareSerial connection, uint8_t dest_addr);
 void floc_status_send(QueryStatusResponseFullPacket_t* statusResponse);

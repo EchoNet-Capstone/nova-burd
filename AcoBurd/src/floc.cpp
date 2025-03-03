@@ -167,7 +167,7 @@ void floc_broadcast_received(uint8_t *broadcastBuffer, uint8_t size) {
     }
 }
 
-void floc_unicast_received(char *unicastBuffer, uint8_t size) {
+void floc_unicast_received(uint8_t* unicastBuffer, uint8_t size) {
     // May not be used
 }
 
