@@ -1,4 +1,5 @@
 #include "nmv3_api.hpp"
+#include "floc.hpp"
 
 // Supported Modem Commands (Link Quality Indicator OFF)
 //  Query Status                                DONE
@@ -45,23 +46,23 @@ void ping(HardwareSerial connection, uint8_t addr) {
     connection.printf("$P%03d", addr);
 }
 
-void parse_status_query_packet(uint8_t* packetBuffer, uint8_t size) {
-    char temp[6];
-    memcpy(temp, packetBuffer + STATUS_QUERY_NODE_ADDR_START, STATUS_QUERY_NODE_ADDR_END - STATUS_QUERY_NODE_ADDR_START);
-    temp[4] = '\0';
-    long node_addr = (uint8_t) atoi(temp);
+void parse_status_query_packet(QueryStatusResponseFullPacket_t* statusResponse) {
+    char temp[6] = {0};
+    memcpy(temp, statusResponse->addr, QUERY_STATUS_RESP_ADDR_MAX);
+    temp[QUERY_STATUS_RESP_ADDR_MAX] = '\0';
+    uint8_t node_addr = (uint8_t) atoi(temp);
 
-    memcpy(temp, packetBuffer + STATUS_QUERY_NODE_ADDR_START, STATUS_QUERY_NODE_ADDR_END - STATUS_QUERY_NODE_ADDR_START);
+    memcpy(temp, statusResponse->voltPayload, QUERY_STATUS_RESP_VOLT_PAYLOAD_MAX);
     temp[5] = '\0';
     long supply_voltage_meas = (uint8_t) atoi(temp);
     
-    float supply_voltage = static_cast<float>(supply_voltage_meas) * 15.0f / 65536.0f;
+    float supply_voltage = (float)(supply_voltage_meas) * 15.0f / 65536.0f;
 
     if (debug) {
         Serial.printf("Status query packet received.\r\n\tDevice addr : %03ld\r\n\tDevice Supply Voltage : %f\r\n", node_addr, supply_voltage);
     }
 
-    floc_status_send(packetBuffer, size);
+    floc_status_send(statusResponse);
 }
 
 void parse_set_address_packet(uint8_t *packetBuffer, uint8_t size) {

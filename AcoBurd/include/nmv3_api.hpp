@@ -745,7 +745,7 @@ void set_address(HardwareSerial connection, int8_t addr);
 uint8_t get_modem_address();
 void broadcast(HardwareSerial connection, char *data, int8_t bytes);
 void ping(HardwareSerial connection, int8_t addr);
-void parse_status_query_packet(uint8_t* packetBuffer, uint8_t size);
+void parse_status_query_packet(QueryStatusResponseFullPacket_t* statusResponse);
 void parse_broadcast_packet(uint8_t* packetBuffer, uint8_t size);
 void parse_unicast_packet(uint8_t* packetBuffer, uint8_t size);
 void packet_received_modem(uint8_t* packetBuffer, uint8_t size);

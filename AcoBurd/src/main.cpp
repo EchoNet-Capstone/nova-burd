@@ -1,14 +1,17 @@
 #include <Arduino.h>
-#include "heltec_serial_api.hpp"
+#include "nmv3_api.hpp"
+#include "floc.hpp"
 #include "display.hpp"
 #include "motor.hpp"
 #include "watchdog.hpp"
 
-// Defined if the serial port (not serial1) is used to receive data from the NeST
-#define RECV_SERIAL_NEST
-
 // Testing define
 #define MASTER_NODE
+
+#ifdef MASTER_NODE
+  // Defined if the serial port (not serial1) is used to receive data from the NeST
+  #define RECV_SERIAL_NEST
+#endif
 
 // Packet buffer for data received from the ship terminal (NeST) serial line
 static uint8_t packetBuffer_nest[SERIAL_FLOC_MAX_SIZE] = {0};

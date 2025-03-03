@@ -194,13 +194,7 @@ void floc_status_queue(HardwareSerial connection, uint8_t dest_addr) {
     query_status(connection);
 }
 
-void floc_status_send(uint8_t *status, uint8_t size) {
-    // Ensure the status message fits within the response packet
-    if (size > MAX_RESPONSE_DATA_SIZE) {
-        if (debug) printf("Error, status message too large.\n");
-        return;
-    }
-
+void floc_status_send(QueryStatusResponseFullPacket_t* statusResponse) {
     // Construct the packet
     FlocPacket_t packet;
     packet.header.ttl = TTL_START;
@@ -212,10 +206,10 @@ void floc_status_send(uint8_t *status, uint8_t size) {
     packet.header.src_addr = htons(get_modem_address());
 
     packet.payload.response.header.request_pid = packet.header.pid;
-    packet.payload.response.header.size = size;
+    packet.payload.response.header.size = QUERY_STATUS_RESP_MAX;
 
     // Copy the status string into the response data
-    memcpy(packet.payload.response.data, status, size);
+    memcpy(packet.payload.response.data, statusResponse, QUERY_STATUS_RESP_MAX);
 
-    broadcast(MODEM_SERIAL_CONNECTION, reinterpret_cast<char*>(&packet), sizeof(FlocHeader_t) + sizeof(ResponseHeader_t) + size);
+    broadcast(MODEM_SERIAL_CONNECTION, (char*)(&packet), sizeof(FlocHeader_t) + sizeof(ResponseHeader_t) + QUERY_STATUS_RESP_MAX);
 }

@@ -10,6 +10,9 @@
 #include "motor.hpp"
 #endif // ON_DEVICE
 
+// -- Defaults ---
+#define TTL_START 3
+
 // --- Configuration (Maximum Sizes) ---
 #define FLOC_MAX_SIZE 64  // Maximum size of a complete FLOC packet
 #define SERIAL_FLOC_MAX_SIZE 64 // Maximum size for a serial floc packet.
@@ -169,7 +172,7 @@ void floc_broadcast_received(uint8_t *broadcastBuffer, uint8_t size);
 void floc_unicast_received(uint8_t *unicastBuffer, uint8_t size);
 void floc_acknowledgement_send(uint8_t ttl, uint8_t ack_pid, uint16_t dest_addr, uint16_t src_addr);
 void floc_status_queue(HardwareSerial connection, uint8_t dest_addr);
-void floc_status_send(uint8_t *status, uint8_t size);
+void floc_status_send(QueryStatusResponseFullPacket_t* statusResponse);
 #endif // ON_DEVICE
 
 #endif
