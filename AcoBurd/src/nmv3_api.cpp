@@ -38,11 +38,11 @@ uint8_t get_modem_address() {
 }
 
 void broadcast(HardwareSerial connection, char *data, uint8_t bytes) {
-    Serial.printf("$B%02u", bytes);
+    /*Serial.printf("$B%02u", bytes);
     for (int i = 0; i < bytes; i++) {
         Serial.printf(" %02X", (uint8_t)data[i]);
     }
-    Serial.println();
+    Serial.println();*/
     connection.printf("$B%02u", bytes);
     connection.write((uint8_t *)data, bytes);
 }
@@ -122,14 +122,15 @@ void parse_ping_packet(RangeDataResponsePacket_t* rangeResponse) {
 }
 
 void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
-    if (debug) {
+    /*if (debug) {
         Serial.printf("PKT RECV (%02u bytes): [", size);
         for(int i = 0; i < size; i++){
-            Serial.printf("%02x, ", packetBuffer[i]);
+            // Serial.printf("%02x, ", packetBuffer[i]);
+            Serial.printf("%c, ", packetBuffer[i]);
         }
         Serial.printf("]\r\n");
-    }
-
+    }*/
+    
     if (size < 1) {
         // Should never happen over serial connection.
         return;
@@ -178,13 +179,15 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                     // }
                 }
                 break;
-            case PING_CMD_LOCAL_RESP_TYPE: // 'P'
-                if (size == PING_CMD_LOACL_RESP_MAX) {
-                    // if (debug) {
-                    //     Serial.printf("Ping to modem %03ld sent.\r\n", 
-                    //     packetBuffer.substring(PING_LOCAL_ECHO_DEST_ADDR_START, 
-                    //                            PING_LOCAL_ECHO_DEST_ADDR_END).toInt());
-                    // }
+            case 'P':
+                if (size == PING_LOCAL_ECHO_LENGTH) {
+                    if (debug) {
+                        Serial.print("Ping to modem "); 
+                        for (int i = PING_LOCAL_ECHO_DEST_ADDR_START; i < PING_LOCAL_ECHO_DEST_ADDR_END; i++) {
+                            Serial.printf("%c", packetBuffer[i]);
+                        }
+                        Serial.print("sent.\r\n"); 
+                    }
                 }
                 break;
             case RESET_CMD_LOCAL_RESP_TYPE: // 'R'
@@ -235,6 +238,16 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 BroadcastMessageResponsePacket_t* broadcast = (BroadcastMessageResponsePacket_t*) &response->response;
                 parse_broadcast_packet(broadcast);
                 break;
+            case 'M':
+                // TODO : Handle unicast with ack? Does this exist with # prefix?
+                break;
+            case 'P':
+                
+                break;
+            case 'R':
+                Serial.printf("PING SIZE IS %u\r\n", size);
+                if (size == PING_PACKET_LENGTH) {
+                    parse_ping_packet(packetBuffer, size);
             }
             case RANGE_RESP_TYPE: // 'R'
             {
@@ -284,7 +297,7 @@ void packet_received_nest(uint8_t* packetBuffer, uint8_t size) {
         return;
     }
 
-    uint8_t pkt_type = *(packetBuffer++);
+    uint8_t pkt_type = *(packetBuffer++); // Remove '$' prefix
 
     SerialFlocPacket_t* pkt = (SerialFlocPacket_t*)(packetBuffer);
 

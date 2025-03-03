@@ -73,7 +73,7 @@ void setup(){
 
     delay(500);
     // Allocate memory for the command packet
-    FlocPacket_t *temp = (FlocPacket_t *)malloc(sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3); // 3 bytes of command data
+    /*FlocPacket_t *temp = (FlocPacket_t *)malloc(sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3); // 3 bytes of command data
 
     // Populate the common header
     temp->header.ttl = 2;
@@ -109,7 +109,7 @@ void setup(){
     MODEM_SERIAL_CONNECTION.write(struct_ptr, (size_t)(sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3));
 
     // Free allocated memory
-    free(temp);
+    free(temp);*/
   }
 #else
   if (MODEM_SERIAL_CONNECTION.availableForWrite()) {
@@ -136,7 +136,6 @@ void loop(){
             // Remove the <CR> from the buffer
             packetBuffer_nest[packetBuffer_nest_idx - 1] = 0;
 
-            Serial.printf("Size of packet : %d\r\n", packetBuffer_nest_idx - 1);
             packet_received_nest(packetBuffer_nest, packetBuffer_nest_idx - 1);
             
             memset(packetBuffer_nest, 0 , sizeof(packetBuffer_nest)); // Clear the buffer
