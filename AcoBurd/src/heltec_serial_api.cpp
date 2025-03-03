@@ -305,10 +305,12 @@ void packet_received_nest(uint8_t* packetBuffer, uint8_t size) {
 
         switch (pkt->header.type) {
             // Broadcast the data received on the serial line
-            case 'B':
-                broadcast(MODEM_SERIAL_CONNECTION, &pkt->payload, pkt->header.size);
+            case 'B': {
+                SerialBroadcastPacket_t* broadcastPacket = (SerialBroadcastPacket_t* )&pkt->payload;
+                broadcast(MODEM_SERIAL_CONNECTION, (char*) broadcastPacket, pkt->header.size);
                 // display_modem_packet_data(packetBuffer);
                 break;
+            }
             case 'U':
                 // TODO : need to extract dst from packet in order to send packet
                 // May not need to implement, depending on networking strategy
