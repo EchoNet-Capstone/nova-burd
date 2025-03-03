@@ -192,7 +192,7 @@ void floc_status_queue(HardwareSerial connection, uint8_t dest_addr) {
     query_status(connection);
 }
 
-void floc_status_send(String status, uint8_t ttl) {
+void floc_status_send(String status) {
     // Ensure the status message fits within the response packet
     uint8_t statusSize = status.length();
     if (statusSize > MAX_RESPONSE_DATA_SIZE) {
@@ -202,7 +202,7 @@ void floc_status_send(String status, uint8_t ttl) {
 
     // Construct the packet
     FlocPacket_t packet;
-    packet.header.ttl = ttl;
+    packet.header.ttl = TTL_START;
     packet.header.type = FLOC_RESPONSE_TYPE;
     packet.header.nid = get_network_id();
     packet.header.pid = use_packet_id();

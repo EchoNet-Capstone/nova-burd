@@ -41,18 +41,19 @@ void ping(HardwareSerial connection, int8_t addr) {
 }
 
 void parse_status_query_packet(uint8_t* packetBuffer, uint8_t size) {
-    // long node_addr = packetBuffer.substring(STATUS_QUERY_NODE_ADDR_START, STATUS_QUERY_NODE_ADDR_END).toInt();
-    // long supply_voltage_meas = packetBuffer.substring(STATUS_QUERY_SUPPLY_VOLTAGE_START, STATUS_QUERY_SUPPLY_VOLTAGE_END).toInt();
-    // float supply_voltage = static_cast<float>(supply_voltage_meas) * 15.0f / 65536.0f;
-    // String release_version = packetBuffer.substring(STATUS_QUERY_RELEASE_START, STATUS_QUERY_RELEASE_END);
-    // String build_date_time = packetBuffer.substring(STATUS_QUERY_BUILD_DATE_START, STATUS_QUERY_BUILD_DATE_END);
+    
+    long node_addr = packetBuffer.substring(STATUS_QUERY_NODE_ADDR_START, STATUS_QUERY_NODE_ADDR_END).toInt();
+    long supply_voltage_meas = packetBuffer.substring(STATUS_QUERY_SUPPLY_VOLTAGE_START, STATUS_QUERY_SUPPLY_VOLTAGE_END).toInt();
+    float supply_voltage = static_cast<float>(supply_voltage_meas) * 15.0f / 65536.0f;
+    String release_version = packetBuffer.substring(STATUS_QUERY_RELEASE_START, STATUS_QUERY_RELEASE_END);
+    String build_date_time = packetBuffer.substring(STATUS_QUERY_BUILD_DATE_START, STATUS_QUERY_BUILD_DATE_END);
 
-    // if (debug) {
-    //     Serial.printf("Status query packet received.\r\n\tDevice addr : %03ld\r\n\tDevice Supply Voltage : %f\r\n\tDevice Release Version : ", node_addr, supply_voltage);
-    //     Serial.print(release_version + "\r\n\tDevice Build Date + Time [BYYYY-MM-DDThh:mm:ss] : " + build_date_time + "\r\n");
-    // }
+    if (debug) {
+        Serial.printf("Status query packet received.\r\n\tDevice addr : %03ld\r\n\tDevice Supply Voltage : %f\r\n\tDevice Release Version : ", node_addr, supply_voltage);
+        Serial.print(release_version + "\r\n\tDevice Build Date + Time [BYYYY-MM-DDThh:mm:ss] : " + build_date_time + "\r\n");
+    }
 
-    // floc_status_send(packetBuffer, TTL_START);
+    floc_status_send(packetBuffer);
 }
 
 void parse_unicast_packet(uint8_t* packetBuffer, uint8_t size) {
@@ -67,27 +68,23 @@ void parse_unicast_packet(uint8_t* packetBuffer, uint8_t size) {
 }
 
 void parse_broadcast_packet(uint8_t* packetBuffer, uint8_t size) {
-    // long src_addr = packetBuffer.substring(BROADCAST_SRC_ADDR_START, BROADCAST_SRC_ADDR_END).toInt();
-    // long bytes = packetBuffer.substring(BROADCAST_BYTE_LENGTH_START, BROADCAST_BYTE_LENGTH_END).toInt();
     Serial.printf("Parsing broadcast packet...\r\n");
     char temp[4];
     uint8_t src_addr;
     uint8_t bytes;
     memcpy(temp, packetBuffer + BROADCAST_SRC_ADDR_START, 3);
     temp[4] = '\0';
-    Serial.printf("temp: %s\r\n", temp);
+    // Serial.printf("temp: %s\r\n", temp);
     src_addr = (uint8_t) atoi(temp);
 
     memset(temp, 0, 4);
     memcpy(temp, packetBuffer + BROADCAST_BYTE_LENGTH_START, 2);
     temp[3] = '\0';
-    Serial.printf("temp: %s\r\n", temp);
+    // Serial.printf("temp: %s\r\n", temp);
     bytes = (uint8_t) atoi(temp);
 
-    Serial.printf("Src_addr: %d, Size %d\r\n", src_addr, bytes);
+    Serial.printf("Src_addr: %d, Size: %d\r\n", src_addr, bytes);
 
-    // String packetData = packetBuffer.substring(BROADCAST_PACKET_DATA_START, BROADCAST_PACKET_DATA_START + bytes);
-    
     uint8_t *broadcastBuffer = packetBuffer + BROADCAST_PACKET_DATA_START;
 
     // if (debug) {
@@ -115,9 +112,21 @@ void parse_unicast_packet(String packetBuffer) {
 }
 
 // Also handles ack packets from Unicast with ack command
-void parse_ping_packet(String packetBuffer) {
-    long ping_addr = packetBuffer.substring(PING_ADDR_START, PING_ADDR_END).toInt();
-    long ping_propogation_counter = packetBuffer.substring(PING_PROPOGATION_COUNTER_START, PING_PROPOGATION_COUNTER_END).toInt();
+void parse_ping_packet(uint8_t *packetBuffer, uint8_t size) {
+    String packetParser = "";
+    
+    for (int i = PING_ADDR_START; i < PING_ADDR_END; i++) {
+        packetParser += (char)packetBuffer[i];
+    }
+    long ping_addr = packetParser.toInt();
+    packetParser = "";
+
+    for (int i = PING_PROPOGATION_COUNTER_START; i < PING_PROPOGATION_COUNTER_END; i++) {
+        packetParser += (char)packetBuffer[i];
+    }
+    long ping_propogation_counter = packetParser.toInt();
+    packetParser = "";
+
     float meter_range = static_cast<float>(ping_propogation_counter) * SOUND_SPEED * 3.125e-5;
 
     if (debug) {
@@ -126,15 +135,13 @@ void parse_ping_packet(String packetBuffer) {
 }
 
 void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
-    // if (debug) Serial.println("PKT RECV : " + packetBuffer);
-
-    if (debug) {
+    /*if (debug) {
         Serial.printf("PKT RECV: [");
         for(int i = 0; i < size; i++){
             Serial.printf("%02x, ", packetBuffer[i]);
         }
         Serial.printf("]\r\n");
-    }
+    }*/
     
     if (size < 1) {
         // Should never happen over serial connection.
@@ -142,7 +149,13 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
     }
 
     if (packetBuffer[0] == 'E') {
-        if (debug) Serial.printf("Error packet received.\r\n");
+        if (debug) Serial.println("Error packet received.");
+        return;
+    }
+
+
+    if (size < 2) {
+        if (debug) Serial.println("Packet invalid, size too small.");
         return;
     }
 
@@ -172,7 +185,6 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                     //     packetBuffer.substring(UNICAST_LOCAL_ECHO_DEST_ADDR_START, 
                     //                            UNICAST_LOCAL_ECHO_DEST_ADDR_END).toInt());
                     // }
-
                 }
                 break;
             case 'P':
@@ -228,7 +240,7 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 break;
             case 'R':
                 if (size == PING_PACKET_LENGTH) {
-                    //parse_ping_packet(packetBuffer, size);
+                    parse_ping_packet(packetBuffer, size);
                 }
                 break;
             case 'T':
@@ -264,36 +276,34 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
 
 void packet_received_nest(uint8_t* packetBuffer, uint8_t size) {
     
-    // if (packetBuffer.length() < 3) {
-    //     // Need a prefix character, a casting type, and at least one byte of data e.g. $BX for a broadcast with data 'X'
-    //     return;
-    // }
+    if (size < 3) {
+        // Need a prefix character, a casting type, and at least one byte of data e.g. $BX for a broadcast with data 'X'
+        if (debug) Serial.println("NeST packet too small. Minimum size : 3.");
+        return;
+    }
 
-    // if (packetBuffer.charAt(0) == '$') {
-    //     char *buffer = (char *)malloc(packetBuffer.length() + 1);
-    //     packetBuffer.toCharArray(buffer, packetBuffer.length() + 1);
-        
-    //     char *transmission_data_start = buffer + 2;
+    if (packetBuffer[0] == '$') {
+        char *transmission_data_start = ((char *)packetBuffer + 2);
 
-    //     switch (packetBuffer.charAt(1)) {
-    //         // Broadcast the data received on the serial line
-    //         case 'B':
-    //             broadcast(MODEM_SERIAL_CONNECTION, transmission_data_start, packetBuffer.length() - 2);
-    //             display_modem_packet_data(packetBuffer);
-    //             break;
-    //         case 'U':
-    //             // TODO : need to extract dst from packet in order to send packet
-    //             // May not need to implement, depending on networking strategy
-    //             break;
-    //         default:
-    //             if (debug) {
-    //                 Serial.printf("Unhandled packet type [NeST] : prefix [%c]\r\n", packetBuffer.charAt(1));
-    //                 Serial.println("Full packet : " + packetBuffer);
-    //             }
-    //     }
-    // } else {
-    //     // Packet does not follow nest prefix structure (starts with $)
-    //     if (debug) print_packet(packetBuffer, "Unknown prefix [NeST packet]");
-    //     return;
-    // }
+        switch (packetBuffer[1]) {
+            // Broadcast the data received on the serial line
+            case 'B':
+                broadcast(MODEM_SERIAL_CONNECTION, transmission_data_start, size - 2);
+                // display_modem_packet_data(packetBuffer);
+                break;
+            case 'U':
+                // TODO : need to extract dst from packet in order to send packet
+                // May not need to implement, depending on networking strategy
+                break;
+            default:
+                if (debug) {
+                    Serial.printf("Unhandled packet type [NeST] : prefix [%c]\r\n", packetBuffer[1]);
+                    Serial.printf("Full packet : %s\r\n", packetBuffer);
+                }
+        }
+    } else {
+        // Packet does not follow nest prefix structure (starts with $)
+        // if (debug) print_packet(packetBuffer, "Unknown prefix [NeST packet]");
+        return;
+    }
 }
