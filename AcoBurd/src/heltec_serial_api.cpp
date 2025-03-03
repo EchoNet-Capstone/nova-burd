@@ -32,11 +32,11 @@ uint8_t get_modem_address() {
 }
 
 void broadcast(HardwareSerial connection, char *data, uint8_t bytes) {
-    Serial.printf("$B%02u", bytes);
+    /*Serial.printf("$B%02u", bytes);
     for (int i = 0; i < bytes; i++) {
         Serial.printf(" %02X", (uint8_t)data[i]);
     }
-    Serial.println();
+    Serial.println();*/
     connection.printf("$B%02u", bytes);
     connection.write((uint8_t *)data, bytes);
 }
@@ -49,11 +49,11 @@ void parse_status_query_packet(uint8_t* packetBuffer, uint8_t size) {
     char temp[6];
     memcpy(temp, packetBuffer + STATUS_QUERY_NODE_ADDR_START, STATUS_QUERY_NODE_ADDR_END - STATUS_QUERY_NODE_ADDR_START);
     temp[4] = '\0';
-    long node_addr = (uint8_t) atoi(temp);
+    long node_addr = atoi(temp);
 
-    memcpy(temp, packetBuffer + STATUS_QUERY_NODE_ADDR_START, STATUS_QUERY_NODE_ADDR_END - STATUS_QUERY_NODE_ADDR_START);
+    memcpy(temp, packetBuffer + STATUS_QUERY_SUPPLY_VOLTAGE_START, STATUS_QUERY_SUPPLY_VOLTAGE_END - STATUS_QUERY_SUPPLY_VOLTAGE_START);
     temp[5] = '\0';
-    long supply_voltage_meas = (uint8_t) atoi(temp);
+    long supply_voltage_meas = atoi(temp);
     
     float supply_voltage = static_cast<float>(supply_voltage_meas) * 15.0f / 65536.0f;
 
@@ -151,13 +151,14 @@ void parse_ping_packet(uint8_t *packetBuffer, uint8_t size) {
 }
 
 void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
-    if (debug) {
+    /*if (debug) {
         Serial.printf("PKT RECV (%02u bytes): [", size);
         for(int i = 0; i < size; i++){
-            Serial.printf("%02x, ", packetBuffer[i]);
+            // Serial.printf("%02x, ", packetBuffer[i]);
+            Serial.printf("%c, ", packetBuffer[i]);
         }
         Serial.printf("]\r\n");
-    }
+    }*/
     
     if (size < 1) {
         // Should never happen over serial connection.
@@ -176,7 +177,7 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
     }
 
     if (packetBuffer[0] == '$') {
-        Serial.printf("Local Echo...");
+        Serial.printf("Local Echo...\r\n");
         // Local Echo
         switch (packetBuffer[1]) {
             case '?':
@@ -205,11 +206,13 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 break;
             case 'P':
                 if (size == PING_LOCAL_ECHO_LENGTH) {
-                    // if (debug) {
-                    //     Serial.printf("Ping to modem %03ld sent.\r\n", 
-                    //     packetBuffer.substring(PING_LOCAL_ECHO_DEST_ADDR_START, 
-                    //                            PING_LOCAL_ECHO_DEST_ADDR_END).toInt());
-                    // }
+                    if (debug) {
+                        Serial.print("Ping to modem "); 
+                        for (int i = PING_LOCAL_ECHO_DEST_ADDR_START; i < PING_LOCAL_ECHO_DEST_ADDR_END; i++) {
+                            Serial.printf("%c", packetBuffer[i]);
+                        }
+                        Serial.print("sent.\r\n"); 
+                    }
                 }
                 break;
             case 'U':
@@ -255,6 +258,7 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 
                 break;
             case 'R':
+                Serial.printf("PING SIZE IS %u\r\n", size);
                 if (size == PING_PACKET_LENGTH) {
                     parse_ping_packet(packetBuffer, size);
                 }

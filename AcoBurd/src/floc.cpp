@@ -69,8 +69,8 @@ void parse_floc_acknowledgement_packet(uint8_t *broadcastBuffer, uint8_t size) {
     uint8_t ack_pid = ackHeader->ack_pid;
 
     if (debug) {
-        printf("ACK Packet Received:\n");
-        printf("  Acknowledged Packet ID: %d\n", ack_pid);
+        printf("ACK Packet Received:\r\n");
+        printf("\tAcknowledged Packet ID: %d\r\n", ack_pid);
     }
 
     // TODO : Handle ACK processing (e.g., mark packet as acknowledged)
@@ -78,7 +78,7 @@ void parse_floc_acknowledgement_packet(uint8_t *broadcastBuffer, uint8_t size) {
 
 void parse_floc_response_packet(uint8_t *broadcastBuffer, uint8_t size) {
     if (sizeof(FlocHeader_t) + sizeof(ResponseHeader_t) > FLOC_MAX_SIZE) {
-        if (debug) printf("Invalid Response Packet: Too small\n");
+        if (debug) printf("Invalid Response Packet: Too small\r\n");
         return;
     }
 
@@ -92,7 +92,7 @@ void parse_floc_response_packet(uint8_t *broadcastBuffer, uint8_t size) {
     uint8_t dataSize = responseHeader->size;
 
     if (sizeof(FlocHeader_t) + sizeof(ResponseHeader_t) + dataSize > FLOC_MAX_SIZE) {
-        if (debug) printf("Invalid Response Packet: Incomplete data\n");
+        if (debug) printf("Invalid Response Packet: Incomplete data\r\n");
         return;
     }
 
@@ -100,9 +100,9 @@ void parse_floc_response_packet(uint8_t *broadcastBuffer, uint8_t size) {
     uint8_t *responseData = reinterpret_cast<uint8_t*>(broadcastBuffer + sizeof(FlocHeader_t) + sizeof(ResponseHeader_t));
 
     if (debug) {
-        printf("Response Packet Received:\n");
-        printf("  Request Packet ID: %d\n", request_pid);
-        printf("  Data Size: %d\n", dataSize);
+        printf("Response Packet Received:\r\n");
+        printf("  Request Packet ID: %d\r\n", request_pid);
+        printf("  Data Size: %d\r\n", dataSize);
     }
     
     // TODO : Handle response data processing
