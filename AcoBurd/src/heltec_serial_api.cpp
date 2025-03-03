@@ -297,13 +297,16 @@ void packet_received_nest(uint8_t* packetBuffer, uint8_t size) {
         return;
     }
 
-    if (packetBuffer[0] == '$') {
-        char *transmission_data_start = ((char *)packetBuffer + 2);
+    uint8_t pkt_type = *(packetBuffer++);
 
-        switch (packetBuffer[1]) {
+    SerialFlocPacket_t* pkt = (SerialFlocPacket_t*)(packetBuffer);
+
+    if (pkt_type == '$') {
+
+        switch (pkt->header.type) {
             // Broadcast the data received on the serial line
             case 'B':
-                broadcast(MODEM_SERIAL_CONNECTION, transmission_data_start, size - 2);
+                broadcast(MODEM_SERIAL_CONNECTION, &pkt->payload, pkt->header.size);
                 // display_modem_packet_data(packetBuffer);
                 break;
             case 'U':
