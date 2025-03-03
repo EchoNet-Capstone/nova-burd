@@ -1,6 +1,8 @@
 #include "nmv3_api.hpp"
 #include "floc.hpp"
 
+GET_SET_FUNC_DEF(uint8_t, modem_id, 0)
+
 // Supported Modem Commands (Link Quality Indicator OFF)
 //  Query Status                                DONE
 //  Set Address                                 DONE
@@ -12,7 +14,14 @@
 //  Error
 //  Timeout
 
-uint8_t modem_id = 0;
+int fieldToInt(char* field, uint8_t field_len){
+    char temp[field_len + 1] = {0};
+
+    memcpy(temp, field, field_len);
+    temp[field_len] = '\0';
+
+    return atoi(temp);
+}
 
 void print_packet(String packetBuffer, String packet_type) {
     Serial.println("Packet recieved.\n\tType : " + packet_type + "\n\tPacket data : " + packetBuffer);
@@ -65,43 +74,45 @@ void parse_status_query_packet(QueryStatusResponseFullPacket_t* statusResponse) 
     floc_status_send(statusResponse);
 }
 
-void parse_set_address_packet(uint8_t *packetBuffer, uint8_t size) {
+void parse_set_address_packet(SetAddressResponsePacket_t* setAddressResponse) {
     char temp[4];
-    memcpy(temp, packetBuffer + SET_ADDRESS_ADDR_START, SET_ADDRESS_ADDR_END - SET_ADDRESS_ADDR_START);
-    temp[3] = '\0';
-    long new_addr = (uint8_t) atoi(temp);
+    memcpy(temp, setAddressResponse->addr, SET_ADDRESS_RESP_ADDR_MAX);
+    temp[SET_ADDRESS_RESP_ADDR_MAX] = '\0';
+    uint8_t new_addr = (uint8_t) atoi(temp);
 
     if (debug) {
         Serial.printf("Set address packet received.\r\n\tNew Device addr : %03ld\r\n", new_addr);
     }
 
-    modem_id = new_addr;
-    display_modem_id(modem_id);
+    set_modem_id(new_addr);
+    display_modem_id(get_modem_id());
 }
 
 void parse_unicast_packet(uint8_t* packetBuffer, uint8_t size) {
     // TODO : implement?
 }
 
-void parse_broadcast_packet(uint8_t* packetBuffer, uint8_t size) {
+void parse_broadcast_packet(BroadcastMessageResponsePacket_t* broadcast) {
     Serial.printf("Parsing broadcast packet...\r\n");
+
     char temp[4];
     uint8_t src_addr;
     uint8_t bytes;
-    memcpy(temp, packetBuffer + BROADCAST_SRC_ADDR_START, 3);
-    temp[4] = '\0';
+
+    memcpy(temp, broadcast->header.addr, BROADCAST_RESP_ADDR_MAX);
+    temp[BROADCAST_RESP_ADDR_MAX] = '\0';
     // Serial.printf("temp: %s\r\n", temp);
     src_addr = (uint8_t) atoi(temp);
 
     memset(temp, 0, 4);
-    memcpy(temp, packetBuffer + BROADCAST_BYTE_LENGTH_START, 2);
-    temp[3] = '\0';
+    memcpy(temp, broadcast->header.dataSize, 2);
+    temp[BROADCAST_RESP_DATA_SIZE_MAX] = '\0';
     // Serial.printf("temp: %s\r\n", temp);
     bytes = (uint8_t) atoi(temp);
 
     Serial.printf("Src_addr: %d, Size: %d\r\n", src_addr, bytes);
 
-    uint8_t *broadcastBuffer = packetBuffer + BROADCAST_PACKET_DATA_START;
+    uint8_t *message = (uint8_t*) &broadcast->message;
 
     // if (debug) {
     //     Serial.printf("Broadcast packet received.\r\n\tPacket src addr : %03ld\r\n\tPacket Bytes : %ld\r\n\tPacket data : ", src_addr, bytes);
@@ -111,10 +122,7 @@ void parse_broadcast_packet(uint8_t* packetBuffer, uint8_t size) {
     //     Serial.printf("\r\n");
     // }
 
-    uint8_t* packetData = (uint8_t*) malloc(bytes);
-    memcpy(packetData, broadcastBuffer, bytes);
-    floc_broadcast_received(packetData, bytes);
-    free(packetData);
+    floc_broadcast_received(message, bytes);
 }
 
 void parse_unicast_packet(String packetBuffer) {
@@ -128,25 +136,14 @@ void parse_unicast_packet(String packetBuffer) {
 }
 
 // Also handles ack packets from Unicast with ack command
-void parse_ping_packet(uint8_t *packetBuffer, uint8_t size) {
-    String packetParser = "";
-    
-    for (int i = PING_ADDR_START; i < PING_ADDR_END; i++) {
-        packetParser += (char)packetBuffer[i];
-    }
-    long ping_addr = packetParser.toInt();
-    packetParser = "";
-
-    for (int i = PING_PROPOGATION_COUNTER_START; i < PING_PROPOGATION_COUNTER_END; i++) {
-        packetParser += (char)packetBuffer[i];
-    }
-    long ping_propogation_counter = packetParser.toInt();
-    packetParser = "";
+void parse_ping_packet(RangeDataResponsePacket_t* rangeResponse) {
+    uint8_t src_addr = (uint8_t) fieldToInt((char*) rangeResponse->addr, RANGE_RESP_ADDR_MAX);
+    uint16_t ping_propogation_counter = (uint16_t) fieldToInt((char*) rangeResponse->rangePayload, RANGE_RESP_PAYLOAD_MAX);
 
     float meter_range = static_cast<float>(ping_propogation_counter) * SOUND_SPEED * 3.125e-5;
 
     if (debug) {
-        Serial.printf("Ping (or ACK) packet received.\r\n\tAddr : %03ld\r\n\tRange (m) : %f\r\n", ping_addr, meter_range);
+        Serial.printf("Ping (or ACK) packet received.\r\n\tAddr : %03ld\r\n\tRange (m) : %f\r\n", src_addr, meter_range);
     }
 }
 
@@ -158,33 +155,36 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
         }
         Serial.printf("]\r\n");
     }
-    
+
     if (size < 1) {
         // Should never happen over serial connection.
         return;
     }
 
-    if (packetBuffer[0] == 'E' && size == 1) {
+    ModemPacket_t* pkt = (ModemPacket_t*) packetBuffer;
+
+    if (pkt->type == 'E' && size == 1) {
         if (debug) Serial.println("Error packet received.");
         return;
     }
-
 
     if (size < 2) {
         if (debug) Serial.println("Packet invalid, size too small.");
         return;
     }
 
-    if (packetBuffer[0] == '$') {
+    if (pkt->type == '$') {
+        ModemLocalResponsePacket_t* localResp = (ModemLocalResponsePacket_t* )&pkt->payload;
+
         Serial.printf("Local Echo...");
         // Local Echo
-        switch (packetBuffer[1]) {
+        switch (localResp->type) {
             case '?':
                 break;
             case 'A':
                 break;
             case 'B':
-                if (size == BROADCAST_LOCAL_ECHO_LENGTH) {
+                if (size == BROADCAST_CMD_LOCAL_RESP_MAX) {
                     // if (debug) {
                     //     Serial.printf("Broadcast of %02ld bytes sent.\r\n",
                     //     packetBuffer.substring(BROADCAST_LOCAL_ECHO_BYTE_LENGTH_START, 
@@ -193,7 +193,7 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 }
                 break;
             case 'M':
-                if (size == UNICAST_LOCAL_ECHO_LENGTH) {
+                if (size == UNICAST_ACK_CMD_LOCAL_RESP_MAX) {
                     // if (debug) {
                     //     Serial.printf("Unicast (with ACK) of %02ld bytes to address %03ld sent.\r\n",
                     //     packetBuffer.substring(UNICAST_LOCAL_ECHO_BYTE_LENGTH_START, 
@@ -204,7 +204,7 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 }
                 break;
             case 'P':
-                if (size == PING_LOCAL_ECHO_LENGTH) {
+                if (size == PING_CMD_LOACL_RESP_MAX) {
                     // if (debug) {
                     //     Serial.printf("Ping to modem %03ld sent.\r\n", 
                     //     packetBuffer.substring(PING_LOCAL_ECHO_DEST_ADDR_START, 
@@ -213,7 +213,7 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 }
                 break;
             case 'U':
-                if (size == UNICAST_LOCAL_ECHO_LENGTH) {
+                if (size == UNICAST_CMD_LOCAL_RESP_MAX) {
                     // if (debug) {
                     //     Serial.printf("Unicast of %02ld bytes to address %03ld sent.\r\n",
                     //     packetBuffer.substring(UNICAST_LOCAL_ECHO_BYTE_LENGTH_START, 
@@ -233,32 +233,44 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 //     Serial.println("\tFull packet : " + packetBuffer);
                 // }
         }
-    } else if (packetBuffer[0] == '#') {
+    } else if (pkt->type) {
         Serial.printf("Response packet...\r\n");
-        switch (packetBuffer[1]) {
+
+        ModemResponsePacket_t* response = (ModemResponsePacket_t*)&pkt->payload;
+
+        switch (response->type) {
             case '?':
                 break;
-            case 'A':
-                if (size == STATUS_QUERY_PACKET_LENGTH) {
-                    parse_status_query_packet(packetBuffer, size);
-                } else if (size == SET_ADDRESS_PACKET_LENGTH) {
-                    parse_set_address_packet(packetBuffer, size);
+            case 'A':{
+                QueryStatusResponsePacket_t* statusResponse = (QueryStatusResponsePacket_t*) &response->response;
+                if (size == QUERY_STATUS_RESP_MAX) {
+                    QueryStatusResponseFullPacket_t* fullStatus = (QueryStatusResponseFullPacket_t*) &statusResponse->status;
+                    parse_status_query_packet(fullStatus);
+                } else if (size == SET_ADDRESS_RESP_MAX) {
+                    SetAddressResponsePacket_t* setAddressResponse = (SetAddressResponsePacket_t*) &statusResponse->status;
+                    parse_set_address_packet(setAddressResponse);
                 }
                 break;
-            case 'B':
-                    parse_broadcast_packet(packetBuffer, size);
+            }
+            case 'B': {
+                BroadcastMessageResponsePacket_t* broadcast = (BroadcastMessageResponsePacket_t*) &response->response;
+                parse_broadcast_packet(broadcast);
                 break;
+            }
             case 'M':
                 // TODO : Handle unicast with ack? Does this exist with # prefix?
                 break;
             case 'P':
                 
                 break;
-            case 'R':
-                if (size == PING_PACKET_LENGTH) {
-                    parse_ping_packet(packetBuffer, size);
+            case 'R': {
+                RangeDataResponsePacket_t* rangeResponse = (RangeDataResponsePacket_t*) &response->response;
+
+                if (size == RANGE_RESP_MAX) {
+                    parse_ping_packet(rangeResponse);
                 }
                 break;
+            }
             case 'T':
                 if (size == TIMEOUT_PACKET_LENGTH) {
                     if (debug) {

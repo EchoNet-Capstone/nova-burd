@@ -4,10 +4,13 @@
 #include "Arduino.h"
 #include "globals.hpp"
 #include "display.hpp"
+#include "get_set_macros.hpp"
 
 // --- Configuration (Maximum Sizes) ---
 #define MODEM_DATA_MIN 2
 #define MODEM_PAYLOAD_MAX 64
+#define MODEM_ADDR_SIZE_MAX 3
+#define MODEM_DATA_SIZE_MAX 2
 
 // --- Error Packet ---
 #define ERROR_PRE_MAX 1
@@ -22,11 +25,11 @@
 #define QUERY_STATUS_CMD_MAX      	0
 
 // Set Address
-#define SET_ADDRESS_CMD_ADDR_MAX    3
+#define SET_ADDRESS_CMD_ADDR_MAX    MODEM_ADDR_SIZE_MAX
 #define SET_ADDRESS_CMD_MAX       	SET_ADDRESS_CMD_ADDR_MAX
 
 // Broadcast Message
-#define BROADCAST_CMD_DATA_SIZE_MAX 2
+#define BROADCAST_CMD_DATA_SIZE_MAX MODEM_DATA_SIZE_MAX
 #define BROADCAST_CMD_HDR_MAX     	BROADCAST_CMD_DATA_SIZE_MAX
 #define BROADCAST_CMD_DATA_MIN    	MODEM_DATA_MIN
 #define BROADCAST_CMD_PAYLOAD_MAX   MODEM_PAYLOAD_MAX
@@ -37,13 +40,13 @@
 
 // Channel Impulse 
 #define CHN_IMP_CMD_MAG_COMP_MAX    1
-#define CHN_IMP_CMD_ADDR_MAX        3
+#define CHN_IMP_CMD_ADDR_MAX        MODEM_ADDR_SIZE_MAX
 #define CHN_IMP_CMD_MAX           	CHN_IMP_CMD_MAG_COMP_MAX + \
                                     CHN_IMP_CMD_ADDR_MAX
 
 // Echo Message
-#define ECHO_MSG_CMD_ADDR_MAX       3
-#define ECHO_MSG_CMD_DATA_SIZE_MAX  2
+#define ECHO_MSG_CMD_ADDR_MAX       MODEM_ADDR_SIZE_MAX
+#define ECHO_MSG_CMD_DATA_SIZE_MAX  MODEM_DATA_SIZE_MAX
 #define ECHO_MSG_CMD_HDR_MAX      	ECHO_MSG_CMD_ADDR_MAX + \
                                     ECHO_MSG_CMD_HDR_MAX
 #define ECHO_MSG_CMD_DATA_MIN     	MODEM_DATA_MIN
@@ -57,8 +60,8 @@
 #define HELP_CMD_MAX                    0
 
 // Unicast with Ack Message
-#define UNICAST_ACK_CMD_ADDR_MAX        3
-#define UNICAST_ACK_CMD_DATA_SIZE_MAX   2
+#define UNICAST_ACK_CMD_ADDR_MAX        MODEM_ADDR_SIZE_MAX
+#define UNICAST_ACK_CMD_DATA_SIZE_MAX   MODEM_DATA_SIZE_MAX
 #define UNICAST_ACK_CMD_HDR_MAX      	  UNICAST_ACK_CMD_ADDR_MAX + \
                                         UNICAST_ACK_CMD_HDR_MAX
 #define UNICAST_ACK_CMD_DATA_MIN  	    MODEM_DATA_MIN
@@ -72,7 +75,7 @@
 #define NOISE_MSR_CMD_MAX         	0
 
 // Ping
-#define PING_CMD_ADDR_MAX           3
+#define PING_CMD_ADDR_MAX           MODEM_ADDR_SIZE_MAX
 #define PING_CMD_MAX              	PING_CMD_ADDR_MAX
 
 // Corrected Errors
@@ -85,12 +88,12 @@
 #define SPEC_MSR_CMD_MAX          	0
 
 // Test
-#define TEST_MSG_CMD_ADDR_MAX       3
+#define TEST_MSG_CMD_ADDR_MAX       MODEM_ADDR_SIZE_MAX
 #define TEST_MSG_CMD_MAX          	TEST_MSG_CMD_ADDR_MAX
 
 // Unicast Message
-#define UNICAST_CMD_ADDR_MAX        3
-#define UNICAST_CMD_DATA_SIZE_MAX   2
+#define UNICAST_CMD_ADDR_MAX        MODEM_ADDR_SIZE_MAX
+#define UNICAST_CMD_DATA_SIZE_MAX   MODEM_DATA_SIZE_MAX
 #define UNICAST_CMD_HDR_MAX       	UNICAST_CMD_ADDR_MAX + \
                                     UNICAST_CMD_DATA_SIZE_MAX +
 #define UNICAST_CMD_DATA_MIN      	MODEM_DATA_MIN
@@ -101,7 +104,7 @@
                                     UNICAST_CMD_PAYLOAD_MAX
 
 // Voltage and Noise Measurement
-#define VOLT_NOISE_MSR_CMD_ADDR_MAX 3
+#define VOLT_NOISE_MSR_CMD_ADDR_MAX MODEM_ADDR_SIZE_MAX
 #define VOLT_NOISE_MSR_CMD_MAX      VOLT_NOISE_MSR_CMD_ADDR_MAX
 
 // Extenion Commands
@@ -120,29 +123,29 @@
 #define MODEM_LOCAL_RESP_TYPE_MAX       1
 
 // Broadcast Message
-#define BROADCAST_CMD_LOCAL_RESP_DATA_SIZE_MAX  2
+#define BROADCAST_CMD_LOCAL_RESP_DATA_SIZE_MAX  MODEM_DATA_SIZE_MAX
 #define BROADCAST_CMD_LOCAL_RESP_MAX            BROADCAST_CMD_LOCAL_RESP_DATA_SIZE_MAX
 
 // Channel Impulse
 #define CHN_IMP_CMD_LOCAL_RESP_MAG_COMP_MAX     1
-#define CHN_IMP_CMD_LOCAL_RESP_ADDR_MAX         3
+#define CHN_IMP_CMD_LOCAL_RESP_ADDR_MAX         MODEM_ADDR_SIZE_MAX
 #define CHN_IMP_CMD_LOCAL_RESP_MAX           	  CHN_IMP_CMD_LOCAL_RESP_MAG_COMP_MAX + \
                                                 CHN_IMP_CMD_LOCAL_RESP_ADDR_MAX
 
 // Echo Message
-#define ECHO_MSG_CMD_LOCAL_RESP_ADDR_MAX        3
-#define ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX   2
+#define ECHO_MSG_CMD_LOCAL_RESP_ADDR_MAX        MODEM_ADDR_SIZE_MAX
+#define ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX   MODEM_DATA_SIZE_MAX
 #define ECHO_MSG_CMD_LOCAL_RESP_MAX      	      ECHO_MSG_CMD_LOCAL_RESP_ADDR_MAX + \
                                                 ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX
 
 // Unicast with Ack Message
-#define UNICAST_ACK_CMD_LOCAL_RESP_ADDR_MAX       3
-#define UNICAST_ACK_CMD_LOCAL_RESP_DATA_SIZE_MAX  2
+#define UNICAST_ACK_CMD_LOCAL_RESP_ADDR_MAX       MODEM_ADDR_SIZE_MAX
+#define UNICAST_ACK_CMD_LOCAL_RESP_DATA_SIZE_MAX  MODEM_DATA_SIZE_MAX
 #define UNICAST_ACK_CMD_LOCAL_RESP_MAX            UNICAST_ACK_CMD_LOCAL_RESP_ADDR_MAX + \
                                                   UNICAST_ACK_CMD_LOCAL_RESP_DATA_SIZE_MAX
 
 // Ping
-#define PING_CMD_LOCAL_RESP_ADDR_MAX  3
+#define PING_CMD_LOCAL_RESP_ADDR_MAX  MODEM_ADDR_SIZE_MAX
 #define PING_CMD_LOACL_RESP_MAX       PING_CMD_LOCAL_RESP_ADDR_MAX
 
 // Corrected Errors
@@ -156,17 +159,17 @@
 #define SPEC_MSR_CMD_LOCAL_RESP_MAX     0
 
 // Test
-#define TEST_MSG_CMD_LOCAL_RESP_ADDR_MAX    3
+#define TEST_MSG_CMD_LOCAL_RESP_ADDR_MAX    MODEM_ADDR_SIZE_MAX
 #define TEST_MSG_CMD_LOCAL_RESP_MAX         TEST_MSG_CMD_LOCAL_RESP_ADDR_MAX
 
 // Unicast Message
-#define UNICAST_CMD_LOCAL_RESP_ADDR_MAX       3
-#define UNICAST_CMD_LOCAL_RESP_DATA_SIZE_MAX  2
+#define UNICAST_CMD_LOCAL_RESP_ADDR_MAX       MODEM_ADDR_SIZE_MAX
+#define UNICAST_CMD_LOCAL_RESP_DATA_SIZE_MAX  MODEM_DATA_SIZE_MAX
 #define UNICAST_CMD_LOCAL_RESP_MAX            UNICAST_CMD_LOCAL_RESP_ADDR_MAX + \
                                               UNICAST_CMD_LOCAL_RESP_DATA_SIZE_MAX
 
 // Voltage and Noise Measurement
-#define VOLT_NOISE_MSR_CMD_LOCAL_RESP_ADDR_MAX  3
+#define VOLT_NOISE_MSR_CMD_LOCAL_RESP_ADDR_MAX  MODEM_ADDR_SIZE_MAX
 #define VOLT_NOISE_MSR_CMD_LOCAL_RESP_MAX       VOLT_NOISE_MSR_CMD_LOCAL_RESP_ADDR_MAX
 
 // --- Responses ---
@@ -192,7 +195,7 @@
 
 // Query Status
 #define QUERY_STATUS_RESP_FIELD_PRE_MAX       1
-#define QUERY_STATUS_RESP_ADDR_MAX            3
+#define QUERY_STATUS_RESP_ADDR_MAX            MODEM_ADDR_SIZE_MAX
 #define QUERY_STATUS_RESP_HDR_MAX             QUERY_STATUS_RESP_ADDR_MAX
 #define QUERY_STATUS_RESP_VOLT_PAYLOAD_MAX    5
 #define QUERY_STATUS_RESP_VOLT_MAX            QUERY_STATUS_RESP_FIELD_PRE_MAX + \
@@ -214,12 +217,12 @@
                                               QUERY_STATUS_RESP_BT_MAX
 
 // Set Address
-#define SET_ADDRESS_RESP_ADDR_MAX     3
+#define SET_ADDRESS_RESP_ADDR_MAX     MODEM_ADDR_SIZE_MAX
 #define SET_ADDRESS_RESP_MAX          SET_ADDRESS_RESP_ADDR_MAX
 
 // Broadcast Message
-#define BROADCAST_RESP_ADDR_MAX       3
-#define BROADCAST_RESP_DATA_SIZE_MAX  2
+#define BROADCAST_RESP_ADDR_MAX       MODEM_ADDR_SIZE_MAX
+#define BROADCAST_RESP_DATA_SIZE_MAX  MODEM_DATA_SIZE_MAX
 #define BROADCAST_RESP_HDR_MAX        BROADCAST_RESP_ADDR_MAX + \
                                       BROADCAST_RESP_DATA_SIZE_MAX
 #define BROADCAST_RESP_DATA_MIN       MODEM_DATA_MIN
@@ -232,7 +235,7 @@
 // Channel Impulse
 #define CHN_IMP_RESP_FIELD_PRE_MAX        1
 #define CHN_IMP_RESP_MAG_COMP_MAX         1
-#define CHN_IMP_RESP_ADDR_MAX             3
+#define CHN_IMP_RESP_ADDR_MAX             MODEM_ADDR_SIZE_MAX
 #define CHN_IMP_RESP_MAX                  CHN_IMP_RESP_MAG_COMP_MAX + \
                                           CHN_IMP_RESP_ADDR_MAX
 #define CHN_IMP_RESP_RANGE_PAYLOAD_MAX    5
@@ -262,11 +265,11 @@
 
 // Range Data
 #define RANGE_RESP_FIELD_PRE_MAX  1
-#define RANGE_RESP_ADDR_MAX       3
+#define RANGE_RESP_ADDR_MAX       MODEM_ADDR_SIZE_MAX
 #define RANGE_RESP_HDR_MAX        RANGE_RESP_ADDR_MAX
 #define RANGE_RESP_PAYLOAD_MAX    5
 #define RANGE_RESP_RANGE_MAX      RANGE_RESP_FIELD_PRE_MAX + \
-                                  RANGE_RESP_RANGE_PAYLOAD_MAX
+                                  RANGE_RESP_PAYLOAD_MAX
 #define RANGE_RESP_MAX            RANGE_RESP_HDR_MAX + \
                                   RANGE_RESP_RANGE_MAX
 
@@ -276,7 +279,7 @@
 //TODO finish this field
 
 // Unicast
-#define UNICAST_RESP_DATA_SIZE_MAX 2
+#define UNICAST_RESP_DATA_SIZE_MAX MODEM_DATA_SIZE_MAX
 #define UNICAST_RESP_HDR_MAX       UNICAST_RESP_HDR_MAX
 #define UNICAST_RESP_DATA_MIN      MODEM_DATA_MIN
 #define UNICAST_RESP_PAYLOAD_MAX   MODEM_PAYLOAD_MAX
@@ -287,8 +290,8 @@
 
 // Voltage and Noise Measurement (Broadcast Message)
 #define VOLT_NOISE_MSR_RESP_FIELD_PRE_MAX     1
-#define VOLT_NOISE_MSR_RESP_ADDR_MAX          3
-#define VOLT_NOISE_MSR_RESP_DATA_SIZE_MAX     2
+#define VOLT_NOISE_MSR_RESP_ADDR_MAX          MODEM_ADDR_SIZE_MAX
+#define VOLT_NOISE_MSR_RESP_DATA_SIZE_MAX     MODEM_DATA_SIZE_MAX
 #define VOLT_NOISE_MSR_RESP_HDR_MAX           VOLT_NOISE_MSR_RESP_ADDR_MAX + \
                                               VOLT_NOISE_MSR_RESP_DATA_SIZE_MAX
 #define VOLT_NOISE_MSR_RESP_VOLT_PAYLOAD_MAX  5
@@ -651,16 +654,6 @@ struct QueryStatusResponsePacket_t {
   QueryStatusResponsePacketVariant_u status;
 };
 
-struct BroadcastMessageHeader_t {
-  uint8_t addr[BROADCAST_RESP_ADDR_MAX];
-  uint8_t dataSize[BROADCAST_RESP_DATA_SIZE_MAX];
-};
-
-struct BroadcastMessageResponsePacket_t {
-  BroadcastMessageHeader_t header;
-  BroadcastMessageResponseVariant_u message;
-};
-
 struct NoiseMeasurementResponsePacket_t {
   uint8_t rmsSep;
   uint8_t rmsPayload[NOISE_MSR_RESP_RMS_PAYLOAD_MAX];
@@ -679,6 +672,16 @@ struct VoltageAndNoiseResponsePacket_t {
 union BroadcastMessageResponseVariant_u {
   uint8_t payload[BROADCAST_RESP_PAYLOAD_MAX];
   VoltageAndNoiseResponsePacket_t voltAndNoise;
+};
+
+struct BroadcastMessageHeader_t {
+  uint8_t addr[BROADCAST_RESP_ADDR_MAX];
+  uint8_t dataSize[BROADCAST_RESP_DATA_SIZE_MAX];
+};
+
+struct BroadcastMessageResponsePacket_t {
+  BroadcastMessageHeader_t header;
+  BroadcastMessageResponseVariant_u message;
 };
 
 struct RangeDataResponsePacket_t {
@@ -739,6 +742,8 @@ struct ModemPacket_t {
 
 #pragma pack(pop)
 
+GET_SET_FUNC_PROTO(uint8_t, modem_id)
+
 void print_packet(String packetBuffer, String packet_type);
 void query_status(HardwareSerial connection);
 void set_address(HardwareSerial connection, int8_t addr);
@@ -746,7 +751,9 @@ uint8_t get_modem_address();
 void broadcast(HardwareSerial connection, char *data, int8_t bytes);
 void ping(HardwareSerial connection, int8_t addr);
 void parse_status_query_packet(QueryStatusResponseFullPacket_t* statusResponse);
-void parse_broadcast_packet(uint8_t* packetBuffer, uint8_t size);
+void parse_set_address_packet(SetAddressResponsePacket_t* setAddressResponse);
+void parse_broadcast_packet(BroadcastMessageResponsePacket_t* broadcast);
+void parse_ping_packet(RangeDataResponsePacket_t* rangeResponse);
 void parse_unicast_packet(uint8_t* packetBuffer, uint8_t size);
 void packet_received_modem(uint8_t* packetBuffer, uint8_t size);
 void packet_received_nest(uint8_t* packetBuffer, uint8_t size);
