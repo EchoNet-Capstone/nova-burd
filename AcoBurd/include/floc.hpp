@@ -34,24 +34,24 @@
 // --- Packet Type Enums ---
 
 // The 4 types of floc packets
-enum FlocPacketType_e : uint8_t{
+typedef enum FlocPacketType_e : uint8_t{
     FLOC_DATA_TYPE = 0x0,
     FLOC_COMMAND_TYPE = 0x1,
     FLOC_ACK_TYPE = 0x2,
     FLOC_RESPONSE_TYPE = 0x3
   };
   
-  typedef enum CommandType_e: uint8_t {  // Example
+typedef enum CommandType_e: uint8_t {  // Example
     COMMAND_TYPE_1 = 0x1,
     COMMAND_TYPE_2 = 0x2,
     // ...
-  };
-  
-  typedef enum SerialFlocPacketType_e: uint8_t {
+};
+
+typedef enum SerialFlocPacketType_e: uint8_t {
     SERIAL_BROADCAST_TYPE = 'B',
     SERIAL_UNICAST_TYPE   = 'U',
     // ...
-  };
+};
 
 // --- FLOC Packet Headers ---
 typedef struct FlocHeader_t {
