@@ -1,6 +1,5 @@
 #include "floc.hpp"
 
-
 uint8_t packet_id = 0;
 
 uint16_t status_response_dest_addr = -1; // Address that has requested modem status info

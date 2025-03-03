@@ -23,10 +23,6 @@ int fieldToInt(char* field, uint8_t field_len){
     return atoi(temp);
 }
 
-void print_packet(String packetBuffer, String packet_type) {
-    Serial.println("Packet recieved.\n\tType : " + packet_type + "\n\tPacket data : " + packetBuffer);
-}
-
 // BEGIN MODEM SERIAL CONNECTION FUNCTIONS -----------------
 
 void query_status(HardwareSerial connection) {
@@ -56,14 +52,9 @@ void ping(HardwareSerial connection, uint8_t addr) {
 }
 
 void parse_status_query_packet(QueryStatusResponseFullPacket_t* statusResponse) {
-    char temp[6] = {0};
-    memcpy(temp, statusResponse->addr, QUERY_STATUS_RESP_ADDR_MAX);
-    temp[QUERY_STATUS_RESP_ADDR_MAX] = '\0';
-    uint8_t node_addr = (uint8_t) atoi(temp);
+    uint8_t node_addr = (uint8_t) fieldToInt((char*) statusResponse->addr, QUERY_STATUS_RESP_ADDR_MAX);
 
-    memcpy(temp, statusResponse->voltPayload, QUERY_STATUS_RESP_VOLT_PAYLOAD_MAX);
-    temp[5] = '\0';
-    long supply_voltage_meas = (uint8_t) atoi(temp);
+    uint16_t supply_voltage_meas = (uint16_t) fieldToInt((char*) statusResponse->voltPayload, QUERY_STATUS_RESP_VOLT_PAYLOAD_MAX);
     
     float supply_voltage = (float)(supply_voltage_meas) * 15.0f / 65536.0f;
 
@@ -75,10 +66,7 @@ void parse_status_query_packet(QueryStatusResponseFullPacket_t* statusResponse) 
 }
 
 void parse_set_address_packet(SetAddressResponsePacket_t* setAddressResponse) {
-    char temp[4];
-    memcpy(temp, setAddressResponse->addr, SET_ADDRESS_RESP_ADDR_MAX);
-    temp[SET_ADDRESS_RESP_ADDR_MAX] = '\0';
-    uint8_t new_addr = (uint8_t) atoi(temp);
+    uint8_t new_addr = (uint8_t) fieldToInt((char*) setAddressResponse->addr, SET_ADDRESS_RESP_ADDR_MAX);
 
     if (debug) {
         Serial.printf("Set address packet received.\r\n\tNew Device addr : %03ld\r\n", new_addr);
@@ -88,27 +76,11 @@ void parse_set_address_packet(SetAddressResponsePacket_t* setAddressResponse) {
     display_modem_id(get_modem_id());
 }
 
-void parse_unicast_packet(uint8_t* packetBuffer, uint8_t size) {
-    // TODO : implement?
-}
-
 void parse_broadcast_packet(BroadcastMessageResponsePacket_t* broadcast) {
     Serial.printf("Parsing broadcast packet...\r\n");
 
-    char temp[4];
-    uint8_t src_addr;
-    uint8_t bytes;
-
-    memcpy(temp, broadcast->header.addr, BROADCAST_RESP_ADDR_MAX);
-    temp[BROADCAST_RESP_ADDR_MAX] = '\0';
-    // Serial.printf("temp: %s\r\n", temp);
-    src_addr = (uint8_t) atoi(temp);
-
-    memset(temp, 0, 4);
-    memcpy(temp, broadcast->header.dataSize, 2);
-    temp[BROADCAST_RESP_DATA_SIZE_MAX] = '\0';
-    // Serial.printf("temp: %s\r\n", temp);
-    bytes = (uint8_t) atoi(temp);
+    uint8_t src_addr = fieldToInt((char*) broadcast->header.addr, BROADCAST_RESP_ADDR_MAX);
+    uint8_t bytes = fieldToInt((char*) broadcast->header.dataSize, BROADCAST_RESP_DATA_SIZE_MAX);
 
     Serial.printf("Src_addr: %d, Size: %d\r\n", src_addr, bytes);
 
@@ -125,13 +97,15 @@ void parse_broadcast_packet(BroadcastMessageResponsePacket_t* broadcast) {
     floc_broadcast_received(message, bytes);
 }
 
-void parse_unicast_packet(String packetBuffer) {
-    long bytes = packetBuffer.substring(UNICAST_BYTE_LENGTH_START, UNICAST_BYTE_LENGTH_END).toInt();
+void parse_unicast_packet(UnicastResponsePacket_t* unicast) {
+    uint8_t bytes = (uint8_t) fieldToInt((char*) unicast->dataSize, UNICAST_RESP_DATA_SIZE_MAX);
 
-    String packetData = packetBuffer.substring(UNICAST_PACKET_DATA_START, UNICAST_PACKET_DATA_START + bytes);
+    char message[bytes+1] = {0};
+    memcpy(message, unicast->payload, bytes);
+
     if (debug) {
         Serial.printf("Unicast packet received.\r\n\tPacket Bytes : %ld\r\n\tPacket data : ", bytes);
-        Serial.print(packetData + "\r\n");
+        Serial.printf("%s\r\n", message);
     }
 }
 
@@ -161,29 +135,26 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
         return;
     }
 
-    ModemPacket_t* pkt = (ModemPacket_t*) packetBuffer;
-
-    if (pkt->type == 'E' && size == 1) {
+    if (packetBuffer[0] == ERROR_TYPE && size == ERROR_MAX) { // 'E'
         if (debug) Serial.println("Error packet received.");
         return;
     }
 
-    if (size < 2) {
+    if (size < MODEM_MSG_MIN) {
         if (debug) Serial.println("Packet invalid, size too small.");
         return;
     }
 
-    if (pkt->type == '$') {
+    ModemPacket_t* pkt = (ModemPacket_t*) packetBuffer;
+
+    if (pkt->type == MODEM_LOCAL_RESPONSE_TYPE) { // '$'
         ModemLocalResponsePacket_t* localResp = (ModemLocalResponsePacket_t* )&pkt->payload;
 
         Serial.printf("Local Echo...");
+
         // Local Echo
         switch (localResp->type) {
-            case '?':
-                break;
-            case 'A':
-                break;
-            case 'B':
+            case BROADCAST_CMD_LOCAL_RESP_TYPE: // 'B'
                 if (size == BROADCAST_CMD_LOCAL_RESP_MAX) {
                     // if (debug) {
                     //     Serial.printf("Broadcast of %02ld bytes sent.\r\n",
@@ -192,7 +163,11 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                     // }
                 }
                 break;
-            case 'M':
+            case CHN_IMP_CMD_LOCAL_RESP_TYPE: // 'C' Will also be reached if it's a Corrected Error Local Response Packet
+                break;
+            case ECHO_MSG_CMD_LOCAL_RESP_TYPE: // 'E'
+                break;
+            case UNICAST_ACK_CMD_LOCAL_RESP_TYPE: // 'M'
                 if (size == UNICAST_ACK_CMD_LOCAL_RESP_MAX) {
                     // if (debug) {
                     //     Serial.printf("Unicast (with ACK) of %02ld bytes to address %03ld sent.\r\n",
@@ -203,7 +178,7 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                     // }
                 }
                 break;
-            case 'P':
+            case PING_CMD_LOCAL_RESP_TYPE: // 'P'
                 if (size == PING_CMD_LOACL_RESP_MAX) {
                     // if (debug) {
                     //     Serial.printf("Ping to modem %03ld sent.\r\n", 
@@ -212,7 +187,11 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                     // }
                 }
                 break;
-            case 'U':
+            case RESET_CMD_LOCAL_RESP_TYPE: // 'R'
+                break;
+            case TEST_MSG_CMD_LOCAL_RESP_MAX: // 'T'
+                break;
+            case UNICAST_CMD_LOCAL_RESP_TYPE: // 'U'
                 if (size == UNICAST_CMD_LOCAL_RESP_MAX) {
                     // if (debug) {
                     //     Serial.printf("Unicast of %02ld bytes to address %03ld sent.\r\n",
@@ -223,7 +202,7 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                     // }
                 }
                 break;
-            case 'V':
+            case VOLT_NOISE_MSR_CMD_LOCAL_RESP_TYPE: // 'V'
                 break;
 
             default:
@@ -233,15 +212,14 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 //     Serial.println("\tFull packet : " + packetBuffer);
                 // }
         }
-    } else if (pkt->type) {
+    } else if (pkt->type == MODEM_RESPONSE_TYPE) { // '#'
         Serial.printf("Response packet...\r\n");
 
         ModemResponsePacket_t* response = (ModemResponsePacket_t*)&pkt->payload;
 
         switch (response->type) {
-            case '?':
-                break;
-            case 'A':{
+            case QUERY_STATUS_RESP_TYPE: // 'A' Will also be reached if it's a Set Address Response Packet
+            { 
                 QueryStatusResponsePacket_t* statusResponse = (QueryStatusResponsePacket_t*) &response->response;
                 if (size == QUERY_STATUS_RESP_MAX) {
                     QueryStatusResponseFullPacket_t* fullStatus = (QueryStatusResponseFullPacket_t*) &statusResponse->status;
@@ -252,18 +230,14 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 }
                 break;
             }
-            case 'B': {
+            case BROADCAST_RESP_TYPE: // 'B' 
+            {  
                 BroadcastMessageResponsePacket_t* broadcast = (BroadcastMessageResponsePacket_t*) &response->response;
                 parse_broadcast_packet(broadcast);
                 break;
             }
-            case 'M':
-                // TODO : Handle unicast with ack? Does this exist with # prefix?
-                break;
-            case 'P':
-                
-                break;
-            case 'R': {
+            case RANGE_RESP_TYPE: // 'R'
+            {
                 RangeDataResponsePacket_t* rangeResponse = (RangeDataResponsePacket_t*) &response->response;
 
                 if (size == RANGE_RESP_MAX) {
@@ -271,19 +245,19 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 }
                 break;
             }
-            case 'T':
-                if (size == TIMEOUT_PACKET_LENGTH) {
+            case TIMEOUT_RESP_TYPE: // 'T' 
+                if (size == TIMEOUT_MAX) {
                     if (debug) {
                         Serial.println("Timeout.");
                     }
                 }
                 break;
-            case 'U':
-                    parse_unicast_packet(packetBuffer, size);
+            case UNICAST_RESP_TYPE: // 'U' 
+            {
+                UnicastResponsePacket_t* unicast = (UnicastResponsePacket_t*) &response->response;
+                parse_unicast_packet(unicast);
                 break;
-            case 'V':
-                // TODO : Handling will require modifying Broadcast packet recv handling
-                break;
+            }
 
             default:
                 break;
@@ -315,16 +289,16 @@ void packet_received_nest(uint8_t* packetBuffer, uint8_t size) {
     SerialFlocPacket_t* pkt = (SerialFlocPacket_t*)(packetBuffer);
 
     if (pkt_type == '$') {
-
         switch (pkt->header.type) {
             // Broadcast the data received on the serial line
-            case 'B': {
+            case SERIAL_BROADCAST_TYPE: // 'B'
+            {
                 SerialBroadcastPacket_t* broadcastPacket = (SerialBroadcastPacket_t* )&pkt->payload;
                 broadcast(MODEM_SERIAL_CONNECTION, (char*) broadcastPacket, pkt->header.size);
                 // display_modem_packet_data(packetBuffer);
                 break;
             }
-            case 'U':
+            case SERIAL_UNICAST_TYPE:   // 'U'
                 // TODO : need to extract dst from packet in order to send packet
                 // May not need to implement, depending on networking strategy
                 break;

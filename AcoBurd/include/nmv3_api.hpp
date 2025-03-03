@@ -6,7 +6,8 @@
 #include "display.hpp"
 #include "get_set_macros.hpp"
 
-// --- Configuration (Maximum Sizes) ---
+// --- Sizes ---
+#define MODEM_MSG_MIN 2
 #define MODEM_DATA_MIN 2
 #define MODEM_PAYLOAD_MAX 64
 #define MODEM_ADDR_SIZE_MAX 3
@@ -14,7 +15,11 @@
 
 // --- Error Packet ---
 #define ERROR_PRE_MAX 1
-#define ERROR_MAX 0
+#define ERROR_MAX ERROR_PRE_MAX
+
+// --- Timeout Packet ---
+#define TIMEOUT_PRE_MAX 2
+#define TIMEOUT_MAX TIMEOUT_PRE_MAX
 
 // --- Commands ---
 #define MODEM_COMMAND_PRE_MAX     	1
@@ -412,6 +417,7 @@ enum ModemResponseTypes_e: uint8_t {
   NOISE_MSR_RESP_TYPE     = 'N',
   RANGE_RESP_TYPE         = 'R',
   SPEC_MSR_RESP_TYPE      = 'S',
+  TIMEOUT_RESP_TYPE       = 'T',
   UNICAST_RESP_TYPE       = 'U',
 };
 
@@ -744,17 +750,16 @@ struct ModemPacket_t {
 
 GET_SET_FUNC_PROTO(uint8_t, modem_id)
 
-void print_packet(String packetBuffer, String packet_type);
 void query_status(HardwareSerial connection);
-void set_address(HardwareSerial connection, int8_t addr);
+void set_address(HardwareSerial connection, uint8_t addr);
 uint8_t get_modem_address();
-void broadcast(HardwareSerial connection, char *data, int8_t bytes);
-void ping(HardwareSerial connection, int8_t addr);
+void broadcast(HardwareSerial connection, char *data, uint8_t bytes);
+void ping(HardwareSerial connection, uint8_t addr);
 void parse_status_query_packet(QueryStatusResponseFullPacket_t* statusResponse);
 void parse_set_address_packet(SetAddressResponsePacket_t* setAddressResponse);
 void parse_broadcast_packet(BroadcastMessageResponsePacket_t* broadcast);
 void parse_ping_packet(RangeDataResponsePacket_t* rangeResponse);
-void parse_unicast_packet(uint8_t* packetBuffer, uint8_t size);
+void parse_unicast_packet(UnicastResponsePacket_t* unicast);
 void packet_received_modem(uint8_t* packetBuffer, uint8_t size);
 void packet_received_nest(uint8_t* packetBuffer, uint8_t size);
 
