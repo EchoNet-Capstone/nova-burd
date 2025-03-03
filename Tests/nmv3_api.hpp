@@ -3,384 +3,259 @@
 
 #include <cstdint>
 
-// Forward declarations for NMV3 API packet types
+//================================================================
+// Macros (Configuration, sizes, etc.)
+//================================================================
+#define MODEM_DATA_MIN                2
+#define MODEM_PAYLOAD_MAX             64
 
-// ---------------------
-// Command Packet Types
-// ---------------------
-struct SetAddresCommandPacket_t;
-struct BroadcastMessageCommandPacket_t;
-struct ChannelImpulseCommandPacket_t;
-struct EchoMessageCommandPacket_t;
-struct UnicastWithAckCommandPacket_t;
-struct PingCommandPacket_t;
-struct TestMsgCommandPacket_t;
-struct UnicastCommandPacket_t;
-struct VoltageAndNoiseCommandPacket_t;
-struct ExtenionCommandPacket_t;
-struct SystemTimeCommandPacket_t;
-struct LinkQualityCommandPacket_t;
+#define ERROR_PRE_MAX                 1
+#define ERROR_MAX                     0
 
-union ExtenionCommandPacketVariant_u;
-union ModemCommandPacketVariant_u;  // Combines all command types
-
-// ---------------------
-// Main Modem Packet
-// ---------------------
-union ModemPacketVariant_u;
-struct ModemPacket_t;
-
-// ------------------------------
-// Local Response Packet Types
-// ------------------------------
-struct BroadcastLocalResponsePacket_t;
-struct ChannelImpulseLocalResponsePacket_t;
-struct EchoMessageLocalResponsePacket_t;
-struct UnicastWithAckLocalResponsePacket_t;
-struct PingLocalResponsePacket_t;
-struct CorrectedErrorsLocalResponsePacket_t;
-struct TestMessageLocalResponsePacket_t;
-struct UnicastLocalResponsePacket_t;
-struct VoltageAndNoiseLocalResponsePacket_t;
-
-union ModemLocalResponsePacketVariant_u;
-struct ModemLocalResponsePacket_t;
-
-// ---------------------
-// Response Packet Types
-// ---------------------
-struct QueryStatusResponsePacket_t;
-struct SetAddressResponsePacket_t;
-struct BroadcastMessageResponsePacket_t;
-struct NoiseMeasurementResponsePacket_t;
-struct VoltageAndNoiseResponsePacket_t;
-struct RangeDataResponsePacket_t;
-struct UnicastResponsePacket_t;
-struct ExtenionResponsePacket_t;
-struct SystemTimeResponsePacket_t;
-struct LinkQualityResponsePacket_t;
-
-union ModemResponsePacketVariant_u;
-struct ModemResponsePacket_t;
-
-// ---------------------
-// Extra Response Data Types
-// ---------------------
-struct ResponseExtraData_t;
-union ResponseExtraDataVariant_u;
-
-// ---------------------
-// Additional Unions for Response Variants
-// ---------------------
-union QueryStatusResponsePacketVariant_u;
-union BroadcastMessageResponseVariant_u;
-union ExtenionResponsePacketVariant_u;
-
-
-// --- Configuration (Maximum Sizes) ---
-#define MODEM_DATA_MIN 2
-#define MODEM_PAYLOAD_MAX 64
-
-// --- Error Packet ---
-#define ERROR_PRE_MAX 1
-#define ERROR_MAX 0
-
-// --- Commands ---
-#define MODEM_COMMAND_PRE_MAX     	1
-
-#define MODEM_COMMAND_TYPE_MAX	  	1
+//--- Commands ---
+#define MODEM_COMMAND_PRE_MAX         1
+#define MODEM_COMMAND_TYPE_MAX        1
 
 // Query Status
-#define QUERY_STATUS_CMD_MAX      	0
+#define QUERY_STATUS_CMD_MAX          0
 
 // Set Address
-#define SET_ADDRESS_CMD_ADDR_MAX    3
-#define SET_ADDRESS_CMD_MAX       	SET_ADDRESS_CMD_ADDR_MAX
+#define SET_ADDRESS_CMD_ADDR_MAX      3
+#define SET_ADDRESS_CMD_MAX           SET_ADDRESS_CMD_ADDR_MAX
 
 // Broadcast Message
-#define BROADCAST_CMD_DATA_SIZE_MAX 2
-#define BROADCAST_CMD_HDR_MAX     	BROADCAST_CMD_DATA_SIZE_MAX
-#define BROADCAST_CMD_DATA_MIN    	MODEM_DATA_MIN
-#define BROADCAST_CMD_PAYLOAD_MAX   MODEM_PAYLOAD_MAX
-#define BROADCAST_CMD_MIN         	BROADCAST_CMD_HDR_MAX + \
-                                    BROADCAST_CMD_DATA_MIN
-#define BROADCAST_CMD_MAX         	BROADCAST_CMD_HDR_MAX + \
-                                    BROADCAST_CMD_PAYLOAD_MAX
+#define BROADCAST_CMD_DATA_SIZE_MAX   2
+#define BROADCAST_CMD_HDR_MAX         BROADCAST_CMD_DATA_SIZE_MAX
+#define BROADCAST_CMD_DATA_MIN        MODEM_DATA_MIN
+#define BROADCAST_CMD_PAYLOAD_MAX     MODEM_PAYLOAD_MAX
+#define BROADCAST_CMD_MIN             (BROADCAST_CMD_HDR_MAX + BROADCAST_CMD_DATA_MIN)
+#define BROADCAST_CMD_MAX             (BROADCAST_CMD_HDR_MAX + BROADCAST_CMD_PAYLOAD_MAX)
 
 // Channel Impulse 
-#define CHN_IMP_CMD_MAG_COMP_MAX    1
-#define CHN_IMP_CMD_ADDR_MAX        3
-#define CHN_IMP_CMD_MAX           	CHN_IMP_CMD_MAG_COMP_MAX + \
-                                    CHN_IMP_CMD_ADDR_MAX
+#define CHN_IMP_CMD_MAG_COMP_MAX      1
+#define CHN_IMP_CMD_ADDR_MAX          3
+#define CHN_IMP_CMD_MAX               (CHN_IMP_CMD_MAG_COMP_MAX + CHN_IMP_CMD_ADDR_MAX)
 
 // Echo Message
-#define ECHO_MSG_CMD_ADDR_MAX       3
-#define ECHO_MSG_CMD_DATA_SIZE_MAX  2
-#define ECHO_MSG_CMD_HDR_MAX      	ECHO_MSG_CMD_ADDR_MAX + \
-                                    ECHO_MSG_CMD_HDR_MAX
-#define ECHO_MSG_CMD_DATA_MIN     	MODEM_DATA_MIN
-#define ECHO_MSG_CMD_PAYLOAD_MAX    MODEM_PAYLOAD_MAX
-#define ECHO_MSG_CMD_MIN          	ECHO_MSG_CMD_HDR_MAX + \
-                                    ECHO_MSG_CMD_DATA_MIN
-#define ECHO_MSG_CMD_MAX          	ECHO_MSG_CMD_HDR_MAX + \
-                                    ECHO_MSG_CMD_PAYLOAD_MAX
+#define ECHO_MSG_CMD_ADDR_MAX         3
+#define ECHO_MSG_CMD_DATA_SIZE_MAX    2
+#define ECHO_MSG_CMD_HDR_MAX         (ECHO_MSG_CMD_ADDR_MAX + ECHO_MSG_CMD_DATA_SIZE_MAX)
+#define ECHO_MSG_CMD_DATA_MIN         MODEM_DATA_MIN
+#define ECHO_MSG_CMD_PAYLOAD_MAX      MODEM_PAYLOAD_MAX
+#define ECHO_MSG_CMD_MIN              (ECHO_MSG_CMD_HDR_MAX + ECHO_MSG_CMD_DATA_MIN)
+#define ECHO_MSG_CMD_MAX              (ECHO_MSG_CMD_HDR_MAX + ECHO_MSG_CMD_PAYLOAD_MAX)
 
 // Help
-#define HELP_CMD_MAX                    0
+#define HELP_CMD_MAX                  0
 
 // Unicast with Ack Message
-#define UNICAST_ACK_CMD_ADDR_MAX        3
-#define UNICAST_ACK_CMD_DATA_SIZE_MAX   2
-#define UNICAST_ACK_CMD_HDR_MAX      	  UNICAST_ACK_CMD_ADDR_MAX + \
-                                        UNICAST_ACK_CMD_HDR_MAX
-#define UNICAST_ACK_CMD_DATA_MIN  	    MODEM_DATA_MIN
-#define UNICAST_ACK_CMD_PAYLOAD_MAX  	  MODEM_PAYLOAD_MAX
-#define UNICAST_ACK_CMD_MIN       	    UNICAST_ACK_CMD_HDR_MAX + \
-                                        UNICAST_ACK_CMD_DATA_MIN
-#define UNICAST_ACK_CMD_MAX       	    UNICAST_ACK_CMD_HDR_MAX + \
-                                        UNICAST_ACK_CMD_PAYLOAD_MAX
+#define UNICAST_ACK_CMD_ADDR_MAX      3
+#define UNICAST_ACK_CMD_DATA_SIZE_MAX 2
+#define UNICAST_ACK_CMD_HDR_MAX       (UNICAST_ACK_CMD_ADDR_MAX + UNICAST_ACK_CMD_DATA_SIZE_MAX)
+#define UNICAST_ACK_CMD_DATA_MIN      MODEM_DATA_MIN
+#define UNICAST_ACK_CMD_PAYLOAD_MAX   MODEM_PAYLOAD_MAX
+#define UNICAST_ACK_CMD_MIN           (UNICAST_ACK_CMD_HDR_MAX + UNICAST_ACK_CMD_DATA_MIN)
+#define UNICAST_ACK_CMD_MAX           (UNICAST_ACK_CMD_HDR_MAX + UNICAST_ACK_CMD_PAYLOAD_MAX)
 
 // Noise Measurement
-#define NOISE_MSR_CMD_MAX         	0
+#define NOISE_MSR_CMD_MAX             0
 
 // Ping
-#define PING_CMD_ADDR_MAX           3
-#define PING_CMD_MAX              	PING_CMD_ADDR_MAX
+#define PING_CMD_ADDR_MAX             3
+#define PING_CMD_MAX                  PING_CMD_ADDR_MAX
 
 // Corrected Errors
-#define CORR_ERR_CMD_MAX          	0
+#define CORR_ERR_CMD_MAX              0
 
 // Reset
-#define RESET_CMD_MAX             	0
+#define RESET_CMD_MAX                 0
 
 // Spectrun Measurement
-#define SPEC_MSR_CMD_MAX          	0
+#define SPEC_MSR_CMD_MAX              0
 
 // Test
-#define TEST_MSG_CMD_ADDR_MAX       3
-#define TEST_MSG_CMD_MAX          	TEST_MSG_CMD_ADDR_MAX
+#define TEST_MSG_CMD_ADDR_MAX         3
+#define TEST_MSG_CMD_MAX              TEST_MSG_CMD_ADDR_MAX
 
 // Unicast Message
-#define UNICAST_CMD_ADDR_MAX        3
-#define UNICAST_CMD_DATA_SIZE_MAX   2
-#define UNICAST_CMD_HDR_MAX       	UNICAST_CMD_ADDR_MAX + \
-                                    UNICAST_CMD_DATA_SIZE_MAX +
-#define UNICAST_CMD_DATA_MIN      	MODEM_DATA_MIN
-#define UNICAST_CMD_PAYLOAD_MAX     MODEM_PAYLOAD_MAX
-#define UNICAST_CMD_MIN           	UNICAST_CMD_HDR_MAX + \
-                                    UNICAST_CMD_DATA_MIN
-#define UNICAST_CMD_MAX           	UNICAST_CMD_HDR_MAX + \
-                                    UNICAST_CMD_PAYLOAD_MAX
+#define UNICAST_CMD_ADDR_MAX          3
+#define UNICAST_CMD_DATA_SIZE_MAX     2
+#define UNICAST_CMD_HDR_MAX           (UNICAST_CMD_ADDR_MAX + UNICAST_CMD_DATA_SIZE_MAX)
+#define UNICAST_CMD_DATA_MIN          MODEM_DATA_MIN
+#define UNICAST_CMD_PAYLOAD_MAX       MODEM_PAYLOAD_MAX
+#define UNICAST_CMD_MIN               (UNICAST_CMD_HDR_MAX + UNICAST_CMD_DATA_MIN)
+#define UNICAST_CMD_MAX               (UNICAST_CMD_HDR_MAX + UNICAST_CMD_PAYLOAD_MAX)
 
 // Voltage and Noise Measurement
-#define VOLT_NOISE_MSR_CMD_ADDR_MAX 3
-#define VOLT_NOISE_MSR_CMD_MAX      VOLT_NOISE_MSR_CMD_ADDR_MAX
+#define VOLT_NOISE_MSR_CMD_ADDR_MAX   3
+#define VOLT_NOISE_MSR_CMD_MAX        VOLT_NOISE_MSR_CMD_ADDR_MAX
 
 // Extenion Commands
-#define EXTEN_CMD_TYPE_MAX          1
-#define EXTEN_CMD_MAX             	EXTEN_CMD_TYPE_MAX
+#define EXTEN_CMD_TYPE_MAX            1
+#define EXTEN_CMD_MAX                 EXTEN_CMD_TYPE_MAX
 
-// --- Extension Commands ---
-#define SYS_TIME_EXT_CMD_TYPE_MAX   1
-#define SYS_TIME_EXT_CMD_MAX        SYS_TIME_EXT_CMD_TYPE_MAX
-#define LINK_QUAL_EXT_CMD_TYPE_MAX  1
-#define LINK_QUAL_EXT_CMD_MAX       LINK_QUAL_EXT_CMD_TYPE_MAX
+//--- Extension Commands ---
+#define SYS_TIME_EXT_CMD_TYPE_MAX     1
+#define SYS_TIME_EXT_CMD_MAX          SYS_TIME_EXT_CMD_TYPE_MAX
+#define LINK_QUAL_EXT_CMD_TYPE_MAX    1
+#define LINK_QUAL_EXT_CMD_MAX         LINK_QUAL_EXT_CMD_TYPE_MAX
 
-// --- Local Responses ---
-#define MODEM_LOCAL_RESP_PRE_MAX        1
+//--- Local Responses ---
+#define MODEM_LOCAL_RESP_PRE_MAX      1
+#define MODEM_LOCAL_RESP_TYPE_MAX     1
 
-#define MODEM_LOCAL_RESP_TYPE_MAX       1
-
-// Broadcast Message
+// Broadcast Message (Local Response)
 #define BROADCAST_CMD_LOCAL_RESP_DATA_SIZE_MAX  2
 #define BROADCAST_CMD_LOCAL_RESP_MAX            BROADCAST_CMD_LOCAL_RESP_DATA_SIZE_MAX
 
-// Channel Impulse
+// Channel Impulse (Local Response)
 #define CHN_IMP_CMD_LOCAL_RESP_MAG_COMP_MAX     1
 #define CHN_IMP_CMD_LOCAL_RESP_ADDR_MAX         3
-#define CHN_IMP_CMD_LOCAL_RESP_MAX           	  CHN_IMP_CMD_LOCAL_RESP_MAG_COMP_MAX + \
-                                                CHN_IMP_CMD_LOCAL_RESP_ADDR_MAX
+#define CHN_IMP_CMD_LOCAL_RESP_MAX              (CHN_IMP_CMD_LOCAL_RESP_MAG_COMP_MAX + CHN_IMP_CMD_LOCAL_RESP_ADDR_MAX)
 
-// Echo Message
+// Echo Message (Local Response)
 #define ECHO_MSG_CMD_LOCAL_RESP_ADDR_MAX        3
 #define ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX   2
-#define ECHO_MSG_CMD_LOCAL_RESP_MAX      	      ECHO_MSG_CMD_LOCAL_RESP_ADDR_MAX + \
-                                                ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX
+#define ECHO_MSG_CMD_LOCAL_RESP_MAX              (ECHO_MSG_CMD_LOCAL_RESP_ADDR_MAX + ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX)
 
-// Unicast with Ack Message
+// Unicast with Ack (Local Response)
 #define UNICAST_ACK_CMD_LOCAL_RESP_ADDR_MAX       3
 #define UNICAST_ACK_CMD_LOCAL_RESP_DATA_SIZE_MAX  2
-#define UNICAST_ACK_CMD_LOCAL_RESP_MAX            UNICAST_ACK_CMD_LOCAL_RESP_ADDR_MAX + \
-                                                  UNICAST_ACK_CMD_LOCAL_RESP_DATA_SIZE_MAX
+#define UNICAST_ACK_CMD_LOCAL_RESP_MAX            (UNICAST_ACK_CMD_LOCAL_RESP_ADDR_MAX + UNICAST_ACK_CMD_LOCAL_RESP_DATA_SIZE_MAX)
 
-// Ping
-#define PING_CMD_LOCAL_RESP_ADDR_MAX  3
-#define PING_CMD_LOACL_RESP_MAX       PING_CMD_LOCAL_RESP_ADDR_MAX
+// Ping (Local Response)
+#define PING_CMD_LOCAL_RESP_ADDR_MAX              3
+#define PING_CMD_LOACL_RESP_MAX                   PING_CMD_LOCAL_RESP_ADDR_MAX
 
-// Corrected Errors
-#define CORR_ERR_CMD_LOCAL_RESP_RS_MAX  1
-#define CORR_ERR_CMD_LOCAL_RESP_MAX     CORR_ERR_CMD_LOCAL_RESP_RS_MAX
+// Corrected Errors (Local Response)
+#define CORR_ERR_CMD_LOCAL_RESP_RS_MAX            1
+#define CORR_ERR_CMD_LOCAL_RESP_MAX               CORR_ERR_CMD_LOCAL_RESP_RS_MAX
 
-// Reset
-#define RESET_CMD_LOCAL_RESP_MAX        0
+// Reset (Local Response)
+#define RESET_CMD_LOCAL_RESP_MAX                  0
 
-// Spectrum Measurement
-#define SPEC_MSR_CMD_LOCAL_RESP_MAX     0
+// Spectrum Measurement (Local Response)
+#define SPEC_MSR_CMD_LOCAL_RESP_MAX               0
 
-// Test
-#define TEST_MSG_CMD_LOCAL_RESP_ADDR_MAX    3
-#define TEST_MSG_CMD_LOCAL_RESP_MAX         TEST_MSG_CMD_LOCAL_RESP_ADDR_MAX
+// Test (Local Response)
+#define TEST_MSG_CMD_LOCAL_RESP_ADDR_MAX          3
+#define TEST_MSG_CMD_LOCAL_RESP_MAX               TEST_MSG_CMD_LOCAL_RESP_ADDR_MAX
 
-// Unicast Message
-#define UNICAST_CMD_LOCAL_RESP_ADDR_MAX       3
-#define UNICAST_CMD_LOCAL_RESP_DATA_SIZE_MAX  2
-#define UNICAST_CMD_LOCAL_RESP_MAX            UNICAST_CMD_LOCAL_RESP_ADDR_MAX + \
-                                              UNICAST_CMD_LOCAL_RESP_DATA_SIZE_MAX
+// Unicast Message (Local Response)
+#define UNICAST_CMD_LOCAL_RESP_ADDR_MAX           3
+#define UNICAST_CMD_LOCAL_RESP_DATA_SIZE_MAX      2
+#define UNICAST_CMD_LOCAL_RESP_MAX                (UNICAST_CMD_LOCAL_RESP_ADDR_MAX + UNICAST_CMD_LOCAL_RESP_DATA_SIZE_MAX)
 
-// Voltage and Noise Measurement
-#define VOLT_NOISE_MSR_CMD_LOCAL_RESP_ADDR_MAX  3
-#define VOLT_NOISE_MSR_CMD_LOCAL_RESP_MAX       VOLT_NOISE_MSR_CMD_LOCAL_RESP_ADDR_MAX
+// Voltage and Noise Measurement (Local Response)
+#define VOLT_NOISE_MSR_CMD_LOCAL_RESP_ADDR_MAX     3
+#define VOLT_NOISE_MSR_CMD_LOCAL_RESP_MAX          VOLT_NOISE_MSR_CMD_LOCAL_RESP_ADDR_MAX
 
-// --- Responses ---
-#define MODEM_RESP_PRE_MAX  1
-
-#define MODEM_RESP_TYPE_MAX 1
+//--- Responses ---
+#define MODEM_RESP_PRE_MAX            1
+#define MODEM_RESP_TYPE_MAX           1
 
 // Response Extra Data
-#define RESP_EXTRA_FIELD_PRE_MAX        1
-#define RESP_EXTRA_LQ_QUAL_PAYLOAD_MAX  2
-#define RESP_EXTRA_LQ_QUAL_MAX          RESP_EXTRA_FIELD_PRE_MAX + \
-                                        RESP_EXTRA_LQ_QUAL_PAYLOAD_MAX
-#define RESP_EXTRA_LQ_DOPP_PAYLOAD_MAX  4
-#define RESP_EXTRA_LQ_DOPP_MAX          RESP_EXTRA_FIELD_PRE_MAX + \
-                                        RESP_EXTRA_LQ_DOPP_PAYLOAD_MAX
-#define RESP_EXTRA_LQ_MAX               RESP_EXTRA_LQ_QUAL_MAX + \
-                                        RESP_EXTRA_LQ_DOPP_MAX
-#define RESP_EXTRA_TIME_PAYLOAD_MAX     14
-#define RESP_EXTRA_TIME_MAX             RESP_EXTRA_FIELD_PRE_MAX + \
-                                        RESP_EXTRA_TIME_PAYLOAD_MAX
+#define RESP_EXTRA_FIELD_PRE_MAX      1
+#define RESP_EXTRA_LQ_QUAL_PAYLOAD_MAX 2
+#define RESP_EXTRA_LQ_QUAL_MAX         (RESP_EXTRA_FIELD_PRE_MAX + RESP_EXTRA_LQ_QUAL_PAYLOAD_MAX)
+#define RESP_EXTRA_LQ_DOPP_PAYLOAD_MAX 4
+#define RESP_EXTRA_LQ_DOPP_MAX         (RESP_EXTRA_FIELD_PRE_MAX + RESP_EXTRA_LQ_DOPP_PAYLOAD_MAX)
+#define RESP_EXTRA_LQ_MAX              (RESP_EXTRA_LQ_QUAL_MAX + RESP_EXTRA_LQ_DOPP_MAX)
+#define RESP_EXTRA_TIME_PAYLOAD_MAX    14
+#define RESP_EXTRA_TIME_MAX            (RESP_EXTRA_FIELD_PRE_MAX + RESP_EXTRA_TIME_PAYLOAD_MAX)
+#define RESP_ALL_EXTRA_MAX             (RESP_EXTRA_LQ_MAX + RESP_EXTRA_TIME_MAX)
 
-#define RESP_ALL_EXTRA_MAX              RESP_EXTRA_LQ_MAX + RESP_EXTRA_TIME_MAX
-
-// Query Status
+// Query Status Response
 #define QUERY_STATUS_RESP_FIELD_PRE_MAX       1
 #define QUERY_STATUS_RESP_ADDR_MAX            3
 #define QUERY_STATUS_RESP_HDR_MAX             QUERY_STATUS_RESP_ADDR_MAX
 #define QUERY_STATUS_RESP_VOLT_PAYLOAD_MAX    5
-#define QUERY_STATUS_RESP_VOLT_MAX            QUERY_STATUS_RESP_FIELD_PRE_MAX + \
-                                              QUERY_STATUS_RESP_VOLT_PAYLOAD_MAX
+#define QUERY_STATUS_RESP_VOLT_MAX            (QUERY_STATUS_RESP_FIELD_PRE_MAX + QUERY_STATUS_RESP_VOLT_PAYLOAD_MAX)
 #define QUERY_STATUS_RESP_REL_PAYLOAD_MAX     11
-#define QUERY_STATUS_RESP_REL_MAX             QUERY_STATUS_RESP_FIELD_PRE_MAX + \
-                                              QUERY_STATUS_RESP_REL_PAYLOAD_MAX
+#define QUERY_STATUS_RESP_REL_MAX             (QUERY_STATUS_RESP_FIELD_PRE_MAX + QUERY_STATUS_RESP_REL_PAYLOAD_MAX)
 #define QUERY_STATUS_RESP_BT_YEAR_PAYLOAD_MAX 10
-#define QUERY_STATUS_RESP_BT_YEAR_MAX         QUERY_STATUS_RESP_FIELD_PRE_MAX + \
-                                              QUERY_STATUS_RESP_BT_YEAR_PAYLOAD_MAX
+#define QUERY_STATUS_RESP_BT_YEAR_MAX         (QUERY_STATUS_RESP_FIELD_PRE_MAX + QUERY_STATUS_RESP_BT_YEAR_PAYLOAD_MAX)
 #define QUERY_STATUS_RESP_BT_TIME_PAYLOAD_MAX 9
-#define QUERY_STATUS_RESP_BT_TIME_MAX         QUERY_STATUS_RESP_FIELD_PRE_MAX + \
-                                              QUERY_STATUS_RESP_BT_YEAR_PAYLOAD_MAX
-#define QUERY_STATUS_RESP_BT_MAX              QUERY_STATUS_RESP_BT_YEAR_MAX + \
-                                              QUERY_STATUS_RESP_BT_TIME_MAX
-#define QUERY_STATUS_RESP_MAX                 QUERY_STATUS_RESP_HDR_MAX + \
-                                              QUERY_STATUS_RESP_VOLT_MAX + \
-                                              QUERY_STATUS_RESP_REL_MAX  + \
-                                              QUERY_STATUS_RESP_BT_MAX
+#define QUERY_STATUS_RESP_BT_TIME_MAX         (QUERY_STATUS_RESP_FIELD_PRE_MAX + QUERY_STATUS_RESP_BT_TIME_PAYLOAD_MAX)
+#define QUERY_STATUS_RESP_BT_MAX              (QUERY_STATUS_RESP_BT_YEAR_MAX + QUERY_STATUS_RESP_BT_TIME_MAX)
+#define QUERY_STATUS_RESP_MAX                 (QUERY_STATUS_RESP_HDR_MAX + QUERY_STATUS_RESP_VOLT_MAX + QUERY_STATUS_RESP_REL_MAX  + QUERY_STATUS_RESP_BT_MAX)
 
-// Set Address
+// Set Address Response
 #define SET_ADDRESS_RESP_ADDR_MAX     3
 #define SET_ADDRESS_RESP_MAX          SET_ADDRESS_RESP_ADDR_MAX
 
-// Broadcast Message
+// Broadcast Response
 #define BROADCAST_RESP_ADDR_MAX       3
 #define BROADCAST_RESP_DATA_SIZE_MAX  2
-#define BROADCAST_RESP_HDR_MAX        BROADCAST_RESP_ADDR_MAX + \
-                                      BROADCAST_RESP_DATA_SIZE_MAX
+#define BROADCAST_RESP_HDR_MAX        (BROADCAST_RESP_ADDR_MAX + BROADCAST_RESP_DATA_SIZE_MAX)
 #define BROADCAST_RESP_DATA_MIN       MODEM_DATA_MIN
 #define BROADCAST_RESP_PAYLOAD_MAX    MODEM_PAYLOAD_MAX
-#define BROADCAST_RESP_MIN            BROADCAST_RESP_HDR_MAX + \
-                                      BROADCAST_RESP_DATA_MIN
-#define BROADCAST_RESP_MAX            BROADCAST_RESP_HDR_MAX + \
-                                      BROADCAST_RESP_PAYLOAD_MAX
+#define BROADCAST_RESP_MIN            (BROADCAST_RESP_HDR_MAX + BROADCAST_RESP_DATA_MIN)
+#define BROADCAST_RESP_MAX            (BROADCAST_RESP_HDR_MAX + BROADCAST_RESP_PAYLOAD_MAX)
 
-// Channel Impulse
+// Channel Impulse Response
 #define CHN_IMP_RESP_FIELD_PRE_MAX        1
 #define CHN_IMP_RESP_MAG_COMP_MAX         1
 #define CHN_IMP_RESP_ADDR_MAX             3
-#define CHN_IMP_RESP_MAX                  CHN_IMP_RESP_MAG_COMP_MAX + \
-                                          CHN_IMP_RESP_ADDR_MAX
+#define CHN_IMP_RESP_MAX                  (CHN_IMP_RESP_MAG_COMP_MAX + CHN_IMP_RESP_ADDR_MAX)
 #define CHN_IMP_RESP_RANGE_PAYLOAD_MAX    5
-#define CHN_IMP_RESP_RANGE_MAX            CHN_IMP_RESP_FIELD_PRE_MAX + \
-                                          CHN_IMP_RESP_RANGE_PAYLOAD_MAX
-#define CHN_IMP_RESP_SAMP_AMT_PAYLOAD_MAX 5
-#define CHN_IMP_RESP_SAMP_AMT_MAX         CHN_IMP_RESP_FIELD_PRE_MAX + \
-                                          CHN_IMP_RESP_SAMP_AMT_PAYLOAD_MAX
+#define CHN_IMP_RESP_RANGE_MAX            (CHN_IMP_RESP_FIELD_PRE_MAX + CHN_IMP_RESP_RANGE_PAYLOAD_MAX)
+#define CHN_IMP_RESP_SAMP_AMT_PAYLOAD_MAX  5
+#define CHN_IMP_RESP_SAMP_AMT_MAX         (CHN_IMP_RESP_FIELD_PRE_MAX + CHN_IMP_RESP_SAMP_AMT_PAYLOAD_MAX)
 #define CHN_IMP_RESP_MAG_SAMPLE_MAX       sizeof(uint16_t)
 #define CHN_IMP_RESP_COMP_SAMPLE_MAX      sizeof(int16_t)
-//TODO finish these #defines
 
-// Noise Measurement
+// Noise Measurement Response
 #define NOISE_MSR_RESP_FIELD_PRE_MAX    1
 #define NOISE_MSR_RESP_RMS_PAYLOAD_MAX  6
-#define NOISE_MSR_RESP_RMS_MAX          NOISE_MSR_RESP_FIELD_PRE_MAX + \
-                                        NOISE_MSR_RESP_RMS_PAYLOAD_MAX
+#define NOISE_MSR_RESP_RMS_MAX          (NOISE_MSR_RESP_FIELD_PRE_MAX + NOISE_MSR_RESP_RMS_PAYLOAD_MAX)
 #define NOISE_MSR_RESP_P2P_PAYLOAD_MAX  6
-#define NOISE_MSR_RESP_P2P_MAX          NOISE_MSR_RESP_FIELD_PRE_MAX + \
-                                        NOISE_MSR_RESP_P2P_PAYLOAD_MAX
+#define NOISE_MSR_RESP_P2P_MAX          (NOISE_MSR_RESP_FIELD_PRE_MAX + NOISE_MSR_RESP_P2P_PAYLOAD_MAX)
 #define NOISE_MSR_RESP_MAG_PAYLOAD_MAX  6
-#define NOISE_MSR_RESP_MAG_MAX          NOISE_MSR_RESP_FIELD_PRE_MAX + \
-                                        NOISE_MSR_RESP_MAG_PAYLOAD_MAX
-#define NOISE_MSR_RESP_MAX              NOISE_MSR_RESP_RMS_MAX + \
-                                        NOISE_MSR_RESP_P2P_MAX + \
-                                        NOISE_MSR_RESP_MAG_MAX                                    
+#define NOISE_MSR_RESP_MAG_MAX          (NOISE_MSR_RESP_FIELD_PRE_MAX + NOISE_MSR_RESP_MAG_PAYLOAD_MAX)
+#define NOISE_MSR_RESP_MAX              (NOISE_MSR_RESP_RMS_MAX + NOISE_MSR_RESP_P2P_MAX + NOISE_MSR_RESP_MAG_MAX)
 
-// Range Data
+// Range Data Response
 #define RANGE_RESP_FIELD_PRE_MAX  1
 #define RANGE_RESP_ADDR_MAX       3
 #define RANGE_RESP_HDR_MAX        RANGE_RESP_ADDR_MAX
 #define RANGE_RESP_PAYLOAD_MAX    5
-#define RANGE_RESP_RANGE_MAX      RANGE_RESP_FIELD_PRE_MAX + \
-                                  RANGE_RESP_RANGE_PAYLOAD_MAX
-#define RANGE_RESP_MAX            RANGE_RESP_HDR_MAX + \
-                                  RANGE_RESP_RANGE_MAX
+#define RANGE_RESP_RANGE_MAX      (RANGE_RESP_FIELD_PRE_MAX + RANGE_RESP_PAYLOAD_MAX)
+#define RANGE_RESP_MAX            (RANGE_RESP_HDR_MAX + RANGE_RESP_RANGE_MAX)
 
-// Spectrum Measurement
+// Spectrum Measurement Response
 #define SPEC_MSR_RESP_NUM_BINS_PAYLOAD_MAX 5
-#define SPEC_MSR_RESP_MAG_PAYLOAD_MAX      sizeof(unint16_t)
-//TODO finish this field
+#define SPEC_MSR_RESP_MAG_PAYLOAD_MAX      sizeof(uint16_t)
 
-// Unicast
-#define UNICAST_RESP_DATA_SIZE_MAX 2
-#define UNICAST_RESP_HDR_MAX       UNICAST_RESP_HDR_MAX
-#define UNICAST_RESP_DATA_MIN      MODEM_DATA_MIN
-#define UNICAST_RESP_PAYLOAD_MAX   MODEM_PAYLOAD_MAX
-#define UNICAST_RESP_MIN           UNICAST_RESP_HDR_MAX + \
-                                   UNICAST_RESP_DATA_MIN
-#define UNICAST_RESP_MAX           UNICAT_RESP_HDR_MAX + \
-                                   UNICAST_RESP_PAYLOAD_MAX
+// Unicast Response
+#define UNICAST_RESP_DATA_SIZE_MAX  2
+#define UNICAST_RESP_HDR_MAX        UNICAST_RESP_DATA_SIZE_MAX
+#define UNICAST_RESP_DATA_MIN       MODEM_DATA_MIN
+#define UNICAST_RESP_PAYLOAD_MAX    MODEM_PAYLOAD_MAX
+#define UNICAST_RESP_MIN            (UNICAST_RESP_HDR_MAX + UNICAST_RESP_DATA_MIN)
+#define UNICAST_RESP_MAX            (UNICAST_RESP_HDR_MAX + UNICAST_RESP_PAYLOAD_MAX)
 
-// Voltage and Noise Measurement (Broadcast Message)
+// Voltage and Noise Measurement (Broadcast Response)
 #define VOLT_NOISE_MSR_RESP_FIELD_PRE_MAX     1
 #define VOLT_NOISE_MSR_RESP_ADDR_MAX          3
 #define VOLT_NOISE_MSR_RESP_DATA_SIZE_MAX     2
-#define VOLT_NOISE_MSR_RESP_HDR_MAX           VOLT_NOISE_MSR_RESP_ADDR_MAX + \
-                                              VOLT_NOISE_MSR_RESP_DATA_SIZE_MAX
+#define VOLT_NOISE_MSR_RESP_HDR_MAX           (VOLT_NOISE_MSR_RESP_ADDR_MAX + VOLT_NOISE_MSR_RESP_DATA_SIZE_MAX)
 #define VOLT_NOISE_MSR_RESP_VOLT_PAYLOAD_MAX  5
-#define VOLT_NOISE_MSR_RESP_VOLT_MAX          VOLT_NOISE_MSR_RESP_FIELD_PRE_MAX + \
-                                              VOLT_NOISE_MSR_RESP_VOLT_PAYLOAD_MAX
+#define VOLT_NOISE_MSR_RESP_VOLT_MAX          (VOLT_NOISE_MSR_RESP_FIELD_PRE_MAX + VOLT_NOISE_MSR_RESP_VOLT_PAYLOAD_MAX)
 #define VOLT_NOISE_MSR_NOISE_MAX              NOISE_MSR_RESP_MAX
 
-// Extenion Commands
+// Extenion Responses
 #define EXTEN_RESP_TYPE_MAX         1
-#define EXTEN_RESP_MAX             	EXTEN_RESP_TYPE_MAX
+#define EXTEN_RESP_MAX              EXTEN_RESP_TYPE_MAX
 
-// --- Extension Commands ---
+//--- Extension Responses ---
 #define SYS_TIME_EXT_RESP_STATUS_MAX  1
 #define SYS_TIME_EXT_RESP_PAYLOAD_MAX 14
-#define SYS_TIME_EXT_RESP_MAX         SYS_TIME_EXT_RESP_STATUS_MAX + \
-                                      SYS_TIME_EXT_RESP_PAYLOAD_MAX
+#define SYS_TIME_EXT_RESP_MAX         (SYS_TIME_EXT_RESP_STATUS_MAX + SYS_TIME_EXT_RESP_PAYLOAD_MAX)
 #define LINK_QUAL_EXT_RESP_STATUS_MAX 1
 #define LINK_QUAL_EXT_RESP_MAX        LINK_QUAL_EXT_RESP_STATUS_MAX
 
-// --- Prefixes ---
+//--- Prefixes and Postfixes ---
 #define ERROR_PRE                         'E'
 #define MODEM_COMMAND_PRE                 '$'
 #define MODEM_LOCAL_RESP_PRE              '$'
@@ -398,19 +273,12 @@ union ExtenionResponsePacketVariant_u;
 #define RESP_EXTRA_FIELD_LQ_QUAL_PRE      'Q'
 #define RESP_EXTRA_FIELD_LQ_DOPP_PRE      'D'
 #define RESP_EXTRA_FIELD_TIME_PRE         'T'
+#define MODEM_POSTFIX                     "/r/n"
 
-// --- Postfixes ---
-#define MODEM_POSTFIX '/r/n'
+//----------------------------------------------------------------
+// Enumerated Types
+//----------------------------------------------------------------
 
-// --- Modem Packet Types --
-enum ModemPacketTypes_e: uint8_t {
-  MODEM_COMMAND_TYPE        = '$',
-  MODEM_LOCAL_RESPONSE_TYPE = '$', 
-  MODEM_RESPONSE_TYPE       = '#',
-  ERROR_TYPE                = 'E',
-};
-
-// --- Command Types ---
 enum ModemCommandTypes_e: uint8_t {
   QUERY_STATUS_CMD_TYPE   = '?',
   SET_ADDRESS_CMD_TYPE    = 'A',
@@ -430,42 +298,37 @@ enum ModemCommandTypes_e: uint8_t {
   EXTEN_CMD_TYPE          = 'X',
 };
 
-// --- Extention Types --- 
 enum ModemExtentionCommandTypes_e: uint8_t {
-	SYS_TIME_EXT_CMD_TYPE 	= 'T',
-	LINK_QUAL_EXT_CMD_TYPE 	= 'Q',
+  SYS_TIME_EXT_CMD_TYPE   = 'T',
+  LINK_QUAL_EXT_CMD_TYPE  = 'Q',
 };
 
-// --- System Time Types ---
 enum SystemTimeCommandTypes_e: uint8_t {
-  SYS_TIME_ENABLE_CMD_TYPE    = 'E',
-  SYS_TIME_DISABLE_CMD_TYPE   = 'D',
-  SYS_TIME_CLEAR_CMD_TYPE     = 'C',
-  SYS_TIME_GET_TIME_CMD_TYPE  = 'G',
+  SYS_TIME_ENABLE_CMD_TYPE   = 'E',
+  SYS_TIME_DISABLE_CMD_TYPE  = 'D',
+  SYS_TIME_CLEAR_CMD_TYPE    = 'C',
+  SYS_TIME_GET_TIME_CMD_TYPE = 'G',
 };
 
-// --- Link Quality Types --- 
 enum LinkQualityCommandTypes_e: uint8_t {
   LINK_QUAL_ENABLE_CMD_TYPE  = 'E',
   LINK_QUAL_DISABLE_CMD_TYPE = 'D',
 };
 
-// --- Local Response Types ---
 enum ModemLocalResponseTypes_e: uint8_t {
-  BROADCAST_CMD_LOCAL_RESP_TYPE  		  = 'B',
-  CHN_IMP_CMD_LOCAL_RESP_TYPE    		  = 'C',
-  ECHO_MSG_CMD_LOCAL_RESP_TYPE   		  = 'E',
-  UNICAST_ACK_CMD_LOCAL_RESP_TYPE 	  = 'M',
-  PING_CMD_LOCAL_RESP_TYPE            = 'P',
-  CORR_ERR_CMD_LOCAL_RESP_TYPE        = 'C',
-  RESET_CMD_LOCAL_RESP_TYPE      		  = 'R',
-  SPEC_MSR_CMD_LOCAL_RESP_TYPE   		  = 'S',
-  TEST_MSG_CMD_LOCAL_RESP_TYPE        = 'T',
-  UNICAST_CMD_LOCAL_RESP_TYPE    		  = 'U',
-  VOLT_NOISE_MSR_CMD_LOCAL_RESP_TYPE  = 'V',
+  BROADCAST_CMD_LOCAL_RESP_TYPE     = 'B',
+  CHN_IMP_CMD_LOCAL_RESP_TYPE       = 'C',
+  ECHO_MSG_CMD_LOCAL_RESP_TYPE      = 'E',
+  UNICAST_ACK_CMD_LOCAL_RESP_TYPE   = 'M',
+  PING_CMD_LOCAL_RESP_TYPE          = 'P',
+  CORR_ERR_CMD_LOCAL_RESP_TYPE      = 'C',
+  RESET_CMD_LOCAL_RESP_TYPE         = 'R',
+  SPEC_MSR_CMD_LOCAL_RESP_TYPE      = 'S',
+  TEST_MSG_CMD_LOCAL_RESP_TYPE      = 'T',
+  UNICAST_CMD_LOCAL_RESP_TYPE       = 'U',
+  VOLT_NOISE_MSR_CMD_LOCAL_RESP_TYPE = 'V',
 };
 
-// --- Response Types ---
 enum ModemResponseTypes_e: uint8_t {
   QUERY_STATUS_RESP_TYPE  = 'A',
   SET_ADDRESS_RESP_TYPE   = 'A',
@@ -477,41 +340,33 @@ enum ModemResponseTypes_e: uint8_t {
   UNICAST_RESP_TYPE       = 'U',
 };
 
-// --- Extention Types --- 
 enum ModemExtentionResponseTypes_e: uint8_t {
-	SYS_TIME_EXT_RESP_TYPE 	= 'T',
-	LINK_QUAL_EXT_RESP_TYPE = 'Q',
+  SYS_TIME_EXT_RESP_TYPE   = 'T',
+  LINK_QUAL_EXT_RESP_TYPE  = 'Q',
 };
 
-// --- System Time Types ---
 enum SystemTimeResponseTypes_e: uint8_t {
-  SYS_TIME_ENABLE_RESP_TYPE    = 'E',
-  SYS_TIME_DISABLE_RESP_TYPE   = 'D',
-  SYS_TIME_CLEAR_RESP_TYPE     = 'C',
-  SYS_TIME_GET_TIME_RESP_TYPE  = 'G',
+  SYS_TIME_ENABLE_RESP_TYPE   = 'E',
+  SYS_TIME_DISABLE_RESP_TYPE  = 'D',
+  SYS_TIME_CLEAR_RESP_TYPE    = 'C',
+  SYS_TIME_GET_TIME_RESP_TYPE = 'G',
 };
 
-// --- Link Quality Types --- 
 enum LinkQualityResponseTypes_e: uint8_t {
   LINK_QUAL_ENABLE_RESP_TYPE  = 'E',
   LINK_QUAL_DISABLE_RESP_TYPE = 'D',
 };
 
-// --- Packet Structures 
-//Byte-align the structs. Pretty please. 
+//----------------------------------------------------------------
+// Begin Packed Definitions
+//----------------------------------------------------------------
 #pragma pack(push, 1)
-// --- Modem Packet --- 
-struct ModemPacket_t {
-  ModemPacketTypes_e type;
-  ModemPacketVariant_u payload;
-};
 
-// --- Modem Command Packets ---
-struct ModemCommandPacket_t {
-  ModemCommandTypes_e type; 
-  ModemCommandPacketVariant_u command;
-};
+//================================================================
+// Leaf Structure Definitions
+//================================================================
 
+//=== Command Packet Leaf Structures ===
 struct SetAddresCommandPacket_t {
   uint8_t addr[SET_ADDRESS_CMD_ADDR_MAX];
 };
@@ -572,12 +427,6 @@ struct VoltageAndNoiseCommandPacket_t {
   uint8_t addr[VOLT_NOISE_MSR_CMD_ADDR_MAX];
 };
 
-// Extenion Commands
-struct ExtenionCommandPacket_t{
-  ModemExtentionCommandTypes_e type;
-  ExtenionCommandPacketVariant_u command;
-};
-
 struct SystemTimeCommandPacket_t {
   SystemTimeCommandTypes_e type;
 };
@@ -586,12 +435,11 @@ struct LinkQualityCommandPacket_t {
   LinkQualityCommandTypes_e type;
 };
 
-// --- Local Response Commands ---
-struct ModemLocalResponsePacket_t {
-  ModemLocalResponseTypes_e type;
-  ModemLocalResponsePacketVariant_u response;
+struct ExtenionCommandPacket_t {
+  ModemExtentionCommandTypes_e type;
 };
 
+//=== Local Response Leaf Structures ===
 struct BroadcastLocalResponsePacket_t {
   uint8_t dataSize[BROADCAST_CMD_LOCAL_RESP_DATA_SIZE_MAX];
 };
@@ -606,7 +454,7 @@ struct EchoMessageLocalResponsePacket_t {
   uint8_t dataSize[ECHO_MSG_CMD_LOCAL_RESP_DATA_SIZE_MAX];
 };
 
-struct UnicastWithAckLocalResponsePacket_t{
+struct UnicastWithAckLocalResponsePacket_t {
   uint8_t addr[UNICAST_ACK_CMD_LOCAL_RESP_ADDR_MAX];
   uint8_t dataSize[UNICAST_ACK_CMD_LOCAL_RESP_DATA_SIZE_MAX];
 };
@@ -632,18 +480,7 @@ struct VoltageAndNoiseLocalResponsePacket_t {
   uint8_t addr[VOLT_NOISE_MSR_CMD_LOCAL_RESP_ADDR_MAX];
 };
 
-// --- Modem Response Packets ---
-struct ModemResponsePacket_t {
-  ModemResponseTypes_e type;
-  ModemResponsePacketVariant_u response;
-  ResponseExtraData_t extraData;
-};
-
-// Response Extra Data (Link Quality and/or Time)
-struct ResponseExtraData_t {
-  ResponseExtraDataVariant_u data;
-};
-
+//=== Response Extra Data Leaf Structures ===
 struct ResponseExtraLinkQuality_t {
   uint8_t lqQualSep;
   uint8_t lqQualPayload[RESP_EXTRA_LQ_QUAL_PAYLOAD_MAX];
@@ -656,15 +493,22 @@ struct ResponseExtraTime_t {
   uint8_t timePayload[RESP_EXTRA_TIME_PAYLOAD_MAX];
 };
 
-struct ResponseExtraAll_t{
+struct ResponseExtraAll_t {
   ResponseExtraLinkQuality_t lqData;
   ResponseExtraTime_t timeData;
 };
 
-struct QueryStatusResponsePacket_t {
-  QueryStatusResponsePacketVariant_u status;
+union ResponseExtraDataVariant_u {
+  ResponseExtraLinkQuality_t linkQuality;
+  ResponseExtraTime_t time;
+  ResponseExtraAll_t all;
 };
 
+struct ResponseExtraData_t {
+  ResponseExtraDataVariant_u data;
+};
+
+//=== Response Packet Leaf Structures ===
 struct SetAddressResponsePacket_t {
   uint8_t addr[SET_ADDRESS_RESP_ADDR_MAX];
 };
@@ -685,14 +529,28 @@ struct QueryStatusResponseFullPacket_t {
   QueryStatusResponseBuildTime_t buildTime;
 };
 
+union QueryStatusResponsePacketVariant_u {
+  SetAddressResponsePacket_t setAddress;
+  QueryStatusResponseFullPacket_t fullStatus;
+};
+
+struct QueryStatusResponsePacket_t {
+  union QueryStatusResponsePacketVariant_u status;
+};
+
 struct BroadcastMessageHeader_t {
   uint8_t addr[BROADCAST_RESP_ADDR_MAX];
   uint8_t dataSize[BROADCAST_RESP_DATA_SIZE_MAX];
 };
 
+union BroadcastMessageResponseVariant_u {
+  uint8_t payload[BROADCAST_RESP_PAYLOAD_MAX];
+  // Alternatively, you might define a VoltageAndNoiseResponsePacket_t
+};
+
 struct BroadcastMessageResponsePacket_t {
   BroadcastMessageHeader_t header;
-  BroadcastMessageResponseVariant_u message;
+  union BroadcastMessageResponseVariant_u message;
 };
 
 struct NoiseMeasurementResponsePacket_t {
@@ -710,7 +568,6 @@ struct VoltageAndNoiseResponsePacket_t {
   NoiseMeasurementResponsePacket_t noiseMeasurmeent;
 };
 
-
 struct RangeDataResponsePacket_t {
   uint8_t addr[RANGE_RESP_ADDR_MAX];
   uint8_t rangeSep;
@@ -722,12 +579,6 @@ struct UnicastResponsePacket_t {
   uint8_t payload[UNICAST_RESP_PAYLOAD_MAX];
 };
 
-// Extention Packets
-struct ExtenionResponsePacket_t {
-  ModemExtentionResponseTypes_e type;
-  ExtenionResponsePacketVariant_u response;
-};
-
 struct SystemTimeResponsePacket_t {
   uint8_t status;
   uint8_t timePayload[SYS_TIME_EXT_RESP_PAYLOAD_MAX];
@@ -737,11 +588,20 @@ struct LinkQualityResponsePacket_t {
   uint8_t status;
 };
 
-// --- Unions --- 
-union ExtenionCommandPacketVariant_u {
-  SystemTimeCommandPacket_t systemTime;
-  LinkQualityCommandPacket_t linkQuality;
+union ExtenionResponsePacketVariant_u {
+  SystemTimeResponsePacket_t systemTime;
+  LinkQualityResponsePacket_t linkQuality;
 };
+
+struct ExtenionResponsePacket_t {
+  ModemExtentionResponseTypes_e type;
+  union ExtenionResponsePacketVariant_u response;
+};
+
+
+//================================================================
+// Union Definitions (All leaf types are now complete)
+//================================================================
 
 union ModemCommandPacketVariant_u {
   SetAddresCommandPacket_t setAddress;
@@ -768,27 +628,6 @@ union ModemLocalResponsePacketVariant_u {
   VoltageAndNoiseLocalResponsePacket_t voltageAndNoise;
 };
 
-union ResponseExtraDataVariant_u{
-  ResponseExtraLinkQuality_t linkQuality;
-  ResponseExtraTime_t time;
-  ResponseExtraAll_t all;
-};
-
-union QueryStatusResponsePacketVariant_u{
-  SetAddressResponsePacket_t setAddress;
-  QueryStatusResponseFullPacket_t fullStatus;
-};
-
-union BroadcastMessageResponseVariant_u {
-  uint8_t payload[BROADCAST_RESP_PAYLOAD_MAX];
-  VoltageAndNoiseResponsePacket_t voltAndNoise;
-};
-
-union ExtenionResponsePacketVariant_u {
-  SystemTimeResponsePacket_t systemTime;
-  LinkQualityResponsePacket_t linkQuality;
-};
-
 union ModemResponsePacketVariant_u {
   QueryStatusResponsePacket_t queryStatus;
   BroadcastMessageResponsePacket_t broadcast;
@@ -797,25 +636,49 @@ union ModemResponsePacketVariant_u {
   ExtenionResponsePacket_t extPacket;
 };
 
+union ExtenionCommandPacketVariant_u {
+  SystemTimeCommandPacket_t systemTime;
+  LinkQualityCommandPacket_t linkQuality;
+};
+
+//================================================================
+// Container Packet Structures
+//================================================================
+
+enum ModemPacketTypes_e : uint8_t {
+  MODEM_COMMAND_TYPE        = '$',
+  MODEM_LOCAL_RESPONSE_TYPE = '$',
+  MODEM_RESPONSE_TYPE       = '#',
+  ERROR_TYPE                = 'E'
+};
+
+struct ModemCommandPacket_t {
+  ModemCommandTypes_e type;
+  ModemCommandPacketVariant_u command;
+};
+
+struct ModemLocalResponsePacket_t {
+  ModemLocalResponseTypes_e type;
+  ModemLocalResponsePacketVariant_u response;
+};
+
+struct ModemResponsePacket_t {
+  ModemResponseTypes_e type;
+  ModemResponsePacketVariant_u response;
+  ResponseExtraData_t extraData;
+};
+
 union ModemPacketVariant_u {
   ModemCommandPacket_t command;
   ModemLocalResponsePacket_t localResponse;
   ModemResponsePacket_t response;
 };
 
+struct ModemPacket_t {
+  ModemPacketTypes_e type;
+  ModemPacketVariant_u payload;
+};
+
 #pragma pack(pop)
-
-// void print_packet(String packetBuffer, String packet_type);
-// void query_status(HardwareSerial connection);
-// void set_address(HardwareSerial connection, int8_t addr);
-// uint8_t get_modem_address();
-// void broadcast(HardwareSerial connection, char *data, int8_t bytes);
-// void ping(HardwareSerial connection, int8_t addr);
-// void parse_status_query_packet(uint8_t* packetBuffer, uint8_t size);
-// void parse_broadcast_packet(uint8_t* packetBuffer, uint8_t size);
-// void parse_unicast_packet(uint8_t* packetBuffer, uint8_t size);
-// void packet_received_modem(uint8_t* packetBuffer, uint8_t size);
-// void packet_received_nest(uint8_t* packetBuffer, uint8_t size);
-
 
 #endif
