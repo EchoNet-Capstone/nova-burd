@@ -23,7 +23,7 @@ void query_status(HardwareSerial connection) {
     connection.print("$?");
 }
 
-void set_address(HardwareSerial connection, int8_t addr) {
+void set_address(HardwareSerial connection, uint8_t addr) {
     connection.printf("$A%03d", addr);
 }
 
@@ -31,12 +31,17 @@ uint8_t get_modem_address() {
     return modem_id;
 }
 
-void broadcast(HardwareSerial connection, char *data, int8_t bytes) {
-    connection.printf("$B%02d", bytes);
-    connection.print(data);
+void broadcast(HardwareSerial connection, char *data, uint8_t bytes) {
+    Serial.printf("$B%02u", bytes);
+    for (int i = 0; i < bytes; i++) {
+        Serial.printf(" %02X", (uint8_t)data[i]);
+    }
+    Serial.println();
+    connection.printf("$B%02u", bytes);
+    connection.write((uint8_t *)data, bytes);
 }
 
-void ping(HardwareSerial connection, int8_t addr) {
+void ping(HardwareSerial connection, uint8_t addr) {
     connection.printf("$P%03d", addr);
 }
 
@@ -145,20 +150,20 @@ void parse_ping_packet(uint8_t *packetBuffer, uint8_t size) {
 }
 
 void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
-    /*if (debug) {
-        Serial.printf("PKT RECV: [");
+    if (debug) {
+        Serial.printf("PKT RECV (%02u bytes): [", size);
         for(int i = 0; i < size; i++){
             Serial.printf("%02x, ", packetBuffer[i]);
         }
         Serial.printf("]\r\n");
-    }*/
+    }
     
     if (size < 1) {
         // Should never happen over serial connection.
         return;
     }
 
-    if (packetBuffer[0] == 'E') {
+    if (packetBuffer[0] == 'E' && size == 1) {
         if (debug) Serial.println("Error packet received.");
         return;
     }

@@ -28,7 +28,7 @@ void motor_init(void){
   //motor_run_to_position(CLOSED_POSITION);
   //delay(5000);
   motor_run_to_position(OPEN_POSITION);
-  delay(5000);
+  //delay(5000);
 }
 
 // Wiggle the motor to clear barnacles
@@ -117,6 +117,7 @@ void motor_forward(){
 
 // Motor encoder interrupt
 void motor_quadrature_interrupt(){
+  // Serial.println("quad interrupt");
   if(digitalRead(MOTOR_QUAD_B)){
     set_motor_position(get_motor_position() + 1);
   }

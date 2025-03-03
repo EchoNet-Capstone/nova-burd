@@ -40,6 +40,8 @@ void parse_floc_command_packet(FlocHeader_t* floc_header, CommandPacket_t* pkt, 
     switch (commandType) {
         case COMMAND_TYPE_1:
             // TODO : Code to release buoy goes here
+            motor_run_to_position(CLOSED_POSITION);
+
             floc_acknowledgement_send(TTL_START, floc_header->pid, floc_header->src_addr, get_modem_address());
 
             break;

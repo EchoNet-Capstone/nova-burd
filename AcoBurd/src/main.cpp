@@ -3,6 +3,7 @@
 #include "display.hpp"
 #include "motor.hpp"
 #include "watchdog.hpp"
+#include <Ethernet.h>
 
 // Defined if the serial port (not serial1) is used to receive data from the NeST
 #define RECV_SERIAL_NEST
@@ -40,7 +41,7 @@ void setup(){
 
   noInterrupts();
 
-  // motor_init();
+  motor_init();
 
   //Enable the WDT.
   // innerWdtEnable(true);
@@ -51,9 +52,9 @@ void setup(){
 
   // go_to_sleep();
 
-  oled_initialize();
-
   interrupts();
+
+  oled_initialize();
 
 #ifdef MASTER_NODE
 
@@ -75,22 +76,29 @@ void setup(){
     // Populate the common header
     temp->header.ttl = 2;
     temp->header.type = FLOC_COMMAND_TYPE;  // Corrected type from COMMAND_TYPE
-    temp->header.nid = 4;  // Example NID
+    temp->header.nid = htons(4);  // Example NID
     temp->header.pid = 8;
     temp->header.res = 0;
-    temp->header.dest_addr = 16;
-    temp->header.src_addr = 32;
+    temp->header.dest_addr = htons(16);
+    temp->header.src_addr = htons(32);
 
     // Populate the command-specific header
     temp->payload.command.header.command_type = COMMAND_TYPE_1;  // Example command type
     temp->payload.command.header.size = 3;
 
     // Populate command data (example data)
-    temp->payload.command.data[0] = 0xA1;
-    temp->payload.command.data[1] = 0xB2;
-    temp->payload.command.data[2] = 0xC3;
+    temp->payload.command.data[0] = 'A';
+    temp->payload.command.data[1] = 'S';
+    temp->payload.command.data[2] = 'D';
 
     const uint8_t *struct_ptr = (uint8_t *)temp;
+    if (debug) {
+        Serial.printf("PACKET HERE (%02u bytes): [", sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3);
+        for(int i = 0; i < sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3; i++){
+            Serial.printf("%02x, ", struct_ptr[i]);
+        }
+        Serial.printf("]\r\n");
+    }
 
     // Structure acoustic broadcast command
     MODEM_SERIAL_CONNECTION.printf("$B%02d", sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3);
@@ -126,6 +134,7 @@ void loop(){
             // Remove the <CR> from the buffer
             packetBuffer_nest[packetBuffer_nest_idx - 1] = 0;
 
+            Serial.printf("Size of packet : %d\r\n", packetBuffer_nest_idx - 1);
             packet_received_nest(packetBuffer_nest, packetBuffer_nest_idx - 1);
             
             memset(packetBuffer_nest, 0 , sizeof(packetBuffer_nest)); // Clear the buffer
