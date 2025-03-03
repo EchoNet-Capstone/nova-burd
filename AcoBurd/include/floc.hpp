@@ -47,22 +47,22 @@
 
 // The 4 types of floc packets
 enum FlocPacketType_e : uint8_t{
-    FLOC_DATA_TYPE = 0x0,
-    FLOC_COMMAND_TYPE = 0x1,
-    FLOC_ACK_TYPE = 0x2,
-    FLOC_RESPONSE_TYPE = 0x3
+  FLOC_DATA_TYPE = 0x0,
+  FLOC_COMMAND_TYPE = 0x1,
+  FLOC_ACK_TYPE = 0x2,
+  FLOC_RESPONSE_TYPE = 0x3
 };
 
 enum CommandType_e: uint8_t {  // Example
-    COMMAND_TYPE_1 = 0x1,
-    COMMAND_TYPE_2 = 0x2,
-    // ...
+  COMMAND_TYPE_1 = 0x1,
+  COMMAND_TYPE_2 = 0x2,
+  // ...
 };
 
 enum SerialFlocPacketType_e: uint8_t {
-    SERIAL_BROADCAST_TYPE = 'B',
-    SERIAL_UNICAST_TYPE   = 'U',
-    // ...
+  SERIAL_BROADCAST_TYPE = 'B',
+  SERIAL_UNICAST_TYPE   = 'U',
+  // ...
 };
 
 // --- Packet Structures ---
@@ -118,12 +118,14 @@ struct ResponsePacket_t {
     uint8_t data[MAX_RESPONSE_DATA_SIZE]; // Statically allocated, maximum size
 };
 
+// --- Now Define Complete Packet Structures ---
 struct FlocPacket_t {
     FlocHeader_t header;
     FlocPacketVariant_u payload;
 };
 
-// --- Serial FLOC Packet Structures ---
+// --- Serial FLOC Structures ---
+// Define the header first.
 struct SerialFlocHeader_t {
     SerialFlocPacketType_e type: SERIAL_FLOC_TYPE_SIZE;
     uint8_t                size;
@@ -151,9 +153,10 @@ union FlocPacketVariant_u {
     ResponsePacket_t response;
 };
 
+// Now define the union with complete types.
 union SerialFlocPacketVariant_u {
-    SerialBroadcastPacket_t broadcast;
-    SerialUnicastPacket_t unicast;
+  struct SerialBroadcastPacket_t broadcast;
+  struct SerialUnicastPacket_t unicast;
 };
 
 #ifdef ON_DEVICE
@@ -166,7 +169,7 @@ void floc_broadcast_received(uint8_t *broadcastBuffer, uint8_t size);
 void floc_unicast_received(uint8_t *unicastBuffer, uint8_t size);
 void floc_acknowledgement_send(uint8_t ttl, uint8_t ack_pid, uint16_t dest_addr, uint16_t src_addr);
 void floc_status_queue(HardwareSerial connection, uint8_t dest_addr);
-void floc_status_send(String status, uint8_t ttl);
+void floc_status_send(uint8_t *status, uint8_t size);
 #endif // ON_DEVICE
 
 #endif

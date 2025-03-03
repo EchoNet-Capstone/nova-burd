@@ -40,7 +40,9 @@ void parse_floc_command_packet(FlocHeader_t* floc_header, CommandPacket_t* pkt, 
     switch (commandType) {
         case COMMAND_TYPE_1:
             // TODO : Code to release buoy goes here
-            floc_acknowledgement_send(TTL_START, floc_header->pid, floc_header->src_addr, get_modem_address());
+            motor_run_to_position(CLOSED_POSITION);
+
+            floc_acknowledgement_send(TTL_START, floc_header->pid, ntohs(floc_header->src_addr), get_modem_address());
 
             break;
         case COMMAND_TYPE_2:
@@ -121,10 +123,10 @@ void floc_broadcast_received(uint8_t *broadcastBuffer, uint8_t size) {
 
     uint8_t ttl = header->ttl;
     uint8_t type = header->type;
-    uint16_t nid = header->nid;
+    uint16_t nid = ntohs(header->nid);
     uint8_t pid = header->pid;
-    uint16_t dest_addr = header->dest_addr;
-    uint16_t src_addr = header->src_addr;
+    uint16_t dest_addr = ntohs(header->dest_addr);
+    uint16_t src_addr = ntohs(header->src_addr);
 
     if (debug) {
         Serial.printf(
@@ -175,11 +177,11 @@ void floc_acknowledgement_send(uint8_t ttl, uint8_t ack_pid, uint16_t dest_addr,
     FlocPacket_t packet;
     packet.header.ttl = ttl;
     packet.header.type = FLOC_ACK_TYPE;
-    packet.header.nid = get_network_id();
+    packet.header.nid = htons(get_network_id());
     packet.header.pid = use_packet_id();
     packet.header.res = 0;
-    packet.header.dest_addr = dest_addr;
-    packet.header.src_addr = src_addr;
+    packet.header.dest_addr = htons(dest_addr);
+    packet.header.src_addr = htons(src_addr);
 
     packet.payload.ack.header.ack_pid = ack_pid;
 
@@ -192,29 +194,28 @@ void floc_status_queue(HardwareSerial connection, uint8_t dest_addr) {
     query_status(connection);
 }
 
-void floc_status_send(String status, uint8_t ttl) {
+void floc_status_send(uint8_t *status, uint8_t size) {
     // Ensure the status message fits within the response packet
-    uint8_t statusSize = status.length();
-    if (statusSize > MAX_RESPONSE_DATA_SIZE) {
+    if (size > MAX_RESPONSE_DATA_SIZE) {
         if (debug) printf("Error, status message too large.\n");
         return;
     }
 
     // Construct the packet
     FlocPacket_t packet;
-    packet.header.ttl = ttl;
+    packet.header.ttl = TTL_START;
     packet.header.type = FLOC_RESPONSE_TYPE;
-    packet.header.nid = get_network_id();
+    packet.header.nid = htons(get_network_id());
     packet.header.pid = use_packet_id();
     packet.header.res = 0;
-    packet.header.dest_addr = status_response_dest_addr;
-    packet.header.src_addr = get_modem_address();
+    packet.header.dest_addr = htons(status_response_dest_addr);
+    packet.header.src_addr = htons(get_modem_address());
 
     packet.payload.response.header.request_pid = packet.header.pid;
-    packet.payload.response.header.size = statusSize;
+    packet.payload.response.header.size = size;
 
     // Copy the status string into the response data
-    memcpy(packet.payload.response.data, status.c_str(), statusSize);
+    memcpy(packet.payload.response.data, status, size);
 
-    broadcast(MODEM_SERIAL_CONNECTION, reinterpret_cast<char*>(&packet), sizeof(FlocHeader_t) + sizeof(ResponseHeader_t) + statusSize);
+    broadcast(MODEM_SERIAL_CONNECTION, reinterpret_cast<char*>(&packet), sizeof(FlocHeader_t) + sizeof(ResponseHeader_t) + size);
 }

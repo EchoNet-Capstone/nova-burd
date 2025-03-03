@@ -8,10 +8,11 @@
 #define RECV_SERIAL_NEST
 
 // Testing define
-// #define MASTER_NODE
+#define MASTER_NODE
 
 // Packet buffer for data received from the ship terminal (NeST) serial line
-String packetBuffer_nest = "";
+static uint8_t packetBuffer_nest[SERIAL_FLOC_MAX_SIZE] = {0};
+static uint8_t packetBuffer_nest_idx = 0;
 
 // Packet buffer for data received from the acoustic modem serial line
 static uint8_t packetBuffer_modem[FLOC_MAX_SIZE] = {0};
@@ -39,7 +40,7 @@ void setup(){
 
   noInterrupts();
 
-  // motor_init();
+  motor_init();
 
   //Enable the WDT.
   // innerWdtEnable(true);
@@ -50,9 +51,9 @@ void setup(){
 
   // go_to_sleep();
 
-  oled_initialize();
-
   interrupts();
+
+  oled_initialize();
 
 #ifdef MASTER_NODE
 
@@ -74,22 +75,29 @@ void setup(){
     // Populate the common header
     temp->header.ttl = 2;
     temp->header.type = FLOC_COMMAND_TYPE;  // Corrected type from COMMAND_TYPE
-    temp->header.nid = 4;  // Example NID
+    temp->header.nid = htons(4);  // Example NID
     temp->header.pid = 8;
     temp->header.res = 0;
-    temp->header.dest_addr = 16;
-    temp->header.src_addr = 32;
+    temp->header.dest_addr = htons(16);
+    temp->header.src_addr = htons(32);
 
     // Populate the command-specific header
     temp->payload.command.header.command_type = COMMAND_TYPE_1;  // Example command type
     temp->payload.command.header.size = 3;
 
     // Populate command data (example data)
-    temp->payload.command.data[0] = 0xA1;
-    temp->payload.command.data[1] = 0xB2;
-    temp->payload.command.data[2] = 0xC3;
+    temp->payload.command.data[0] = 'A';
+    temp->payload.command.data[1] = 'S';
+    temp->payload.command.data[2] = 'D';
 
     const uint8_t *struct_ptr = (uint8_t *)temp;
+    if (debug) {
+        Serial.printf("PACKET HERE (%02u bytes): [", sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3);
+        for(int i = 0; i < sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3; i++){
+            Serial.printf("%02x, ", struct_ptr[i]);
+        }
+        Serial.printf("]\r\n");
+    }
 
     // Structure acoustic broadcast command
     MODEM_SERIAL_CONNECTION.printf("$B%02d", sizeof(FlocHeader_t) + sizeof(CommandHeader_t) + 3);
@@ -117,67 +125,52 @@ void setup(){
 void loop(){
 
 #ifdef RECV_SERIAL_NEST
-    /*if (NEST_SERIAL_CONNECTION.available() > 0) {
-        char nest_char = NEST_SERIAL_CONNECTION.read();  // Read one character from modem
-        packetBuffer_nest += nest_char;
+    while (NEST_SERIAL_CONNECTION.available() > 0) {
+        char nest_char = NEST_SERIAL_CONNECTION.read();
 
         // Check for <CR><LF> sequence
-        int end_sequence = packetBuffer_nest.indexOf("\r\n");
-        if (end_sequence > -1) {
-            String current_packet_nest = packetBuffer_nest.substring(0, end_sequence);
-            packetBuffer_nest = packetBuffer_nest.substring(end_sequence + 2);
+        if (nest_char == '\n' && packetBuffer_nest_idx > 0 && packetBuffer_nest[packetBuffer_nest_idx - 1] == '\r') {
+            // Remove the <CR> from the buffer
+            packetBuffer_nest[packetBuffer_nest_idx - 1] = 0;
 
-            packet_received_nest(current_packet_nest);
-        }
-    }*/
-    while (NEST_SERIAL_CONNECTION.available() > 0) {
-        // char nest_char = NEST_SERIAL_CONNECTION.read();
-
-        // // Check for <CR><LF> sequence
-        // if (nest_char == '\n' && packetBuffer_nest.endsWith("\r")) {
-        //     // Remove the <CR> from the buffer
-        //     packetBuffer_nest.remove(packetBuffer_nest.length() - 1);
-
-        //     packet_received_nest(packetBuffer_nest);
+            Serial.printf("Size of packet : %d\r\n", packetBuffer_nest_idx - 1);
+            packet_received_nest(packetBuffer_nest, packetBuffer_nest_idx - 1);
             
-        //     packetBuffer_nest = "";  // Clear the buffer
-        // } else {
-        //     // Append character to the buffer
-        //     packetBuffer_nest += nest_char;
-        // }
+            memset(packetBuffer_nest, 0 , sizeof(packetBuffer_nest)); // Clear the buffer
+            packetBuffer_nest_idx = 0;
+        } else {
+            if (packetBuffer_nest_idx >= sizeof(packetBuffer_nest)) {
+                // Some error has occurred, clear the packet
+                memset(packetBuffer_nest, 0 , sizeof(packetBuffer_nest));
+                packetBuffer_nest_idx = 0;
+            }
+            // Append character to the buffer
+            packetBuffer_nest[packetBuffer_nest_idx] = nest_char;
+            packetBuffer_nest_idx++;
+        }
     }
 #endif
-
-    /*if (MODEM_SERIAL_CONNECTION.available() > 0) {
-        char modem_char = MODEM_SERIAL_CONNECTION.read();  // Read one character from modem
-        packetBuffer_modem += modem_char;
-
-        // Check for <CR><LF> sequence
-        int end_sequence = packetBuffer_modem.indexOf("\r\n");
-        if (end_sequence > -1) {
-            String current_packet_modem = packetBuffer_modem.substring(0, end_sequence);
-            packetBuffer_modem = packetBuffer_modem.substring(end_sequence + 2);
-
-            Serial.println(current_packet_modem);
-            packet_received_modem(current_packet_modem);
-        }
-    }*/
     while (MODEM_SERIAL_CONNECTION.available() > 0) {
         char modem_char = MODEM_SERIAL_CONNECTION.read();
 
         // Check for <CR><LF> sequence
-        if (modem_char == '\n' && packetBuffer_modem[packetBuffer_modem_idx - 1] == '\r') {
+        if (modem_char == '\n' && packetBuffer_modem_idx > 0 && packetBuffer_modem[packetBuffer_modem_idx - 1] == '\r') {
             // Remove the <CR> from the buffer
-            packetBuffer_modem[packetBuffer_modem_idx - 1] == 0;
+            packetBuffer_modem[packetBuffer_modem_idx - 1] = 0;
 
-            packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx);
+            packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx - 1);
             
             memset(packetBuffer_modem, 0 , sizeof(packetBuffer_modem)); // Clear the buffer
             packetBuffer_modem_idx = 0;
         } else {
+            if (packetBuffer_modem_idx >= sizeof(packetBuffer_modem)) {
+                // Some error has occurred, clear the packet
+                memset(packetBuffer_modem, 0 , sizeof(packetBuffer_modem));
+                packetBuffer_modem_idx = 0;
+            }
             // Append character to the buffer
             packetBuffer_modem[packetBuffer_modem_idx] = modem_char;
-            packetBuffer_modem_idx = (packetBuffer_modem_idx + 1);
+            packetBuffer_modem_idx++;
         }
     }
 }
