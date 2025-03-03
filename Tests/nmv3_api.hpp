@@ -376,7 +376,7 @@ struct BroadcastMeassageHeader_t {
 };
 
 struct BroadcastMessageCommandPacket_t {
-  BroadcastMeassageHeader_t header;
+  struct BroadcastMeassageHeader_t header;
   uint8_t payload[BROADCAST_CMD_PAYLOAD_MAX];
 };
 
@@ -391,7 +391,7 @@ struct EchoMessageCommandHeader_t {
 };
 
 struct EchoMessageCommandPacket_t {
-  EchoMessageCommandHeader_t header;
+  struct EchoMessageCommandHeader_t header;
   uint8_t payload[ECHO_MSG_CMD_PAYLOAD_MAX];
 };
 
@@ -401,7 +401,7 @@ struct UnicastWithAckCommandHeader_t {
 };
 
 struct UnicastWithAckCommandPacket_t {
-  UnicastWithAckCommandHeader_t header;
+  struct UnicastWithAckCommandHeader_t header;
   uint8_t payload[UNICAST_ACK_CMD_PAYLOAD_MAX];
 };
 
@@ -419,7 +419,7 @@ struct UnicastCommandHeader_t {
 };
 
 struct UnicastCommandPacket_t {
-  UnicastCommandHeader_t header;
+  struct UnicastCommandHeader_t header;
   uint8_t payload[UNICAST_CMD_PAYLOAD_MAX];
 };
 
@@ -494,14 +494,14 @@ struct ResponseExtraTime_t {
 };
 
 struct ResponseExtraAll_t {
-  ResponseExtraLinkQuality_t lqData;
-  ResponseExtraTime_t timeData;
+  struct ResponseExtraLinkQuality_t lqData;
+  struct ResponseExtraTime_t timeData;
 };
 
 union ResponseExtraDataVariant_u {
-  ResponseExtraLinkQuality_t linkQuality;
-  ResponseExtraTime_t time;
-  ResponseExtraAll_t all;
+  struct ResponseExtraLinkQuality_t linkQuality;
+  struct ResponseExtraTime_t time;
+  struct ResponseExtraAll_t all;
 };
 
 struct ResponseExtraData_t {
@@ -526,12 +526,12 @@ struct QueryStatusResponseFullPacket_t {
   uint8_t releaseSep;
   uint8_t releasePayload[QUERY_STATUS_RESP_REL_PAYLOAD_MAX];
   uint8_t buildTimeSep;
-  QueryStatusResponseBuildTime_t buildTime;
+  struct QueryStatusResponseBuildTime_t buildTime;
 };
 
 union QueryStatusResponsePacketVariant_u {
-  SetAddressResponsePacket_t setAddress;
-  QueryStatusResponseFullPacket_t fullStatus;
+  struct SetAddressResponsePacket_t setAddress;
+  struct QueryStatusResponseFullPacket_t fullStatus;
 };
 
 struct QueryStatusResponsePacket_t {
@@ -549,7 +549,7 @@ union BroadcastMessageResponseVariant_u {
 };
 
 struct BroadcastMessageResponsePacket_t {
-  BroadcastMessageHeader_t header;
+  struct BroadcastMessageHeader_t header;
   union BroadcastMessageResponseVariant_u message;
 };
 
@@ -565,7 +565,7 @@ struct NoiseMeasurementResponsePacket_t {
 struct VoltageAndNoiseResponsePacket_t {
   uint8_t voltSep;
   uint8_t voltPayload[VOLT_NOISE_MSR_RESP_VOLT_PAYLOAD_MAX];
-  NoiseMeasurementResponsePacket_t noiseMeasurmeent;
+  struct NoiseMeasurementResponsePacket_t noiseMeasurmeent;
 };
 
 struct RangeDataResponsePacket_t {
@@ -589,8 +589,8 @@ struct LinkQualityResponsePacket_t {
 };
 
 union ExtenionResponsePacketVariant_u {
-  SystemTimeResponsePacket_t systemTime;
-  LinkQualityResponsePacket_t linkQuality;
+  struct SystemTimeResponsePacket_t systemTime;
+  struct LinkQualityResponsePacket_t linkQuality;
 };
 
 struct ExtenionResponsePacket_t {
@@ -604,41 +604,41 @@ struct ExtenionResponsePacket_t {
 //================================================================
 
 union ModemCommandPacketVariant_u {
-  SetAddresCommandPacket_t setAddress;
-  BroadcastMessageCommandPacket_t broadcastMessage;
-  ChannelImpulseCommandPacket_t channelImpulse;
-  EchoMessageCommandPacket_t echoMessage;
-  UnicastWithAckCommandPacket_t unicastWithAck;
-  PingCommandPacket_t ping;
-  TestMsgCommandPacket_t testMsg;
-  UnicastCommandPacket_t unicast;
-  VoltageAndNoiseCommandPacket_t voltageAndNoise;
-  ExtenionCommandPacket_t extPacket;
+  struct SetAddresCommandPacket_t setAddress;
+  struct BroadcastMessageCommandPacket_t broadcastMessage;
+  struct ChannelImpulseCommandPacket_t channelImpulse;
+  struct EchoMessageCommandPacket_t echoMessage;
+  struct UnicastWithAckCommandPacket_t unicastWithAck;
+  struct PingCommandPacket_t ping;
+  struct TestMsgCommandPacket_t testMsg;
+  struct UnicastCommandPacket_t unicast;
+  struct VoltageAndNoiseCommandPacket_t voltageAndNoise;
+  struct ExtenionCommandPacket_t extPacket;
 };
 
 union ModemLocalResponsePacketVariant_u {
-  BroadcastLocalResponsePacket_t broadcast;
-  ChannelImpulseLocalResponsePacket_t channelImpulse;
-  EchoMessageLocalResponsePacket_t echoMessage;
-  UnicastWithAckLocalResponsePacket_t unicastWithAck;
-  PingLocalResponsePacket_t ping;
-  CorrectedErrorsLocalResponsePacket_t correctedErorrs;
-  TestMessageLocalResponsePacket_t testMessage;
-  UnicastLocalResponsePacket_t unicast;
-  VoltageAndNoiseLocalResponsePacket_t voltageAndNoise;
+  struct BroadcastLocalResponsePacket_t broadcast;
+  struct ChannelImpulseLocalResponsePacket_t channelImpulse;
+  struct EchoMessageLocalResponsePacket_t echoMessage;
+  struct UnicastWithAckLocalResponsePacket_t unicastWithAck;
+  struct PingLocalResponsePacket_t ping;
+  struct CorrectedErrorsLocalResponsePacket_t correctedErorrs;
+  struct TestMessageLocalResponsePacket_t testMessage;
+  struct UnicastLocalResponsePacket_t unicast;
+  struct VoltageAndNoiseLocalResponsePacket_t voltageAndNoise;
 };
 
 union ModemResponsePacketVariant_u {
-  QueryStatusResponsePacket_t queryStatus;
-  BroadcastMessageResponsePacket_t broadcast;
-  RangeDataResponsePacket_t rangeData;
-  UnicastResponsePacket_t unicast;
-  ExtenionResponsePacket_t extPacket;
+  struct QueryStatusResponsePacket_t queryStatus;
+  struct BroadcastMessageResponsePacket_t broadcast;
+  struct RangeDataResponsePacket_t rangeData;
+  struct UnicastResponsePacket_t unicast;
+  struct ExtenionResponsePacket_t extPacket;
 };
 
 union ExtenionCommandPacketVariant_u {
-  SystemTimeCommandPacket_t systemTime;
-  LinkQualityCommandPacket_t linkQuality;
+  struct SystemTimeCommandPacket_t systemTime;
+  struct LinkQualityCommandPacket_t linkQuality;
 };
 
 //================================================================
@@ -665,13 +665,13 @@ struct ModemLocalResponsePacket_t {
 struct ModemResponsePacket_t {
   ModemResponseTypes_e type;
   ModemResponsePacketVariant_u response;
-  ResponseExtraData_t extraData;
+  struct ResponseExtraData_t extraData;
 };
 
 union ModemPacketVariant_u {
-  ModemCommandPacket_t command;
-  ModemLocalResponsePacket_t localResponse;
-  ModemResponsePacket_t response;
+  struct ModemCommandPacket_t command;
+  struct ModemLocalResponsePacket_t localResponse;
+  struct ModemResponsePacket_t response;
 };
 
 struct ModemPacket_t {
