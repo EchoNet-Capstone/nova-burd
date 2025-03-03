@@ -3,7 +3,6 @@
 #include "display.hpp"
 #include "motor.hpp"
 #include "watchdog.hpp"
-#include <Ethernet.h>
 
 // Defined if the serial port (not serial1) is used to receive data from the NeST
 #define RECV_SERIAL_NEST

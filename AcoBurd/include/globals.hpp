@@ -69,4 +69,12 @@
 #define PING_LOCAL_ECHO_DEST_ADDR_START 2
 #define PING_LOCAL_ECHO_DEST_ADDR_END 5
 
+static inline uint16_t htons(uint16_t val) {
+    return __builtin_bswap16(val);
+}
+
+static inline uint16_t ntohs(uint16_t val) {
+    return __builtin_bswap16(val);
+}
+
 #endif
