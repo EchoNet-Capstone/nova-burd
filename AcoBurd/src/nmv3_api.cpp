@@ -179,12 +179,12 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                     // }
                 }
                 break;
-            case 'P':
-                if (size == PING_LOCAL_ECHO_LENGTH) {
+            case PING_CMD_LOCAL_RESP_TYPE: // 'P'
+                if (size == PING_CMD_LOCAL_RESP_MAX) {
                     if (debug) {
                         Serial.print("Ping to modem "); 
-                        for (int i = PING_LOCAL_ECHO_DEST_ADDR_START; i < PING_LOCAL_ECHO_DEST_ADDR_END; i++) {
-                            Serial.printf("%c", packetBuffer[i]);
+                        for (int i = 0; i < PING_CMD_LOCAL_RESP_ADDR_MAX; i++) {
+                            Serial.printf("%c", ((PingLocalResponsePacket_t*) &localResp->response)->addr[i]);
                         }
                         Serial.print("sent.\r\n"); 
                     }
@@ -238,16 +238,6 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 BroadcastMessageResponsePacket_t* broadcast = (BroadcastMessageResponsePacket_t*) &response->response;
                 parse_broadcast_packet(broadcast);
                 break;
-            case 'M':
-                // TODO : Handle unicast with ack? Does this exist with # prefix?
-                break;
-            case 'P':
-                
-                break;
-            case 'R':
-                Serial.printf("PING SIZE IS %u\r\n", size);
-                if (size == PING_PACKET_LENGTH) {
-                    parse_ping_packet(packetBuffer, size);
             }
             case RANGE_RESP_TYPE: // 'R'
             {
