@@ -192,7 +192,9 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 break;
             case RESET_CMD_LOCAL_RESP_TYPE: // 'R'
                 break;
-            case TEST_MSG_CMD_LOCAL_RESP_MAX: // 'T'
+            case SPEC_MSR_CMD_LOCAL_RESP_TYPE: // 'S'
+                break;
+            case TEST_MSG_CMD_LOCAL_RESP_TYPE: // 'T'
                 break;
             case UNICAST_CMD_LOCAL_RESP_TYPE: // 'U'
                 if (size == UNICAST_CMD_LOCAL_RESP_MAX) {
@@ -239,6 +241,8 @@ void packet_received_modem(uint8_t* packetBuffer, uint8_t size) {
                 parse_broadcast_packet(broadcast);
                 break;
             }
+            case CHN_IMP_RESP_TYPE: // 'C'
+                break;
             case RANGE_RESP_TYPE: // 'R'
             {
                 RangeDataResponsePacket_t* rangeResponse = (RangeDataResponsePacket_t*) &response->response;
