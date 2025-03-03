@@ -112,6 +112,7 @@ void parse_broadcast_packet(uint8_t* packetBuffer, uint8_t size) {
 
     uint8_t* packetData = (uint8_t*) malloc(bytes);
     memcpy(packetData, broadcastBuffer, bytes);
+    display_modem_packet_data(packetData, bytes);
     floc_broadcast_received(packetData, bytes);
     free(packetData);
 }
@@ -297,7 +298,7 @@ void packet_received_nest(uint8_t* packetBuffer, uint8_t size) {
         return;
     }
 
-    uint8_t pkt_type = *(packetBuffer++);
+    uint8_t pkt_type = *(packetBuffer++); // Remove '$' prefix
 
     SerialFlocPacket_t* pkt = (SerialFlocPacket_t*)(packetBuffer);
 

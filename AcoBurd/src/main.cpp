@@ -5,10 +5,10 @@
 #include "watchdog.hpp"
 
 // Defined if the serial port (not serial1) is used to receive data from the NeST
-#define RECV_SERIAL_NEST
+// #define RECV_SERIAL_NEST
 
 // Testing define
-#define MASTER_NODE
+// #define MASTER_NODE
 
 // Packet buffer for data received from the ship terminal (NeST) serial line
 static uint8_t packetBuffer_nest[SERIAL_FLOC_MAX_SIZE] = {0};

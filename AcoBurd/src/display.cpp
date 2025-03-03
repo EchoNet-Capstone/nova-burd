@@ -45,8 +45,17 @@ void display_modem_id(int modem_id){
     oled.display();
 }
 
-void display_modem_packet_data(String packetBuffer) {
+/*void display_modem_packet_data(String packetBuffer) {
     oled.drawString(0, 20, "  Packet : " + packetBuffer);
+    oled.display();
+}*/
+
+void display_modem_packet_data(uint8_t *packetBuffer, uint8_t size) {
+    char hexString[size * 2 + 1] = {0};  // 2 chars per byte + null terminator
+    for (size_t i = 0; i < size; ++i) {
+        snprintf(hexString + (i * 2), 3, "%02X", packetBuffer[i]);
+    }
+    oled.drawString(0, 20, hexString);
     oled.display();
 }
 
