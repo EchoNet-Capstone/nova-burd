@@ -330,6 +330,13 @@
 // --- Postfixes ---
 #define MODEM_POSTFIX '/r/n'
 
+//Byte-align the structs. Pretty please. 
+#pragma pack(push, 1)
+/**
+ * ------------------------------------
+ *             PACKET TYPES
+ * ------------------------------------
+ */
 // --- Modem Packet Types --
 enum ModemPacketTypes_e: uint8_t {
   MODEM_COMMAND_TYPE        = '$',
@@ -425,21 +432,12 @@ enum LinkQualityResponseTypes_e: uint8_t {
   LINK_QUAL_DISABLE_RESP_TYPE = 'D',
 };
 
-//Byte-align the structs. Pretty please. 
-#pragma pack(push, 1)
-
-// --- Modem Packet --- 
-struct ModemPacket_t {
-  ModemPacketTypes_e type;
-  ModemPacketVariant_u payload;
-};
-
+/**
+ * ------------------------------------
+ *        PACKET STRUCTURES
+ * ------------------------------------
+ */
 // --- Modem Command Packets ---
-struct ModemCommandPacket_t {
-  ModemCommandTypes_e type; 
-  ModemCommandPacketVariant_u command;
-};
-
 struct SetAddresCommandPacket_t {
   uint8_t addr[SET_ADDRESS_CMD_ADDR_MAX];
 };
@@ -501,11 +499,6 @@ struct VoltageAndNoiseCommandPacket_t {
 };
 
 // Extenion Commands
-struct ExtenionCommandPacket_t{
-  ModemExtentionCommandTypes_e type;
-  ExtenionCommandPacketVariant_u command;
-};
-
 struct SystemTimeCommandPacket_t {
   SystemTimeCommandTypes_e type;
 };
@@ -517,6 +510,11 @@ struct LinkQualityCommandPacket_t {
 union ExtenionCommandPacketVariant_u {
   SystemTimeCommandPacket_t systemTime;
   LinkQualityCommandPacket_t linkQuality;
+};
+
+struct ExtenionCommandPacket_t{
+  ModemExtentionCommandTypes_e type;
+  ExtenionCommandPacketVariant_u command;
 };
 
 union ModemCommandPacketVariant_u {
@@ -532,12 +530,12 @@ union ModemCommandPacketVariant_u {
   ExtenionCommandPacket_t extPacket;
 };
 
-// --- Local Response Commands ---
-struct ModemLocalResponsePacket_t {
-  ModemLocalResponseTypes_e type;
-  ModemLocalResponsePacketVariant_u response;
+struct ModemCommandPacket_t {
+  ModemCommandTypes_e type; 
+  ModemCommandPacketVariant_u command;
 };
 
+// --- Local Response Commands ---
 struct BroadcastLocalResponsePacket_t {
   uint8_t dataSize[BROADCAST_CMD_LOCAL_RESP_DATA_SIZE_MAX];
 };
@@ -590,18 +588,12 @@ union ModemLocalResponsePacketVariant_u {
   VoltageAndNoiseLocalResponsePacket_t voltageAndNoise;
 };
 
+struct ModemLocalResponsePacket_t {
+  ModemLocalResponseTypes_e type;
+  ModemLocalResponsePacketVariant_u response;
+};
+
 // --- Modem Response Packets ---
-struct ModemResponsePacket_t {
-  ModemResponseTypes_e type;
-  ModemResponsePacketVariant_u response;
-  ResponseExtraData_t extraData;
-};
-
-// Response Extra Data (Link Quality and/or Time)
-struct ResponseExtraData_t {
-  ResponseExtraDataVariant_u data;
-};
-
 struct ResponseExtraLinkQuality_t {
   uint8_t lqQualSep;
   uint8_t lqQualPayload[RESP_EXTRA_LQ_QUAL_PAYLOAD_MAX];
@@ -625,8 +617,9 @@ union ResponseExtraDataVariant_u{
   ResponseExtraAll_t all;
 };
 
-struct QueryStatusResponsePacket_t {
-  QueryStatusResponsePacketVariant_u status;
+// Response Extra Data (Link Quality and/or Time)
+struct ResponseExtraData_t {
+  ResponseExtraDataVariant_u data;
 };
 
 struct SetAddressResponsePacket_t {
@@ -652,6 +645,10 @@ struct QueryStatusResponseFullPacket_t {
 union QueryStatusResponsePacketVariant_u{
   SetAddressResponsePacket_t setAddress;
   QueryStatusResponseFullPacket_t fullStatus;
+};
+
+struct QueryStatusResponsePacket_t {
+  QueryStatusResponsePacketVariant_u status;
 };
 
 struct BroadcastMessageHeader_t {
@@ -696,11 +693,6 @@ struct UnicastResponsePacket_t {
 };
 
 // Extention Packets
-struct ExtenionResponsePacket_t {
-  ModemExtentionResponseTypes_e type;
-  ExtenionResponsePacketVariant_u response;
-};
-
 struct SystemTimeResponsePacket_t {
   uint8_t status;
   uint8_t timePayload[SYS_TIME_EXT_RESP_PAYLOAD_MAX];
@@ -714,6 +706,10 @@ union ExtenionResponsePacketVariant_u {
   SystemTimeResponsePacket_t systemTime;
   LinkQualityResponsePacket_t linkQuality;
 };
+struct ExtenionResponsePacket_t {
+  ModemExtentionResponseTypes_e type;
+  ExtenionResponsePacketVariant_u response;
+};
 
 union ModemResponsePacketVariant_u {
   QueryStatusResponsePacket_t queryStatus;
@@ -723,11 +719,24 @@ union ModemResponsePacketVariant_u {
   ExtenionResponsePacket_t extPacket;
 };
 
+struct ModemResponsePacket_t {
+  ModemResponseTypes_e type;
+  ModemResponsePacketVariant_u response;
+  ResponseExtraData_t extraData;
+};
+
+// --- Modem Packet ---
 union ModemPacketVariant_u {
   ModemCommandPacket_t command;
   ModemLocalResponsePacket_t localResponse;
   ModemResponsePacket_t response;
 };
+
+struct ModemPacket_t {
+  ModemPacketTypes_e type;
+  ModemPacketVariant_u payload;
+};
+
 #pragma pack(pop)
 
 void print_packet(String packetBuffer, String packet_type);
