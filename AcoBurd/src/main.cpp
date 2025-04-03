@@ -4,9 +4,10 @@
 #include <display.hpp>
 #include <motor.hpp>
 #include <watchdog.hpp>
+#include <device_actions.hpp>
 
 // Testing define
-#define MASTER_NODE
+// #define MASTER_NODE
 
 #ifdef MASTER_NODE
   // Defined if the serial port (not serial1) is used to receive data from the NeST
@@ -136,7 +137,12 @@ void loop(){
             // Remove the <CR> from the buffer
             packetBuffer_nest[packetBuffer_nest_idx - 1] = 0;
 
+            DeviceAction_t da;
+            init_da(&da);
+
             packet_received_nest(packetBuffer_nest, packetBuffer_nest_idx - 1);
+
+            act_upon(&da);
             
             memset(packetBuffer_nest, 0 , sizeof(packetBuffer_nest)); // Clear the buffer
             packetBuffer_nest_idx = 0;
@@ -160,7 +166,12 @@ void loop(){
             // Remove the <CR> from the buffer
             packetBuffer_modem[packetBuffer_modem_idx - 1] = 0;
 
-            packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx - 1);
+            DeviceAction_t da;
+            init_da(&da);
+
+            packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx - 1, &da);
+
+            act_upon(&da);
             
             memset(packetBuffer_modem, 0 , sizeof(packetBuffer_modem)); // Clear the buffer
             packetBuffer_modem_idx = 0;

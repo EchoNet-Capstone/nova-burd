@@ -7,6 +7,8 @@
 #define NEST_SERIAL_CONNECTION Serial
 #define MODEM_SERIAL_CONNECTION Serial1
 
+#include <stdint.h>
+
 // Speed of sound in m/s
 // #define SOUND_SPEED 343     // Sound speed through air
 #define SOUND_SPEED 1500    // Sound speed through water
