@@ -11,7 +11,7 @@
  * `var_type get_var_name(void);`
  */
 #define GET_SET_FUNC_PROTO(x, y) SETTER_SIG(x, y);\
-                             GETTER_SIG(x, y)
+                             GETTER_SIG(x, y);
 
 /**
  * For (`var_type`, `var_name`, `var_inital_value`), this becomes:
