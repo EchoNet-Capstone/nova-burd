@@ -1,5 +1,5 @@
-#ifndef MY_CLOCK_H
-#define MY_CLOCK_H
+#ifndef MY_CLOCK_HPP
+#define MY_CLOCK_HPP
 
 long InternalClock(void);
 

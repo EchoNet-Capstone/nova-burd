@@ -1,8 +1,7 @@
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#ifndef DISPLAY_HPP
+#define DISPLAY_HPP
 
-#include <stdio.h>
-#include <Arduino.h>
+#include <stdint.h>
 
 void oled_sleep(void);
 void oled_wake(void);

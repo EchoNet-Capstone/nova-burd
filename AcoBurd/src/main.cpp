@@ -1,10 +1,16 @@
+#include <stdint.h>
+
 #include <Arduino.h>
-#include <nmv3_api.hpp>
-#include <floc.hpp>
+
+#include <device_actions.hpp>
 #include <display.hpp>
+#include <globals.hpp>
 #include <motor.hpp>
 #include <watchdog.hpp>
-#include <device_actions.hpp>
+
+#include <floc.hpp>
+
+#include <nmv3_api.hpp>
 
 // Testing define
 // #define MASTER_NODE

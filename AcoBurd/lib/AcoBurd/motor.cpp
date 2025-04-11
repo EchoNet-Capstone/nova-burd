@@ -1,11 +1,12 @@
 #include <Arduino.h>
 
-#include "motor.hpp"
-#include "my_clock.hpp"
-#include "get_set_macros.hpp"
-#include "timers.hpp"
 #include "device_state.hpp"
+#include "get_set_macros.hpp"
+#include "my_clock.hpp"
+#include "timers.hpp"
 #include "watchdog.hpp"
+
+#include "motor.hpp"
 
 GET_SET_FUNC_DEF(int, motor_target, 0);
 GET_SET_FUNC_DEF(bool, is_motor_running, false);

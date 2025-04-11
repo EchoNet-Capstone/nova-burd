@@ -1,13 +1,13 @@
-#ifndef GLOBALS_H
-#define GLOBALS_H
+#ifndef GLOBALS_HPP
+#define GLOBALS_HPP
+
+#include <stdint.h>
 
 #define debug true
 #define ON_DEVICE
 
 #define NEST_SERIAL_CONNECTION Serial
 #define MODEM_SERIAL_CONNECTION Serial1
-
-#include <stdint.h>
 
 // Speed of sound in m/s
 // #define SOUND_SPEED 343     // Sound speed through air
