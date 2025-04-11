@@ -11,10 +11,10 @@ int fieldToInt(char* field, uint8_t field_len){
     return atoi(temp);
 }
 
-void printFullPacket(uint8_t* pkt, uint8_t size){
+void printPacketContents(uint8_t* pkt, uint8_t size){
     if (size == 0) Serial.printf("\tOops! This packet is empty!\r\n"); return;
 
-    Serial.printf("\tFull packet (%03u bytes): \r\n", size);
+    Serial.printf("\tPacket Contents (%03u bytes): \r\n", size);
     Serial.printf("\t    |     0          1          2          3          4          5          6          7\r\n");
 
     int i = 0;
