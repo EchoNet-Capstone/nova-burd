@@ -1,8 +1,12 @@
-#include <globals.hpp>
-#include <device_state.hpp>
-#include <motor.hpp>
-#include <display.hpp>
-#include <floc.hpp>
+#include <stdint.h>
+
+#include <Arduino.h>
+
+#include "device_state.hpp"
+#include "display.hpp"
+#include "floc.hpp"
+#include "globals.hpp"
+#include "motor.hpp"
 
 #include "device_actions.hpp"
 

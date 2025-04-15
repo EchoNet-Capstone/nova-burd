@@ -1,8 +1,9 @@
-#include "watchdog.hpp"
-#include "Arduino.h"
+#include <Arduino.h>
 #include <cytypes.h>
 #include <cyfitter.h>
 #include <cydevice_trm.h>
+
+#include "watchdog.hpp"
 
 void wdt_isr_Start(void){
   /* For all we know the interrupt is active. */

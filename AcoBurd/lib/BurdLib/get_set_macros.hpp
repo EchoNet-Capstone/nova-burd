@@ -1,5 +1,5 @@
-#ifndef STATE_MACROS_H
-#define STATE_MACROS_H
+#ifndef GET_SET_MACROS_HPP
+#define GET_SET_MACROS_HPP
 
 #define SETTER_NEW(y) new_ ## y
 #define SETTER_SIG(x, y) void set_ ## y(x SETTER_NEW(y))

@@ -1,4 +1,4 @@
-#include <GPS_Air530Z.h>
+#include <timeServer.h>
 
 // Global timer routine
 long Corrected_time = 0;

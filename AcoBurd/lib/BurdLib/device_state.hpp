@@ -1,5 +1,5 @@
-#ifndef DEVICE_STATE_H
-#define DEVICE_STATE_H
+#ifndef DEVICE_STATE_HPP
+#define DEVICE_STATE_HPP
 
 #include "get_set_macros.hpp"
 
