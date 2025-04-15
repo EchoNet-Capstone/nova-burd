@@ -1,5 +1,5 @@
-#ifndef MOTOR_H
-#define MOTOR_H
+#ifndef MOTOR_HPP
+#define MOTOR_HPP
 
 // Motor and Encoder GPIO Setup
 #define MOTOR_DRIVER_POWER GPIO7              // To motor driver Vcc AND motor encoder blue wire (encoder power)
@@ -15,9 +15,9 @@
 #define WIGGLE_DEADBAND 259200                // If release will occur in next x seconds, then don't wiggle
 
 // Silver AliExpress Motors - 2695 counts per rev
-//#define CLOSED_POSITION (0.490 * GEARBOX_RATIO * PULSES_PER_MOTOR_ROTATION)
+#define CLOSED_POSITION (0.490 * GEARBOX_RATIO * PULSES_PER_MOTOR_ROTATION)
 // Red Mark Pololu Motors
-#define CLOSED_POSITION (0.550 * GEARBOX_RATIO * PULSES_PER_MOTOR_ROTATION)
+// #define CLOSED_POSITION (0.550 * GEARBOX_RATIO * PULSES_PER_MOTOR_ROTATION)
 #define OPEN_POSITION 0
 
 void motor_init(void);

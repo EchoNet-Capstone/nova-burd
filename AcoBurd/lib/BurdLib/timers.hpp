@@ -1,7 +1,7 @@
-#ifndef TIMERS_H
-#define TIMERS_H
+#ifndef TIMERS_HPP
+#define TIMERS_HPP
 
-#include "get_set_macros.h"
+#include "get_set_macros.hpp"
 
 // Timer Add Configuration
 #define RELEASE_TIMER_ADD_1 7200              // Time to add for each magnet tap

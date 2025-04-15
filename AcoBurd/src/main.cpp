@@ -1,97 +1,155 @@
-#include <Arduino.h>
-#include <LoRa_APP.h>
+#include <stdint.h>
 
-#include "motor.h"
-#include "my_clock.h"
-#include "subroutines.h"
-#include "display.h"
-#include "burd_radio.h"
-#include "sleep.h"
-#include "gps.h"
-#include "watchdog.h"
-#include "user_input.h"
-#include "device_state.h"
-#include "timers.h"
-#include "battery.h"
+#include <Arduino.h>
+
+#include <device_actions.hpp>
+#include <display.hpp>
+#include <globals.hpp>
+#include <motor.hpp>
+#include <watchdog.hpp>
+
+#include <floc.hpp>
+
+#include <nmv3_api.hpp>
+
+// Testing define
+// #define MASTER_NODE
+
+#ifdef MASTER_NODE
+  // Defined if the serial port (not serial1) is used to receive data from the NeST
+  #define RECV_SERIAL_NEST
+#endif
+
+// Packet buffer for data received from the ship terminal (NeST) serial line
+static uint8_t packetBuffer_nest[SERIAL_FLOC_MAX_SIZE] = {0};
+static uint8_t packetBuffer_nest_idx = 0;
+
+// Packet buffer for data received from the acoustic modem serial line
+static uint8_t packetBuffer_modem[FLOC_MAX_SIZE] = {0};
+static uint8_t packetBuffer_modem_idx = 0;
+
 
 void setup(){
-  // put your setup code here, to run once:
-  if(DEBUG){
-    Serial.begin(115200);
-  }
 
-  TimerReset(0);
+  // Debug messages to USB connection
+  NEST_SERIAL_CONNECTION.begin(115200, SERIAL_8N1);
+
+  // Serial connection to modem
+  MODEM_SERIAL_CONNECTION.begin(9600, SERIAL_8N1);
+
+
+  // TimerReset(0);
   // Hopefully reset onboard timers
-  boardInitMcu();
+  // boardInitMcu();
 
   delay(100);
 
-  if(DEBUG){
-    Serial.printf("Booting up...\n");
+  if(debug){
+    Serial.printf("Booting up...\r\n");
   }
 
-  // Disable interrupts for bootup
   noInterrupts();
-
-  user_input_init();
 
   motor_init();
 
-  //gps_init();
+  //Enable the WDT.
+  // innerWdtEnable(true);
 
-  // Enable interrupts
+  // VextOFF();
+
+  // init_sleep();
+
+  // go_to_sleep();
+
   interrupts();
 
-  logo();
+  oled_initialize();
 
-  //Enable the WDT.
-  innerWdtEnable(true);
+#ifdef MASTER_NODE
 
-  // Star LoRa radio
-  radio_init();
+  if (MODEM_SERIAL_CONNECTION.availableForWrite()) {
+    // Master node address will be 1
+    set_address(MODEM_SERIAL_CONNECTION, 1);
 
-  VextOFF();
+    delay(500);
+    query_status(MODEM_SERIAL_CONNECTION);
 
-  init_sleep();
+    delay(500);
+    // If there is a slave node, ping address 2
+    ping(MODEM_SERIAL_CONNECTION, 2);
+  }
+#else
+  if (MODEM_SERIAL_CONNECTION.availableForWrite()) {
+    set_address(MODEM_SERIAL_CONNECTION, 4);
 
-  go_to_sleep();
+    delay(300);
+    query_status(MODEM_SERIAL_CONNECTION);
+
+    delay(300);
+    // If there is a master node, ping address 1
+    ping(MODEM_SERIAL_CONNECTION, 1);
+  }
+#endif
 }
 
 void loop(){
-  if(DEBUG){
-    Serial.printf("Loop Started\n");
-  }
 
-  // Pet the watchdog - interrupt generated every 1.4 seconds.  Two consecutive interrupts causes a reboot (2.8s)
-  feedInnerWdt();
+#ifdef RECV_SERIAL_NEST
+    while (NEST_SERIAL_CONNECTION.available() > 0) {
+        char nest_char = NEST_SERIAL_CONNECTION.read();
 
-  //note that lowPowerHandler() runs six times before the mcu goes into low_power mode;
-  if(get_low_power()){
-    lowPowerHandler();
-  }
+        // Check for <CR><LF> sequence
+        if (nest_char == '\n' && packetBuffer_nest_idx > 0 && packetBuffer_nest[packetBuffer_nest_idx - 1] == '\r') {
+            // Remove the <CR> from the buffer
+            packetBuffer_nest[packetBuffer_nest_idx - 1] = 0;
 
-  release_service();
+            DeviceAction_t da;
+            init_da(&da);
 
-  battery_service();
+            packet_received_nest(packetBuffer_nest, packetBuffer_nest_idx - 1, &da);
 
-  motor_service();
+            act_upon(&da);
+            
+            memset(packetBuffer_nest, 0 , sizeof(packetBuffer_nest)); // Clear the buffer
+            packetBuffer_nest_idx = 0;
+        } else {
+            if (packetBuffer_nest_idx >= sizeof(packetBuffer_nest)) {
+                // Some error has occurred, clear the packet
+                memset(packetBuffer_nest, 0 , sizeof(packetBuffer_nest));
+                packetBuffer_nest_idx = 0;
+            }
+            // Append character to the buffer
+            packetBuffer_nest[packetBuffer_nest_idx] = nest_char;
+            packetBuffer_nest_idx++;
+        }
+    }
+#endif
+    while (MODEM_SERIAL_CONNECTION.available() > 0) {
+        char modem_char = MODEM_SERIAL_CONNECTION.read();
 
-  gps_service();
+        // Check for <CR><LF> sequence
+        if (modem_char == '\n' && packetBuffer_modem_idx > 0 && packetBuffer_modem[packetBuffer_modem_idx - 1] == '\r') {
+            // Remove the <CR> from the buffer
+            packetBuffer_modem[packetBuffer_modem_idx - 1] = 0;
 
-  radio_service();
+            DeviceAction_t da;
+            init_da(&da);
 
-  interaction_service();
+            packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx - 1, &da);
 
-  if(DEBUG){
-    debug_subroutine();
-  }
-
-  // I have no idea what this does - something about being able to call an interrupt on completion of LoRa TX
-  Radio.IrqProcess();
-
-  if(DEBUG){
-    Serial.printf("Loop Ended, going to sleep.\n");
-  }
-
-  go_to_sleep();
+            act_upon(&da);
+            
+            memset(packetBuffer_modem, 0 , sizeof(packetBuffer_modem)); // Clear the buffer
+            packetBuffer_modem_idx = 0;
+        } else {
+            if (packetBuffer_modem_idx >= sizeof(packetBuffer_modem)) {
+                // Some error has occurred, clear the packet
+                memset(packetBuffer_modem, 0 , sizeof(packetBuffer_modem));
+                packetBuffer_modem_idx = 0;
+            }
+            // Append character to the buffer
+            packetBuffer_modem[packetBuffer_modem_idx] = modem_char;
+            packetBuffer_modem_idx++;
+        }
+    }
 }

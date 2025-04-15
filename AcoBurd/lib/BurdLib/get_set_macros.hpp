@@ -1,5 +1,5 @@
-#ifndef STATE_MACROS_H
-#define STATE_MACROS_H
+#ifndef GET_SET_MACROS_HPP
+#define GET_SET_MACROS_HPP
 
 #define SETTER_NEW(y) new_ ## y
 #define SETTER_SIG(x, y) void set_ ## y(x SETTER_NEW(y))
@@ -11,7 +11,7 @@
  * `var_type get_var_name(void);`
  */
 #define GET_SET_FUNC_PROTO(x, y) SETTER_SIG(x, y);\
-                             GETTER_SIG(x, y)
+                             GETTER_SIG(x, y);
 
 /**
  * For (`var_type`, `var_name`, `var_inital_value`), this becomes:
