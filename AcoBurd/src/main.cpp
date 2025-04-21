@@ -7,6 +7,7 @@
 #include <globals.hpp>
 #include <motor.hpp>
 #include <watchdog.hpp>
+#include <buffer.hpp>
 
 #include <floc.hpp>
 
@@ -93,6 +94,12 @@ void setup(){
 }
 
 void loop(){
+
+int activity = 0;
+
+activity = checkqueueStatus();
+
+// we are going to have a command activitiy variable 
 
 #ifdef RECV_SERIAL_NEST
     while (NEST_SERIAL_CONNECTION.available() > 0) {
