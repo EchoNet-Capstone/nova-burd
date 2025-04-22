@@ -19,7 +19,7 @@
 #include <optional>
 #include <map>
 #include <queue>
-#include <algorithm>  // <-- This is important for fill_n, equal, etc.
+#include <algorithm>
 #include <iterator>
 #include <type_traits>
 #include <utility>
@@ -29,9 +29,10 @@
 
 class FLOCBufferManager {
     public:
-        void addPacket(const FlocPacket_t& packet);
+        void addPacket(const FlocPacket_t& packet, int retrans = 0);
         int checkqueueStatus();
-
+        int queuehandler();
+        void add_ackID(uint8_t ackID);
 
     private:
 
@@ -42,6 +43,8 @@ class FLOCBufferManager {
 
         std::queue<FlocPacket_t> commandBuffer;
         std::queue<FlocPacket_t> responseBuffer;
+
+        // this is going to be different 
         std::queue<FlocPacket_t> retransmissionBuffer;
 
         std::map<uint8_t, int> ackIDs;
@@ -49,22 +52,4 @@ class FLOCBufferManager {
         const int maxTransmissions = 5;
 };
 
-
-
-// #ifndef BUFFER_HPP
-// #define BUFFER_HPP
-
-// #include <stdint.h>
-// #include "floc.hpp"
-
-// // // Buffer structure for data
-// // struct Buffer {
-// //     uint8_t* data; // Pointer to the data array
-// //     size_t size;   // Size of the buffer
-// //     size_t index;  // Current index in the buffer
-// // };
-
-// void addPacket(const FlocPacket_t& packet);
-// int checkqueueStatus();
-
-// #endif
+extern FLOCBufferManager flocBuffer;

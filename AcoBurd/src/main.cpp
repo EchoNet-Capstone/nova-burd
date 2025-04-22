@@ -8,6 +8,7 @@
 #include <motor.hpp>
 #include <watchdog.hpp>
 #include <buffer.hpp>
+#include <activityperiod.hpp>
 
 #include <floc.hpp>
 
@@ -95,11 +96,8 @@ void setup(){
 
 void loop(){
 
-int activity = 0;
-FLOCBufferManager buffermanager;
+activity_update();
 
-// blocking on 0
-activity = buffermanager.checkqueueStatus();
 
 // we are going to have a command activitiy variable 
 
