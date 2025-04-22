@@ -20,10 +20,12 @@
 #include <stdio.h>
 #include <queue>
 #include <optional>
+#include <map>
+#include <Arduino.h>
   
-
+#include <globals.hpp>
 #include "buffer.hpp"
-#include "floc.hpp"
+#include <nmv3_api.hpp>
 
 #define DEBUG 1
 
@@ -60,24 +62,82 @@ int FLOCBufferManager::checkqueueStatus(){
     }
 }
 
+// retransmit and remoiceve from buffer
 int FLOCBufferManager::retransmission_handler() {
     FlocPacket_t packet = retransmissionBuffer.front();
+
+    uint16_t packet_id = packet.header.pid;
+
+    // if message is an ack, remove from buffer
+    if (checkackID(packet_id)) {
+        if (DEBUG) printf("Ack ID %d found and removed\n", packet_id);
+        commandBuffer.pop(); // Remove from buffer
+        return 1;
+    }
     // send packet
+    broadcast(MODEM_SERIAL_CONNECTION, (char*)&packet, ACK_PACKET_ACTUAL_SIZE(&packet));
+
+    retransmissionBuffer.pop(); // Remove from buffer
     return 0;
 }
 
 int FLOCBufferManager::response_handler() {
     FlocPacket_t packet = responseBuffer.front();
+
+    uint16_t packet_id = packet.header.pid;
+
+    // if message is an ack, remove from buffer
+    if (checkackID(packet_id)) {
+        if (DEBUG) printf("Ack ID %d found and removed\n", packet_id);
+        commandBuffer.pop(); // Remove from buffer
+        return 1;
+    }
     // send packet
+    broadcast(MODEM_SERIAL_CONNECTION, (char*)&packet, ACK_PACKET_ACTUAL_SIZE(&packet));
+    responseBuffer.pop(); // Remove from buffer
     return 0;
 }
 
 int FLOCBufferManager::command_handler() {
+    // copy the packet from the front of the queue
     FlocPacket_t packet = commandBuffer.front();
-    if (packet.header.ttl == 0) {
-        commandBuffer.pop();
+    
+    uint8_t packet_id = packet.header.pid;
+
+    // if message is an ack, remove from buffer
+    if (checkackID(packet_id)) {
+        if (DEBUG) printf("Ack ID %d found and removed\n", packet_id);
+        commandBuffer.pop(); // Remove from buffer
+        return 1;
+    }
+
+    // Check if the packet ID exists in the map, if not initialize it
+    if (transmissionCounts.find(packet_id) == transmissionCounts.end()) {
+        transmissionCounts[packet_id] = 0; // Initialize count for this packet ID
+    }
+
+    // Check if the packet has been transmitted the maximum number of times
+    if(transmissionCounts[packet_id] >= maxTransmissions) {
+        if (DEBUG) printf("Max transmissions reached for packet ID %d\n", packet_id);
+        commandBuffer.pop(); // Remove from buffer
+        transmissionCounts.erase(packet_id); // Remove from map
         return 0;
     }
+    
+    transmissionCounts[packet_id]++; // Increment transmission count for this packet ID
+
+    broadcast(MODEM_SERIAL_CONNECTION, (char*)&packet, ACK_PACKET_ACTUAL_SIZE(&packet));
     // send packet
     return 0;
+}
+
+// list of ackIDs 
+int FLOCBufferManager::checkackID(uint8_t ackID) {
+    if (ackIDs.find(ackID) != ackIDs.end()) {
+        ackIDs.erase(ackID);
+        if (DEBUG) printf("Ack ID %d found and removed\n", ackID);
+        return 1;
+    } else {
+        return 0;
+    }
 }
