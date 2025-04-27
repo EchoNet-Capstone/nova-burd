@@ -26,6 +26,7 @@
 #include <globals.hpp>
 #include "buffer.hpp"
 #include <nmv3_api.hpp>
+#include "activityperiod.hpp"
 
 #define DEBUG 1
 
@@ -42,7 +43,7 @@ void FLOCBufferManager::addPacket(const FlocPacket_t& packet, int retrans) {
     // if not a retransmission, check the type of the packet
     if(packet.header.type == FLOC_COMMAND_TYPE) {
         commandBuffer.push(packet);
-    } else if (packet.header.type == FLOC_RESPONSE_TYPE) {
+    } else if (packet.header.type == FLOC_RESPONSE_TYPE || packet.header.type == FLOC_ERROR_TYPE) {
         responseBuffer.push(packet);
     } else {
         printf("Invalid packet type for command buffer\n");
@@ -145,6 +146,8 @@ int FLOCBufferManager::command_handler() {
         if (DEBUG) printf("Max transmissions reached for packet ID %d\n", packet_id);
         commandBuffer.pop(); // Remove from buffer
         transmissionCounts.erase(packet_id); // Remove from map
+
+        floc_error_send(1,  packet.header.dest_addr, pack); // Send error packet
         return 0;
     }
 

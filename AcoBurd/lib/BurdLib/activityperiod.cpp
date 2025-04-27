@@ -5,6 +5,9 @@
  * 
  * When the activity period is closed, we are waiting and recieving packets
  * 
+ * Total activity period is 10 seconds
+ * - 8 seconds listening
+ * - 2 seconds sending
  * 
  * */
 
@@ -19,8 +22,8 @@ static activityState activity_state = LISTENING;
 
 static unsigned long activity_period_start = 0;
 
-const unsigned int ACTIVITY_PERIOD = 10000; // 10 second
-const unsigned int ACTIVITY_SENDING = 5000; // 5 seconds
+const unsigned int ACTIVITY_PERIOD = 10000; // 10 second (total)
+const unsigned int ACTIVITY_SENDING = 2000; // 2 seconds
 
 
 void activitity_init(){
@@ -44,28 +47,3 @@ void activity_update(){
 enum activityState is_activity_period_open(){
     return activity_state;
 }
-
-
-
-
-
-
-
-
-
-
- /*
-  * The Activity Period shall be a total of ten (10) seconds, described by the following:
-Sending BuRD to send and receive a 64-byte FLOC packet
-1.105 seconds * 2 = 2.21 seconds
-Receiving BuRD to send and receive a 64-byte FLOC packet
-1.105 seconds * 2 = 2.21 seconds
-Maximum round trip time
-2 seconds * 2 = 4 seconds
-Buffer time for processing
-1.58 seconds
-The Activity Period shall be used for all FLOC packet transmissions, for all BuRDs.
-The Activity Period shall not be prematurely ended.
-  * 
-  * 
-  * */

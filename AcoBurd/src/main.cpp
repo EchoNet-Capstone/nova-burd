@@ -14,6 +14,8 @@
 
 #include <nmv3_api.hpp>
 
+
+
 // Testing define
 // #define MASTER_NODE
 
@@ -67,6 +69,8 @@ void setup(){
 
   oled_initialize();
 
+  activitity_init();
+
 #ifdef MASTER_NODE
 
   if (MODEM_SERIAL_CONNECTION.availableForWrite()) {
@@ -98,6 +102,15 @@ void loop(){
 
 activity_update();
 
+if (is_activity_period_open() == SENDING) {
+  if (debug) Serial.printf("Activity period is open for sending...\r\n");
+  if (flocBuffer.checkqueueStatus() == 0) {
+    if (debug) Serial.printf("No packets in the queue...\r\n");
+  } else {
+    if (debug) Serial.printf("Packets in the queue...\r\n");
+    flocBuffer.queuehandler();
+  }
+}
 
 // we are going to have a command activitiy variable 
 
