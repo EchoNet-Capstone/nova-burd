@@ -14,15 +14,13 @@
 
 #include <nmv3_api.hpp>
 
-
-
 // Testing define
 // #define MASTER_NODE
 
-#ifdef MASTER_NODE
-  // Defined if the serial port (not serial1) is used to receive data from the NeST
-  #define RECV_SERIAL_NEST
-#endif
+#ifdef MASTER_NODE // MASTER_NODE
+    // Defined if the serial port (not serial1) is used to receive data from the NeST
+    #define RECV_SERIAL_NEST
+#endif // MASTER_NODE
 
 // Packet buffer for data received from the ship terminal (NeST) serial line
 static uint8_t packetBuffer_nest[SERIAL_FLOC_MAX_SIZE] = {0};
@@ -35,86 +33,93 @@ static uint8_t packetBuffer_modem_idx = 0;
 
 void setup(){
 
-  // Debug messages to USB connection
-  NEST_SERIAL_CONNECTION.begin(115200, SERIAL_8N1);
+    // Debug messages to USB connection
+    NEST_SERIAL_CONNECTION.begin(115200, SERIAL_8N1);
 
-  // Serial connection to modem
-  MODEM_SERIAL_CONNECTION.begin(9600, SERIAL_8N1);
+    // Serial connection to modem
+    MODEM_SERIAL_CONNECTION.begin(9600, SERIAL_8N1);
 
+    // TimerReset(0);
+    // Hopefully reset onboard timers
+    // boardInitMcu();
 
-  // TimerReset(0);
-  // Hopefully reset onboard timers
-  // boardInitMcu();
+    delay(100);
 
-  delay(100);
-
-  if(debug){
+#ifdef DEBUG_ON // DEBUG_ON
     Serial.printf("Booting up...\r\n");
-  }
+#endif // DEBUG_ON
 
-  noInterrupts();
+    noInterrupts();
 
-  motor_init();
+    motor_init();
 
-  //Enable the WDT.
-  // innerWdtEnable(true);
+    //Enable the WDT.
+    // innerWdtEnable(true);
 
-  // VextOFF();
+    // VextOFF();
 
-  // init_sleep();
+    // init_sleep();
 
-  // go_to_sleep();
+    // go_to_sleep();
 
-  interrupts();
+    interrupts();
 
-  oled_initialize();
+    oled_initialize();
 
-  activitity_init();
+    activitity_init();
 
-#ifdef MASTER_NODE
+#ifdef MASTER_NODE // MASTER_NODE
+    if (MODEM_SERIAL_CONNECTION.availableForWrite()) {
+        // Master node address will be 1
+        set_address(MODEM_SERIAL_CONNECTION, 1);
 
-  if (MODEM_SERIAL_CONNECTION.availableForWrite()) {
-    // Master node address will be 1
-    set_address(MODEM_SERIAL_CONNECTION, 1);
+        delay(500);
+        query_status(MODEM_SERIAL_CONNECTION);
 
-    delay(500);
-    query_status(MODEM_SERIAL_CONNECTION);
+        delay(500);
+        // If there is a slave node, ping address 2
+        ping(MODEM_SERIAL_CONNECTION, 2);
+    }
+#else // !MASTER_NODE
+    if (MODEM_SERIAL_CONNECTION.availableForWrite()) {
+        set_address(MODEM_SERIAL_CONNECTION, 4);
 
-    delay(500);
-    // If there is a slave node, ping address 2
-    ping(MODEM_SERIAL_CONNECTION, 2);
-  }
-#else
-  if (MODEM_SERIAL_CONNECTION.availableForWrite()) {
-    set_address(MODEM_SERIAL_CONNECTION, 4);
+        delay(300);
+        query_status(MODEM_SERIAL_CONNECTION);
 
-    delay(300);
-    query_status(MODEM_SERIAL_CONNECTION);
-
-    delay(300);
-    // If there is a master node, ping address 1
-    ping(MODEM_SERIAL_CONNECTION, 1);
-  }
-#endif
+        delay(300);
+        // If there is a master node, ping address 1
+        ping(MODEM_SERIAL_CONNECTION, 1);
+    }
+#endif // MASTER_NODE
 }
 
 void loop(){
 
-activity_update();
+    activity_update();
 
-if (is_activity_period_open() == SENDING) {
-  if (debug) Serial.printf("Activity period is open for sending...\r\n");
-  if (flocBuffer.checkqueueStatus() == 0) {
-    if (debug) Serial.printf("No packets in the queue...\r\n");
-  } else {
-    if (debug) Serial.printf("Packets in the queue...\r\n");
-    flocBuffer.queuehandler();
-  }
-}
+    if (is_activity_period_open() == SENDING) {
+    #ifdef DEBUG_ON // DEBUG_ON
+        Serial.printf("Activity period is open for sending...\r\n");
+    #endif // DEBUG_ON
 
-// we are going to have a command activitiy variable 
+        if (flocBuffer.checkqueueStatus() == 0) {
+        #ifdef DEBUG_ON // DEBUG_ON
+            Serial.printf("No packets in the queue...\r\n");
+        #endif // DEBUG_ON    
 
-#ifdef RECV_SERIAL_NEST
+        } else {
+        #ifdef DEBUG_ON // DEBUG_ON
+            Serial.printf("Packets in the queue...\r\n");
+        #endif // DEBUG_ON
+        
+            flocBuffer.queuehandler();
+        }
+    }
+
+    // we are going to have a command activitiy variable 
+
+#ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
     while (NEST_SERIAL_CONNECTION.available() > 0) {
         char nest_char = NEST_SERIAL_CONNECTION.read();
 
@@ -143,7 +148,7 @@ if (is_activity_period_open() == SENDING) {
             packetBuffer_nest_idx++;
         }
     }
-#endif
+#endif // RECV_SERIAL_NEST
     while (MODEM_SERIAL_CONNECTION.available() > 0) {
         char modem_char = MODEM_SERIAL_CONNECTION.read();
 

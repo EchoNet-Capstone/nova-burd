@@ -25,8 +25,6 @@
 #include <utility>
 #include <cstdint>
 
-
-
 class FLOCBufferManager {
     public:
         void addPacket(const FlocPacket_t& packet, int retrans = 0);
