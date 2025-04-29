@@ -15,8 +15,6 @@ GET_SET_FUNC_PROTO(bool, gps_enabled)
 GET_SET_FUNC_PROTO(bool, gps_lock)
 GET_SET_FUNC_PROTO(long, last_gps_fix)
 
-GET_SET_FUNC_PROTO(int, motor_position)
-
 GET_SET_FUNC_PROTO(bool, low_power)
 GET_SET_FUNC_PROTO(bool, sleep_inhibit)
 GET_SET_FUNC_PROTO(long, reed_switch_first_press)
@@ -28,8 +26,3 @@ GET_SET_FUNC_PROTO(bool, reed_switch2)
 GET_SET_FUNC_PROTO(bool, waiting_to_be_retrieved)
 GET_SET_FUNC_PROTO(bool, release_is_open)
 GET_SET_FUNC_PROTO(bool, release_last_position)
-
-void
-am_i_waiting_to_be_recovered(
-    void
-);

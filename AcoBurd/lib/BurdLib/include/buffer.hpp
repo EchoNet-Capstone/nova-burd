@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include "floc.hpp"
 
 // NEED THESE TO AVOID CONFLICTS WITH std::min AND std::max
 // also need to be before <algorithm> is included
@@ -12,6 +11,8 @@
 #ifdef max
 #undef max
 #endif
+
+#include <floc.hpp>
 
 #include <stddef.h>
 #include <string.h>
@@ -81,3 +82,8 @@ FLOCBufferManager {
 };
 
 extern FLOCBufferManager flocBuffer;
+
+void
+bufferService(
+    void
+);

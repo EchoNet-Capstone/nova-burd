@@ -14,9 +14,6 @@ GET_SET_FUNC_DEF(bool, gps_lock, false)
 // Initial value hack needed to aquire GPS fix on bootup
 GET_SET_FUNC_DEF(long, last_gps_fix, -3600)
 
-//Motor Globals
-GET_SET_FUNC_DEF(int, motor_position, 0)
-
 //Sleep Globals
 GET_SET_FUNC_DEF(bool, low_power, false)
 GET_SET_FUNC_DEF(bool, sleep_inhibit, true)
@@ -29,25 +26,3 @@ GET_SET_FUNC_DEF(bool, reed_switch2, false)
 GET_SET_FUNC_DEF(bool, waiting_to_be_retrieved, false)
 GET_SET_FUNC_DEF(bool, release_is_open, false)
 GET_SET_FUNC_DEF(bool, release_last_position, false)
-
-void
-am_i_waiting_to_be_recovered(
-    void
-){
-    if(abs(get_motor_position()) < (OPEN_POSITION + 1000)){
-        set_release_is_open(true);
-    }
-    else if(abs(get_motor_position()) > (CLOSED_POSITION - 1000)){
-        set_release_is_open(false);
-    }
-
-    if ( get_reed_switch1() || get_reed_switch2() ){
-        set_waiting_to_be_retrieved(false);
-    }
-    else if((get_release_is_open() == true) && (get_release_last_position() == true)){
-        set_waiting_to_be_retrieved(true);
-    }
-
-    // Save state for next time
-    set_release_last_position(get_release_is_open());
-}

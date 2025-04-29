@@ -10,47 +10,69 @@
  * - 2 seconds sending
  *
  * */
+#include "safe_arduino.hpp"
 
 #include <stdint.h>
 #include <stddef.h>
 #include <timer.h>
-#include <Arduino.h>
 
 #include "activity_period.hpp"
+#include "get_set_macros.hpp"
+#include "services.hpp"
 
-static activityState activity_state = LISTENING;
+GET_SET_FUNC_DEF(activityState, activity_state, SENDING)
 
 static unsigned long activity_period_start = 0;
 
 const unsigned int ACTIVITY_PERIOD = 10000; // 10 second (total)
 const unsigned int ACTIVITY_SENDING = 2000; // 2 seconds
 
+extern Service activityServiceDesc;
+
 void
 activitity_init(
     void
 ){
     activity_period_start = millis();
-    activity_state = LISTENING;
+    activity_state = SENDING;
 }
 
 void
-activity_update(
+activityService(
     void
 ){
     unsigned long current_time = millis();
 
-    if ((activity_state == LISTENING) && (current_time - activity_period_start >= ACTIVITY_PERIOD)) {
-        activity_state = SENDING;
-        activity_period_start = current_time;
-    } else if ((activity_state == SENDING) && (current_time - activity_period_start >= ACTIVITY_SENDING)) {
-        activity_state = LISTENING;
-        activity_period_start = current_time;
+    activityServiceDesc.busy = false;
+
+    if ((current_time - activity_period_start < ACTIVITY_PERIOD)) {
+        return;
+    }
+
+    switch(get_activity_state()) {
+        case SENDING:
+            if ((current_time - activity_period_start) >= ACTIVITY_SENDING) {
+                activity_state = LISTENING;
+                activity_period_start = current_time;
+
+                activityServiceDesc.busy = true;
+            }
+            break;
+        case LISTENING:
+            if ((current_time - activity_period_start) >= ACTIVITY_PERIOD) {
+                activity_state = SENDING;
+
+                activityServiceDesc.busy = true;
+            }
+            break;
+        default:
+            break;
     }
 }
 
-enum activityState
+bool
 is_activity_period_open(
     void
 ){
-    return activity_state;
+    return get_activity_state() == SENDING;
 }

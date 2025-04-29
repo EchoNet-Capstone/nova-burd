@@ -12,7 +12,6 @@ GET_SET_FUNC_DEF(long, release_timer1, 0)
 GET_SET_FUNC_DEF(long, release_timer2, 0)
 GET_SET_FUNC_DEF(long, battery_timer, 0)
 GET_SET_FUNC_DEF(long, time_until_release, 0)
-GET_SET_FUNC_DEF(long, wiggle_timer, 0)
 
 void
 release_service(

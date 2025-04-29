@@ -1,6 +1,6 @@
-#include <stdint.h>
+#include "safe_arduino.hpp"
 
-#include <Arduino.h>
+#include <stdint.h>
 
 int
 fieldToInt(

@@ -12,11 +12,11 @@ activitity_init(
 );
 
 void
-activity_update(
+activityService(
     void
 );
 
-enum activityState
+bool
 is_activity_period_open(
     void
 );

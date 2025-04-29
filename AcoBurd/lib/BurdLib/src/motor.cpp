@@ -1,15 +1,47 @@
-#include <Arduino.h>
+#include "safe_arduino.hpp"
 
 #include "device_state.hpp"
 #include "get_set_macros.hpp"
 #include "my_clock.hpp"
-#include "timers.hpp"
-#include "watchdog.hpp"
+#include "services.hpp"
 
 #include "motor.hpp"
 
+extern Service motorServiceDesc;
+
+enum wiggleStates {
+    WIGGLE_OFF,
+    WIGGLE_1,
+    WIGGLE_2,
+    WIGGLE_FINAL,
+};
+
+GET_SET_FUNC_DEF(int, motor_position, 0)
 GET_SET_FUNC_DEF(int, motor_target, 0)
+
 GET_SET_FUNC_DEF(bool, is_motor_running, false)
+
+GET_SET_FUNC_DEF(int, wiggle_state, WIGGLE_OFF)
+GET_SET_FUNC_DEF(int, wiggle_start_pos, 0)
+
+volatile bool motorQuadratureEvent = false;
+
+void motor_quadrature_interrupt() {
+    if (digitalRead(MOTOR_QUAD_B)) {
+        set_motor_position(get_motor_position() + 1);
+    } else {
+        set_motor_position(get_motor_position() - 1);
+    }
+    motorQuadratureEvent = true;     // wake up the service
+}
+
+// Wiggle the motor to clear barnacles
+void
+wiggle_motor(
+    void
+){
+    set_wiggle_state(WIGGLE_1);
+}
 
 void
 motor_init(
@@ -28,74 +60,9 @@ motor_init(
     digitalWrite(MOTOR_DRIVER_A, LOW);
     digitalWrite(MOTOR_DRIVER_B, LOW);
 
-    // ROTATE SHAFT ON BOOT!!!
-    //motor_run_to_position(CLOSED_POSITION);
-    //delay(5000);
-    motor_run_to_position(OPEN_POSITION);
-    //delay(5000);
     Asr_Timer_Init();
-}
-
-// Wiggle the motor to clear barnacles
-void
-check_wiggle(
-    void
-){
-    // Wiggle motor to break barnacles if release is closed
-    if((get_wiggle_timer() >= InternalClock()) || (get_release_is_open() == false)) {
-        return;
-    }
-
-    // If we're more than wiggle_deadband seconds from opening the release, then allow a wiggle
-    if(get_wiggle_timer() >= (get_release_timer() - WIGGLE_DEADBAND)){
-        return;
-    }
-
-    set_wiggle_timer(InternalClock() + WIGGLE_INTERVAL);
-
-    int motor_temporary_position = get_motor_position();
-
-    motor_run_to_position(motor_temporary_position + 250);
-    delay(1000);
-    // Pet the watchdog
-    feedInnerWdt();
-    motor_run_to_position(motor_temporary_position - 250);
-    delay(1300);
-    // Pet the watchdog
-    feedInnerWdt();
-    motor_run_to_position(motor_temporary_position);
-    delay(1000);
-    // Pet the watchdog
-    feedInnerWdt();
-
-    // Need to reset this here because it gets called on boot - this causes this subroutine to run twice
-    set_wiggle_timer(InternalClock() + WIGGLE_INTERVAL);
-}
-
-void
-motor_service(
-    void
-){
-    check_wiggle();
-
-    // Power down encoder and motor driver if it's been a while since motor has been energized
-    if(get_encoder_timer() < InternalClock()){
-        motor_sleep();
-    }
-}
-
-void
-set_motor_state(
-    void
-){
-    if(get_release_timer() > InternalClock()){
-        motor_run_to_position(CLOSED_POSITION);
-        // If there is time on the clock, not waiting to be recovered
-        set_waiting_to_be_retrieved(false);
-    }
-    else{
-        motor_run_to_position(OPEN_POSITION);
-    }
+    Asr_Timer_RegisterAlarmCallback(wiggle_motor);
+    Asr_SetTimeout(WIGGLE_INTERVAL_MS);
 }
 
 // Motor Power Save
@@ -111,7 +78,6 @@ void
 motor_wake_up(
     void
 ){
-    set_encoder_timer(InternalClock() + ENCODER_TIMEOUT);
     digitalWrite(MOTOR_DRIVER_POWER, HIGH);
 }
 
@@ -129,7 +95,6 @@ void
 motor_reverse(
     void
 ){
-    motor_wake_up();
     digitalWrite(MOTOR_DRIVER_A, HIGH);
     digitalWrite(MOTOR_DRIVER_B, LOW);
 }
@@ -139,39 +104,8 @@ void
 motor_forward(
     void
 ){
-    motor_wake_up();
     digitalWrite(MOTOR_DRIVER_A, HIGH);
     digitalWrite(MOTOR_DRIVER_B, HIGH);
-}
-
-// Motor encoder interrupt
-void
-motor_quadrature_interrupt(
-    void
-){
-    // Serial.println("quad interrupt");
-    if(digitalRead(MOTOR_QUAD_B)){
-        set_motor_position(get_motor_position() + 1);
-    }
-    else set_motor_position(get_motor_position() - 1);
-
-    if(abs(get_motor_position() - get_motor_target()) < MOTOR_DEADBAND){
-        motor_off();
-        set_is_motor_running(false);
-    }
-    else if(motor_target < get_motor_position()){
-        motor_forward();
-        set_is_motor_running(true);
-    }
-    else if(motor_target > get_motor_position()){
-        motor_reverse();
-        set_is_motor_running(true);
-    }
-
-    // Set encoder time to one second in the future if motor is running
-    if(get_is_motor_running() == true){
-        //encoder_timer = InternalClock() + ENCODER_TIMEOUT;
-    }
 }
 
 // Set motor target position
@@ -179,24 +113,87 @@ void
 motor_run_to_position(
     int target
 ){
-    motor_target = target;
+    set_motor_target(target);
+    motor_wake_up();
+}
 
-    // Give the motor an initial kick so the interrupt routine can take over
-    if(abs(motor_target - get_motor_position()) < MOTOR_DEADBAND){
-        motor_off();
+void
+motorService(
+    void
+){
+    motorServiceDesc.busy = false;
+
+    switch(get_wiggle_state()){
+        case WIGGLE_OFF:
+            break;
+        case WIGGLE_1:
+            set_wiggle_start_pos(get_motor_position());
+            set_motor_target(get_wiggle_start_pos() + 250);
+
+            Asr_Timer_Disable();                     // clear any old timeout
+
+            motorServiceDesc.busy = true;
+
+            if(!get_is_motor_running()){
+                set_wiggle_state(WIGGLE_2);
+            }
+            break;
+        case WIGGLE_2:
+            set_motor_target(get_wiggle_start_pos() - 250);
+            
+            motorServiceDesc.busy = true;
+
+            if(!get_is_motor_running()){
+                set_wiggle_state(WIGGLE_FINAL);
+            }
+            break;
+        case WIGGLE_FINAL:
+            set_motor_target(get_wiggle_start_pos());
+            
+            motorServiceDesc.busy = true;
+
+            if(!get_is_motor_running()){
+                set_wiggle_state(WIGGLE_OFF);
+
+                Asr_SetTimeout(WIGGLE_INTERVAL_MS);
+            }
+            break;
+        default:
+            // ERROR: unhandled wiggle state
+            break;
     }
-    else if(motor_target < get_motor_position()){
-        // Activate display
 
-        set_display_timer(InternalClock() + DISPLAY_TIMEOUT);
+    // If we just set a new target, immediately start the motor
+    if (motorServiceDesc.busy == true && !get_is_motor_running()) {
         motor_wake_up();
-        motor_forward();
+        if (get_motor_position() < get_motor_target()) {
+            motor_forward();
+        } else {
+            motor_reverse();
+        }
+        set_is_motor_running(true);
     }
-    else if(motor_target > get_motor_position()){
-        // Activate display
 
-        set_display_timer(InternalClock() + DISPLAY_TIMEOUT);
-        motor_wake_up();
-        motor_reverse();
+    if (motorQuadratureEvent) {
+        motorQuadratureEvent = false;
+
+        int pos = get_motor_position();
+        int tgt = get_motor_target();
+        
+        // we’re in range, but wait a few ms for inertia to die out
+        static uint32_t stopTime = 0;
+        if (stopTime == 0) {
+            stopTime = InternalClock() + MOTOR_SETTLE_MS;
+        }
+        else if (InternalClock() >= stopTime) {
+            motor_off();
+            set_is_motor_running(false);
+            stopTime = 0;
+            motorServiceDesc.busy = true;
+        }
+    }
+
+    if (get_is_motor_running()){
+        motorServiceDesc.busy = true;
     }
 }

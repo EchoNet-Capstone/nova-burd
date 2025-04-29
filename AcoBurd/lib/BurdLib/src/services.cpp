@@ -2,10 +2,63 @@
 
 #include "services.hpp"
 
-// TODO: create services struct
+// TODO: create services structs
+/**
+Service myServiceDesc = {
+    myServiceTask,
+    period (interval in ms),
+    0,
+    false
+}
+ */
+Service motorServiceDesc = {
+    motorService,
+    100,
+    0,
+    false
+};
+
+Service activityServiceDesc = {
+    activityService,
+    100,
+    0,
+    false
+};
+
+Service bufferServiceDesc = {
+    bufferService,
+    100,
+    0,
+    false
+};
+
+Service modemServiceDesc = {
+    modemService,
+    0,
+    0,
+    false
+};
+
+#ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
+Service nestSerialServiceDesc = {
+    nestSerialService,
+    0,
+    0,
+    false
+};
+#endif // RECV_SERIAL_NEST
 
 static Service* allServices[] = {
     // TODO: put services here
+    // &myServiceDesc,
+#ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
+    &nestSerialServiceDesc,
+#endif // RECV_SERIAL_NEST
+
+    &modemServiceDesc,
+    &activityServiceDesc,
+    &bufferServiceDesc,
+    &motorServiceDesc,
 };
 
 static constexpr size_t numServices = sizeof(allServices) / sizeof(allServices[0]);

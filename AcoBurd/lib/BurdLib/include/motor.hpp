@@ -11,7 +11,9 @@
 #define GEARBOX_RATIO 499
 #define PULSES_PER_MOTOR_ROTATION 11
 #define MOTOR_DEADBAND 50
+#define MOTOR_SETTLE_MS 50
 #define WIGGLE_DEADBAND 259200                // If release will occur in next x seconds, then don't wiggle
+#define WIGGLE_INTERVAL_MS 10000
 
 // Silver AliExpress Motors - 2695 counts per rev
 #define CLOSED_POSITION (0.490 * GEARBOX_RATIO * PULSES_PER_MOTOR_ROTATION)
@@ -20,47 +22,22 @@
 #define OPEN_POSITION 0
 
 void
+motor_quadrature_interrupt(
+    void
+);
+
+void
 motor_init(
     void
 );
 
 void
-motor_service(
-    void
-);
-
-void
-set_motor_state(
+motorService(
     void
 );
 
 void
 motor_sleep(
-    void
-);
-
-void
-motor_wake_up(
-    void
-);
-
-void
-motor_off(
-    void
-);
-
-void
-motor_reverse(
-    void
-);
-
-void
-motor_forward(
-    void
-);
-
-void
-motor_quadrature_interrupt(
     void
 );
 
