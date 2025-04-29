@@ -1,0 +1,11 @@
+{
+    "name": "BurdLib",
+    "version": "1.0.0",
+    "description": "Internal Burd library for AcoBurd project",
+    "keywords": "internal, device",
+    "authors": [
+      {
+        "name": "Your Name"
+      }
+    ]
+  }
