@@ -27,12 +27,9 @@ modemService(
             // Remove the <CR> from the buffer
             packetBuffer_modem[packetBuffer_modem_idx - 1] = 0;
 
-            DeviceAction_t da;
-            init_da(&da);
+            ParseResult r = packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx - 1);
 
-            packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx - 1, &da);
-
-            act_upon(&da);
+            // TODO : Handle the result of the packet processing
             
             memset(packetBuffer_modem, 0 , sizeof(packetBuffer_modem)); // Clear the buffer
             packetBuffer_modem_idx = 0;
