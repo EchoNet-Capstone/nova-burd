@@ -2,19 +2,6 @@
 
 #include <stdint.h>
 
-int
-fieldToInt(
-    char* field,
-    uint8_t field_len
-){
-    char temp[field_len + 1] = {0};
-
-    memcpy(temp, field, field_len);
-    temp[field_len] = '\0';
-
-    return atoi(temp);
-}
-
 void
 printBufferContents(
     uint8_t* buf,

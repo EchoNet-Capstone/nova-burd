@@ -2,19 +2,15 @@
 
 #include <stdint.h>
 
+#include <activity_period.hpp>
+#include <buffer.hpp>
 #include <device_actions.hpp>
 #include <display.hpp>
 #include <globals.hpp>
 #include <motor.hpp>
-#include <watchdog.hpp>
-#include <buffer.hpp>
-#include <activity_period.hpp>
-
+#include <nmv3_service.hpp>
 #include <services.hpp>
-
-#include <floc.hpp>
-
-#include <nmv3_api.hpp>
+#include <watchdog.hpp>
 
 void 
 setup(

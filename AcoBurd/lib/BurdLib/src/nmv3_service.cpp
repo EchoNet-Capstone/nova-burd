@@ -4,6 +4,7 @@
 #include <nmv3_api.hpp>
 
 #include "device_actions.hpp"
+#include "display.hpp"
 #include "globals.hpp"
 #include "services.hpp"
 
@@ -19,6 +20,8 @@ modemService(
 ){
     modemServiceDesc.busy = false;
 
+    ParseResult r;
+
     while (MODEM_SERIAL_CONNECTION.available() > 0) {
         char modem_char = MODEM_SERIAL_CONNECTION.read();
 
@@ -27,7 +30,7 @@ modemService(
             // Remove the <CR> from the buffer
             packetBuffer_modem[packetBuffer_modem_idx - 1] = 0;
 
-            ParseResult r = packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx - 1);
+            r = packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx - 1);
 
             // TODO : Handle the result of the packet processing
             
@@ -45,6 +48,28 @@ modemService(
         }
 
         modemServiceDesc.busy = true;
+    }
+
+    switch (r.type) {
+        case BROAD_RECV_TYPE:
+            DeviceAction_t da;
+            init_da(&da);
+
+            floc_broadcast_received(r.broadcast.payload, r.broadcast.payload_size, &da);
+
+            act_upon(&da);
+            break;
+        case PING_RESP_TYPE:
+            // TODO: Handle ping response
+            break;
+        case STATUS_QUERY_TYPE:
+            // TODO: handle status query response
+            break;
+        case SET_ADDR_TYPE:
+            display_modem_id(r.set_addr.new_addr);
+            break;
+        default:
+            break;
     }
 }
 
