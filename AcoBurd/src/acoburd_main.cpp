@@ -12,14 +12,6 @@
 #include <motor.hpp>
 #include <nmv3_service.hpp>
 #include <services.hpp>
-#include <watchdog.hpp>
-
-const uint8_t EEPROM_MAGIC = 0x42;
-const int MAGIC_ADDR = 0;
-
-const int DEVICE_ID_ADDR = 1;
-const int NETWORK_ID_ADDR = 3;
-const int SET_BYTE_ADDR = 5;
 
 void
 setup(

@@ -1,3 +1,5 @@
+#include <EEPROM.h>
+
 #include <stdint.h>
 
 #include <floc.hpp>
@@ -123,5 +125,13 @@ void
 nmv3_init(
     void
 ){
-    
+    uint16_t t_device_id;
+    uint16_t t_network_id;
+
+    EEPROM.get(DEVICE_ID_ADDR, t_device_id);
+    EEPROM.get(NETWORK_ID_ADDR, t_network_id);
+
+    uint8_t new_modem_id = (t_device_id * 31 + t_network_id) & 0xFF;
+
+    set_modem_id(new_modem_id);
 }
