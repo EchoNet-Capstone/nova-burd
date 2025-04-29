@@ -10,7 +10,7 @@
 // Motor and Gearbox Configuration
 #define GEARBOX_RATIO 499
 #define PULSES_PER_MOTOR_ROTATION 11
-#define MOTOR_DEADBAND 50
+#define MOTOR_DEADBAND 25
 #define MOTOR_SETTLE_MS 50
 #define WIGGLE_DEADBAND 259200                // If release will occur in next x seconds, then don't wiggle
 #define WIGGLE_INTERVAL_MS 10000

@@ -26,9 +26,6 @@ GET_SET_FUNC_DEF(int, wiggle_start_pos, 0)
 
 volatile bool motorQuadratureEvent = false;
 
-// at top of motor_service.cpp
-static bool wiggleInitialized[4] = { false, false, false, false };
-
 void motor_quadrature_interrupt() {
     if (digitalRead(MOTOR_QUAD_B)) {
         set_motor_position(get_motor_position() + 1);
@@ -124,11 +121,21 @@ motor_run_to_position(
     motor_wake_up();
 }
 
+static uint32_t stopTime = 0;
+static bool wiggleInitialized[4] = { false, false, false, false };
+
 void
 motorService(
     void
 ){
     motorServiceDesc.busy = false;
+
+    if (get_is_motor_running() && stopTime != 0 && InternalClock() >= stopTime) {
+        motor_off();
+        set_is_motor_running(false);
+        stopTime = 0;
+        motorServiceDesc.busy = true;
+    }
 
     // inside motorService(), before the switch:
     int s = get_wiggle_state();
@@ -203,32 +210,22 @@ motorService(
             break;
     }
 
-    if (motorQuadratureEvent) {
-        Serial.printf("quad tick\n");
+  if (motorQuadratureEvent) {
+    motorQuadratureEvent = false;
 
-        motorQuadratureEvent = false;
+    int pos = get_motor_position();
+    int tgt = get_motor_target();
 
-        int pos = get_motor_position();
-        int tgt = get_motor_target();
-        
-        // we’re in range, but wait a few ms for inertia to die out
-        static uint32_t stopTime = 0;
-        if (stopTime == 0) {
-            stopTime = InternalClock() + MOTOR_SETTLE_MS;
-        }
-        else if (InternalClock() >= stopTime) {
-            motor_off();
-            set_is_motor_running(false);
-            stopTime = 0;
-            motorServiceDesc.busy = true;
-        }
+    // equality check is enough if you always hit exactly
+    if (abs(pos - tgt) < MOTOR_DEADBAND) {
+      stopTime = InternalClock() + MOTOR_SETTLE_MS;
     }
 
-    if (get_is_motor_running()){
-        motorServiceDesc.busy = true;
-    }
+    motorServiceDesc.busy = true;
+  }
 
-    if (get_wiggle_state() != WIGGLE_OFF){
-        motorServiceDesc.busy = true;
-    }
+  // ensure busy if still running or wiggle is active
+  if (get_is_motor_running() || get_wiggle_state() != WIGGLE_OFF) {
+    motorServiceDesc.busy = true;
+  }
 }
