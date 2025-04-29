@@ -35,29 +35,6 @@ void motor_quadrature_interrupt() {
     motorQuadratureEvent = true;
 }
 
-// wrap into [0 … TICKS_PER_REV-1]
-int wrappedPos() {
-    int w = get_motor_position() % TICKS_PER_REV;
-    if (w < 0) w += TICKS_PER_REV;
-    return w;
-}
-
-
-// wrap any target the same way
-int wrapTarget(int t) {
-    int w = t % TICKS_PER_REV;
-    if (w < 0) w += TICKS_PER_REV;
-    return w;
-}
-
-// minimal signed distance in [–halfRev … +halfRev]
-int circularDiff(int from, int to) {
-    int d = (to - from) % TICKS_PER_REV;
-    if (d < -TICKS_PER_REV/2)   d += TICKS_PER_REV;
-    else if (d >  TICKS_PER_REV/2) d -= TICKS_PER_REV;
-    return d;
-}
-
 // Wiggle the motor to clear barnacles
 void
 wiggle_motor(
@@ -135,38 +112,54 @@ motor_forward(
     digitalWrite(MOTOR_DRIVER_B, LOW);
 }
 
+static uint32_t    stopTime             = 0;
+static bool        wiggleInitialized[4] = {false,false,false,false};
+static int         lastState            = -1;
+
+// wrap any raw value into [0 .. TICKS_PER_REV-1]
+static int wrapTarget(int raw) {
+    int w = raw % TICKS_PER_REV;
+    if (w < 0) w += TICKS_PER_REV;
+    return w;
+}
+
+// signed shortest-path diff in [−TICKS_PER_REV/2 .. +TICKS_PER_REV/2]
+static int circularDiff(int from, int to) {
+    int d = (to - from) % TICKS_PER_REV;
+    if (d < -TICKS_PER_REV/2)    d += TICKS_PER_REV;
+    else if (d >  TICKS_PER_REV/2) d -= TICKS_PER_REV;
+    return d;
+}
+
+// get the current wrapped position
+static int wrappedPos() {
+    return wrapTarget(get_motor_position());
+}
+
 // Set motor target position
 void
 motor_run_to_position(
     int target
 ){
-    set_motor_target(target);
+    set_motor_target(wrapTarget(target));
     motor_wake_up();
 }
 
-static uint32_t stopTime = 0;
-static bool wiggleInitialized[4] = { false, false, false, false };
 
 void
 motorService(
     void
 ){
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("\x1B[2J\x1B[H");
-
-    Serial.printf(
-        "SVC: pos=%d state=%d init=%d running=%d stopT=%lu now=%lu\n",
-        wrappedPos(),
-        get_wiggle_state(),
-        wiggleInitialized[get_wiggle_state()] ? 1 : 0,
-        get_is_motor_running() ? 1 : 0,
-        stopTime,
-        InternalClock()
-      );
-#endif
-
     motorServiceDesc.busy = false;
+    int s = get_wiggle_state();
 
+    // clear "init" flag on state change
+    if (s != lastState) {
+        wiggleInitialized[s] = false;
+        lastState = s;
+    }
+
+    // 1) Stop‐by‐timeout logic
     if (get_is_motor_running() && stopTime != 0 && InternalClock() >= stopTime) {
         motor_off();
         set_is_motor_running(false);
@@ -174,96 +167,89 @@ motorService(
         motorServiceDesc.busy = true;
     }
 
-    // inside motorService(), before the switch:
-    int s = get_wiggle_state();
-    // if we’ve just entered a new state, clear its init flag
-    static int lastState = -1;
-    if (s != lastState) {
-        wiggleInitialized[s] = false;
-        lastState = s;
+    // 2) Wiggle state‐machine
+    switch (s) {
+      case WIGGLE_OFF:
+        if (!wiggleInitialized[WIGGLE_OFF]) {
+            motor_off();
+            set_is_motor_running(false);
+            wiggleInitialized[WIGGLE_OFF] = true;
+        }
+        break;
+
+      case WIGGLE_1:
+        if (!wiggleInitialized[WIGGLE_1]) {
+            int start = wrappedPos();
+            set_wiggle_start_pos(start);
+            set_motor_target(wrapTarget(start + WIGGLE_OFFSET));
+
+            motor_wake_up();
+            motor_forward();              // enable=A=HIGH, phase=B=LOW
+            set_is_motor_running(true);
+
+            motorServiceDesc.busy = true;
+            wiggleInitialized[WIGGLE_1] = true;
+        }
+        else if (!get_is_motor_running()) {
+            set_wiggle_state(WIGGLE_2);
+        }
+        break;
+
+      case WIGGLE_2:
+        if (!wiggleInitialized[WIGGLE_2]) {
+            int start = get_wiggle_start_pos();
+            set_motor_target(wrapTarget(start - WIGGLE_OFFSET));
+
+            motor_wake_up();
+            motor_reverse();              // enable=A=HIGH, phase=B=HIGH
+            set_is_motor_running(true);
+
+            motorServiceDesc.busy = true;
+            wiggleInitialized[WIGGLE_2] = true;
+        }
+        else if (!get_is_motor_running()) {
+            set_wiggle_state(WIGGLE_FINAL);
+        }
+        break;
+
+      case WIGGLE_FINAL:
+        if (!wiggleInitialized[WIGGLE_FINAL]) {
+            int start = get_wiggle_start_pos();
+            int tgt   = wrapTarget(start);
+            set_motor_target(tgt);
+
+            motor_wake_up();
+            // choose shortest arc
+            if (circularDiff(wrappedPos(), tgt) > 0) motor_forward();
+            else                                     motor_reverse();
+            set_is_motor_running(true);
+
+            motorServiceDesc.busy = true;
+            wiggleInitialized[WIGGLE_FINAL] = true;
+        }
+        else if (!get_is_motor_running()) {
+            set_wiggle_state(WIGGLE_OFF);
+            Asr_SetTimeout(WIGGLE_INTERVAL_MS);
+        }
+        break;
     }
 
-    switch(get_wiggle_state()){
-        case WIGGLE_1:
+    // 3) On each encoder tick, arm the settle timer when within dead-band
+    if (motorQuadratureEvent) {
+        motorQuadratureEvent = false;
 
-            if (!wiggleInitialized[WIGGLE_1]) {
-                // first time in WIGGLE_1: set up and start
-                set_wiggle_start_pos(wrappedPos());
-                set_motor_target(wrapTarget(get_wiggle_start_pos() + 250));
-                motor_wake_up();
-                motor_forward();
-                set_is_motor_running(true);
-                motorServiceDesc.busy = true;
-                wiggleInitialized[WIGGLE_1] = true;
-            }
-            else if (!get_is_motor_running()) {
-                // once the motor has stopped, advance
-                set_wiggle_state(WIGGLE_2);
-            }
-            break;
-        case WIGGLE_2:
+        int pos  = wrappedPos();
+        int tgt  = get_motor_target();
+        int diff = circularDiff(pos, tgt);
 
-            if (!wiggleInitialized[WIGGLE_2]) {
-                set_motor_target(wrapTarget(get_wiggle_start_pos() - 250));
-                motor_wake_up();
-                motor_reverse();
-                set_is_motor_running(true);
-                motorServiceDesc.busy = true;
-                wiggleInitialized[WIGGLE_2] = true;
-            }
-            else if (!get_is_motor_running()) {
-                set_wiggle_state(WIGGLE_FINAL);
-            }
-            break;
-        case WIGGLE_FINAL:
-
-            if (!wiggleInitialized[WIGGLE_FINAL]) {
-                set_motor_target(wrapTarget(get_wiggle_start_pos()));
-                motor_wake_up();
-
-                int pos = wrappedPos();           // 0…TICKS_PER_REV-1
-                int tgt = get_motor_target();     // also wrapped
-                int diff = circularDiff(pos, tgt);
-                
-                if (diff >  MOTOR_DEADBAND)      // target is ahead in the + direction
-                    motor_forward();
-                else if (diff < -MOTOR_DEADBAND) // target is behind
-                    motor_reverse();
-                else
-                    motor_off();                  // we’re within dead-band, just coast
-
-                set_is_motor_running(true);
-                motorServiceDesc.busy = true;
-                wiggleInitialized[WIGGLE_FINAL] = true;
-            }
-            else if (!get_is_motor_running()) {
-                // wiggle is completely done — go back to sleep and re-arm
-                set_wiggle_state(WIGGLE_OFF);
-                Asr_SetTimeout(WIGGLE_INTERVAL_MS);
-            }
-            break;
-        default:
-            // ERROR: unhandled wiggle state
-            break;
+        if (abs(diff) <= MOTOR_DEADBAND) {
+            stopTime = InternalClock() + MOTOR_SETTLE_MS;
+        }
+        motorServiceDesc.busy = true;
     }
 
-  if (motorQuadratureEvent) {
-    motorQuadratureEvent = false;
-
-    int pos = wrappedPos();
-    int tgt = get_motor_target();
-
-    int diff = circularDiff(pos, tgt);
-    // equality check is enough if you always hit exactly
-    if (abs(diff) <= MOTOR_DEADBAND) {
-      stopTime = InternalClock() + MOTOR_SETTLE_MS;
+    // 4) Stay busy until wiggle is fully complete
+    if (get_is_motor_running() || s != WIGGLE_OFF) {
+        motorServiceDesc.busy = true;
     }
-
-    motorServiceDesc.busy = true;
-  }
-
-  // ensure busy if still running or wiggle is active
-  if (get_is_motor_running() || get_wiggle_state() != WIGGLE_OFF) {
-    motorServiceDesc.busy = true;
-  }
 }
