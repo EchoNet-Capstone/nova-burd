@@ -13,21 +13,21 @@ Service myServiceDesc = {
  */
 Service motorServiceDesc = {
     motorService,
-    100,
+    0,
     0,
     false
 };
 
 Service activityServiceDesc = {
     activityService,
-    100,
+    0,
     0,
     false
 };
 
 Service bufferServiceDesc = {
     bufferService,
-    100,
+    0,
     0,
     false
 };

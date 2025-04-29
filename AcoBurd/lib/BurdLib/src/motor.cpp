@@ -26,13 +26,36 @@ GET_SET_FUNC_DEF(int, wiggle_start_pos, 0)
 
 volatile bool motorQuadratureEvent = false;
 
+#define TICKS_PER_REV 2695
+
 void motor_quadrature_interrupt() {
-    if (digitalRead(MOTOR_QUAD_B)) {
-        set_motor_position(get_motor_position() + 1);
-    } else {
-        set_motor_position(get_motor_position() - 1);
-    }
-    motorQuadratureEvent = true;     // wake up the service
+    int delta = digitalRead(MOTOR_QUAD_B) ? +1 : -1;
+    int raw = get_motor_position() + delta;
+    set_motor_position(raw);
+    motorQuadratureEvent = true;
+}
+
+// wrap into [0 … TICKS_PER_REV-1]
+int wrappedPos() {
+    int w = get_motor_position() % TICKS_PER_REV;
+    if (w < 0) w += TICKS_PER_REV;
+    return w;
+}
+
+
+// wrap any target the same way
+int wrapTarget(int t) {
+    int w = t % TICKS_PER_REV;
+    if (w < 0) w += TICKS_PER_REV;
+    return w;
+}
+
+// minimal signed distance in [–halfRev … +halfRev]
+int circularDiff(int from, int to) {
+    int d = (to - from) % TICKS_PER_REV;
+    if (d < -TICKS_PER_REV/2)   d += TICKS_PER_REV;
+    else if (d >  TICKS_PER_REV/2) d -= TICKS_PER_REV;
+    return d;
 }
 
 // Wiggle the motor to clear barnacles
@@ -128,6 +151,20 @@ void
 motorService(
     void
 ){
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("\x1B[2J\x1B[H");
+
+    Serial.printf(
+        "SVC: pos=%d state=%d init=%d running=%d stopT=%lu now=%lu\n",
+        wrappedPos(),
+        get_wiggle_state(),
+        wiggleInitialized[get_wiggle_state()] ? 1 : 0,
+        get_is_motor_running() ? 1 : 0,
+        stopTime,
+        InternalClock()
+      );
+#endif
+
     motorServiceDesc.busy = false;
 
     if (get_is_motor_running() && stopTime != 0 && InternalClock() >= stopTime) {
@@ -148,14 +185,11 @@ motorService(
 
     switch(get_wiggle_state()){
         case WIGGLE_1:
-        #ifdef DEBUG_ON // DEBUG_ON
-            Serial.printf("Wiggle 1...\r\n");
-        #endif // DEBUG_ON
 
             if (!wiggleInitialized[WIGGLE_1]) {
                 // first time in WIGGLE_1: set up and start
-                set_wiggle_start_pos(get_motor_position());
-                set_motor_target(get_wiggle_start_pos() + 250);
+                set_wiggle_start_pos(wrappedPos());
+                set_motor_target(wrapTarget(get_wiggle_start_pos() + 250));
                 motor_wake_up();
                 motor_forward();
                 set_is_motor_running(true);
@@ -168,12 +202,9 @@ motorService(
             }
             break;
         case WIGGLE_2:
-        #ifdef DEBUG_ON // DEBUG_ON
-            Serial.printf("Wiggle 2...\r\n");
-        #endif // DEBUG_ON
 
             if (!wiggleInitialized[WIGGLE_2]) {
-                set_motor_target(get_wiggle_start_pos() - 250);
+                set_motor_target(wrapTarget(get_wiggle_start_pos() - 250));
                 motor_wake_up();
                 motor_reverse();
                 set_is_motor_running(true);
@@ -185,16 +216,23 @@ motorService(
             }
             break;
         case WIGGLE_FINAL:
-        #ifdef DEBUG_ON // DEBUG_ON
-            Serial.printf("Wiggle Final...\r\n");
-        #endif // DEBUG_ON
 
             if (!wiggleInitialized[WIGGLE_FINAL]) {
-                set_motor_target(get_wiggle_start_pos());
+                set_motor_target(wrapTarget(get_wiggle_start_pos()));
                 motor_wake_up();
+                
                 // decide direction based on current pos vs target
-                if (get_motor_position() < get_motor_target()) motor_forward();
-                else motor_reverse();
+                int pos = wrappedPos();          // in [0…TICKS_PER_REV–1]
+                int tgt = get_motor_target();    // already wrapped
+                int diff = circularDiff(pos, tgt);
+
+                if (diff > 0) {
+                    motor_forward();    // target is ahead in the positive direction
+                }
+                else {
+                    motor_reverse();    // target is behind or equal—go the other way
+                }
+
                 set_is_motor_running(true);
                 motorServiceDesc.busy = true;
                 wiggleInitialized[WIGGLE_FINAL] = true;
@@ -213,11 +251,12 @@ motorService(
   if (motorQuadratureEvent) {
     motorQuadratureEvent = false;
 
-    int pos = get_motor_position();
+    int pos = wrappedPos();
     int tgt = get_motor_target();
 
+    int diff = circularDiff(pos, tgt);
     // equality check is enough if you always hit exactly
-    if (abs(pos - tgt) < MOTOR_DEADBAND) {
+    if (abs(diff) <= MOTOR_DEADBAND) {
       stopTime = InternalClock() + MOTOR_SETTLE_MS;
     }
 
