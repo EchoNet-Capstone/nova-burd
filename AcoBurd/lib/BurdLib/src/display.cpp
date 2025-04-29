@@ -1,9 +1,10 @@
+#include <CubeCell_NeoPixel.h>
+
 #include "safe_arduino.hpp"
 
-#include <stdio.h>
-
 #include <HT_SSD1306Wire.h>
-#include <CubeCell_NeoPixel.h>
+
+#include <stdio.h>
 
 #include "display.hpp"
 
@@ -45,6 +46,10 @@ void
 oled_initialize(
     void
 ){
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("OLED Init...\r\n");
+#endif // DEBUG_ON
+
     VextON();// oled power on;
     delay(10);
 

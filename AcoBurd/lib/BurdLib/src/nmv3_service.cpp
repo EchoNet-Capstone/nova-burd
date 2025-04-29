@@ -125,6 +125,10 @@ void
 nmv3_init(
     void
 ){
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Initializing NMV3...\r\n");
+#endif // DEBUG_ON
+
     uint16_t t_device_id;
     uint16_t t_network_id;
 
@@ -133,5 +137,5 @@ nmv3_init(
 
     uint8_t new_modem_id = (t_device_id * 31 + t_network_id) & 0xFF;
 
-    set_modem_id(new_modem_id);
+    set_address(MODEM_SERIAL_CONNECTION, new_modem_id);
 }

@@ -33,6 +33,10 @@ void
 activitity_init(
     void
 ){
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Activity Init...\r\n");
+#endif // DEBUG_ON
+
     activity_period_start = millis();
     activity_state = SENDING;
 }

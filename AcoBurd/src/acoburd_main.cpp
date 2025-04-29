@@ -1,6 +1,8 @@
-#include <safe_arduino.hpp>
-
+#include "LoRaWan_APP.h"
 #include <EEPROM.h>
+
+// Kill it with fire
+#include <safe_arduino.hpp>
 
 #include <stdint.h>
 
@@ -96,7 +98,8 @@ loop(
 
     if (!anyBusy) {
     #ifdef DEBUG_ON // DEBUG_ON
-        Serial.printf("Going to sleep...");
+        Serial.printf("Going to sleep...\r\n");
     #endif
+        LoRaWAN.sleep();
     }
 }
