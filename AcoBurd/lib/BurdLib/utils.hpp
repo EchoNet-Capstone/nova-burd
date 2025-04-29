@@ -1,5 +1,4 @@
-#ifndef UTILS_HPP
-#define UITLS_HPP
+#pragma once
 
 #include <stdint.h>
 
@@ -14,5 +13,3 @@ printBufferContents(
     uint8_t* buf,
     uint8_t buf_size
 );
-
-#endif

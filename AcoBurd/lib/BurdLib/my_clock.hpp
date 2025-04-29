@@ -1,9 +1,6 @@
-#ifndef MY_CLOCK_HPP
-#define MY_CLOCK_HPP
+#pragma once
 
 long 
 InternalClock(
     void
 );
-
-#endif

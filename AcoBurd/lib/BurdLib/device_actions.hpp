@@ -1,5 +1,4 @@
-#ifndef DEVICE_ACTIONS_HPP
-#define DEVICE_ACTIONS_HPP
+#pragma once
 
 #include <stdint.h>
 
@@ -22,5 +21,3 @@ void
 act_upon(
     DeviceAction_t* da
 );
-
-#endif

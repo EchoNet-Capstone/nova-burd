@@ -5,8 +5,7 @@ this is done to break up the header file into
 a header and source file so it is
 compatable with platform.io
 */
-#ifndef WATCHDOG_H
-#define WATCHDOG_H
+#pragma once
 
 #include <cytypes.h>
 #include <CyLib.h>
@@ -127,5 +126,4 @@ innerWdtEnable(bool
     feed
 );
 
-#endif
 #endif

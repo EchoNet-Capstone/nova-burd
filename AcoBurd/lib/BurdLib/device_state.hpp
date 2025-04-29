@@ -1,5 +1,4 @@
-#ifndef DEVICE_STATE_HPP
-#define DEVICE_STATE_HPP
+#pragma once
 
 #include "get_set_macros.hpp"
 
@@ -34,4 +33,3 @@ void
 am_i_waiting_to_be_recovered(
     void
 );
-#endif

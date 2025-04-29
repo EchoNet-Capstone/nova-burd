@@ -1,5 +1,4 @@
-#ifndef DISPLAY_HPP
-#define DISPLAY_HPP
+#pragma once
 
 #include <stdint.h>
 
@@ -28,5 +27,3 @@ display_modem_packet_data(
     uint8_t *packetBuffer,
     uint8_t size
 );
-
-#endif

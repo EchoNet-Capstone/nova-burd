@@ -1,5 +1,4 @@
-#ifndef ACTIVITY_PERIOD_H
-#define ACTIVITY_PERIOD_H
+#pragma once
 
 enum
 activityState {
@@ -21,5 +20,3 @@ enum activityState
 is_activity_period_open(
     void
 );
-
-#endif

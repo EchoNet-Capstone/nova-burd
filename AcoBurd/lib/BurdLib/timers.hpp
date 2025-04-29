@@ -1,5 +1,4 @@
-#ifndef TIMERS_HPP
-#define TIMERS_HPP
+#pragma once
 
 #include "get_set_macros.hpp"
 
@@ -29,5 +28,3 @@ void
 release_service(
     void
 );
-
-#endif

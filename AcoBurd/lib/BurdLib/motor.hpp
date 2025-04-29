@@ -1,5 +1,4 @@
-#ifndef MOTOR_HPP
-#define MOTOR_HPP
+#pragma once
 
 // Motor and Encoder GPIO Setup
 #define MOTOR_DRIVER_POWER GPIO7              // To motor driver Vcc AND motor encoder blue wire (encoder power)
@@ -69,5 +68,3 @@ void
 motor_run_to_position(
     int target
 );
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef GLOBALS_HPP
-#define GLOBALS_HPP
+#pragma once
 
 #include <stdint.h>
 
@@ -27,5 +26,3 @@ ntohs(
 ){
     return __builtin_bswap16(val);
 }
-
-#endif

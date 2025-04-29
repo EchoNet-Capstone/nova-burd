@@ -1,5 +1,4 @@
-#ifndef BUFFER_H
-#define BUFFER_H
+#pragma once
 
 #include <stdint.h>
 #include "floc.hpp"
@@ -82,5 +81,3 @@ FLOCBufferManager {
 };
 
 extern FLOCBufferManager flocBuffer;
-
-#endif
