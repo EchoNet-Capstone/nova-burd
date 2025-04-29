@@ -1,3 +1,5 @@
+#include "safe_arduino.hpp"
+
 #include "service_list.hpp"
 
 #include "services.hpp"
@@ -66,6 +68,9 @@ static constexpr size_t numServices = sizeof(allServices) / sizeof(allServices[0
 void registerAllServices() {
     auto& reg = ServiceRegistry::instance();
     for (size_t i = 0; i < numServices; ++i) {
+    #ifdef DEBUG_ON // DEBUG_ON
+        Serial.printf("Registering service %p...\r\n", allServices[i]);
+    #endif
         reg.registerService(allServices[i]);
     }
 }

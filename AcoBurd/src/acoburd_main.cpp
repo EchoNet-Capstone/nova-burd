@@ -88,12 +88,9 @@ loop(
     bool anyBusy = false;
 
     for (auto* s : svcs) {
-        if (s->period == 0 || now - s->lastRun >= s->period) {
-            s->busy     = false;
-            s->fn();
-            s->lastRun = now;
-            anyBusy   |= s->busy;
-        }
+        s->busy = false;
+        s->fn();
+        anyBusy |= s->busy;
     }
 
     if (!anyBusy) {

@@ -169,69 +169,92 @@ motorService(
 
     // 2) Wiggle state‐machine
     switch (s) {
-      case WIGGLE_OFF:
-        if (!wiggleInitialized[WIGGLE_OFF]) {
-            motor_off();
-            set_is_motor_running(false);
-            wiggleInitialized[WIGGLE_OFF] = true;
-        }
-        break;
+        case WIGGLE_OFF:
+            if (!wiggleInitialized[WIGGLE_OFF]) {
+                motor_off();
+                set_is_motor_running(false);
+                wiggleInitialized[WIGGLE_OFF] = true;
+            }
+            break;
 
-      case WIGGLE_1:
-        if (!wiggleInitialized[WIGGLE_1]) {
-            int start = wrappedPos();
-            set_wiggle_start_pos(start);
-            set_motor_target(wrapTarget(start + WIGGLE_OFFSET));
+        case WIGGLE_1:
+            if (!wiggleInitialized[WIGGLE_1]) {
+                int start = wrappedPos();
+                set_wiggle_start_pos(start);
+                set_motor_target(wrapTarget(start + WIGGLE_OFFSET));
 
-            motor_wake_up();
-            motor_forward();              // enable=A=HIGH, phase=B=LOW
-            set_is_motor_running(true);
+                motor_wake_up();
+                motor_forward();              // enable=A=HIGH, phase=B=LOW
+                set_is_motor_running(true);
 
-            motorServiceDesc.busy = true;
-            wiggleInitialized[WIGGLE_1] = true;
-        }
-        else if (!get_is_motor_running()) {
-            set_wiggle_state(WIGGLE_2);
-        }
-        break;
+                motorServiceDesc.busy = true;
+                wiggleInitialized[WIGGLE_1] = true;
+            }
+            else if (!get_is_motor_running()) {
+                set_wiggle_state(WIGGLE_2);
+            }
+            break;
 
-      case WIGGLE_2:
-        if (!wiggleInitialized[WIGGLE_2]) {
-            int start = get_wiggle_start_pos();
-            set_motor_target(wrapTarget(start - WIGGLE_OFFSET));
+        case WIGGLE_2:
+            if (!wiggleInitialized[WIGGLE_2]) {
+                int start = get_wiggle_start_pos();
+                set_motor_target(wrapTarget(start - WIGGLE_OFFSET));
 
-            motor_wake_up();
-            motor_reverse();              // enable=A=HIGH, phase=B=HIGH
-            set_is_motor_running(true);
+                motor_wake_up();
+                motor_reverse();              // enable=A=HIGH, phase=B=HIGH
+                set_is_motor_running(true);
 
-            motorServiceDesc.busy = true;
-            wiggleInitialized[WIGGLE_2] = true;
-        }
-        else if (!get_is_motor_running()) {
-            set_wiggle_state(WIGGLE_FINAL);
-        }
-        break;
+                motorServiceDesc.busy = true;
+                wiggleInitialized[WIGGLE_2] = true;
+            }
+            else if (!get_is_motor_running()) {
+                set_wiggle_state(WIGGLE_FINAL);
+            }
+            break;
 
-      case WIGGLE_FINAL:
-        if (!wiggleInitialized[WIGGLE_FINAL]) {
-            int start = get_wiggle_start_pos();
-            int tgt   = wrapTarget(start);
-            set_motor_target(tgt);
-
-            motor_wake_up();
-            // choose shortest arc
-            if (circularDiff(wrappedPos(), tgt) > 0) motor_forward();
-            else                                     motor_reverse();
-            set_is_motor_running(true);
-
-            motorServiceDesc.busy = true;
-            wiggleInitialized[WIGGLE_FINAL] = true;
-        }
-        else if (!get_is_motor_running()) {
-            set_wiggle_state(WIGGLE_OFF);
-            Asr_SetTimeout(WIGGLE_INTERVAL_MS);
-        }
-        break;
+        case WIGGLE_FINAL: {
+            static bool finalHomed = false;
+        
+            // first entry: do the normal return‐to‐start wiggle
+            if (!wiggleInitialized[WIGGLE_FINAL]) {
+                int start = get_wiggle_start_pos();
+                int tgt   = wrapTarget(start);
+                set_motor_target(tgt);
+        
+                motor_wake_up();
+                // shortest‐arc drive
+                if (circularDiff(wrappedPos(), tgt) > 0) motor_forward();
+                else                                     motor_reverse();
+                set_is_motor_running(true);
+        
+                motorServiceDesc.busy = true;
+                wiggleInitialized[WIGGLE_FINAL] = true;
+                finalHomed = false;              // reset the homing flag
+            }
+            // once that move finishes, kick off the precise homing pass
+            else if (!get_is_motor_running() && !finalHomed) {
+                int start = get_wiggle_start_pos();
+                int tgt   = wrapTarget(start);
+                set_motor_target(tgt);
+        
+                // if we’re already within dead‐band, skip straight to done:
+                if (abs(circularDiff(wrappedPos(), tgt)) <= MOTOR_DEADBAND) {
+                    finalHomed = true;
+                }
+                else {
+                    motor_wake_up();
+                    if (circularDiff(wrappedPos(), tgt) > 0) motor_forward();
+                    else                                     motor_reverse();
+                    set_is_motor_running(true);
+                }
+                motorServiceDesc.busy = true;
+            }
+            // after the homing pass actually stops, we can finally shut down
+            else if (!get_is_motor_running() && finalHomed) {
+                set_wiggle_state(WIGGLE_OFF);
+                Asr_SetTimeout(WIGGLE_INTERVAL_MS);
+            }
+        } break;
     }
 
     // 3) On each encoder tick, arm the settle timer when within dead-band

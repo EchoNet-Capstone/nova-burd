@@ -266,7 +266,5 @@ bufferService(
 
             bufferServiceDesc.busy = true;
         }
-    } else {
-        bufferServiceDesc.busy = true;
     }
 }
