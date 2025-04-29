@@ -46,7 +46,7 @@ void FLOCBufferManager::addPacket(const FlocPacket_t& packet, int retrans) {
     // if not a retransmission, check the type of the packet
     if(packet.header.type == FLOC_COMMAND_TYPE) {
         commandBuffer.push(packet);
-    } else if (packet.header.type == FLOC_RESPONSE_TYPE || packet.header.type == FLOC_ERROR_TYPE) {
+    } else if (packet.header.type == FLOC_RESPONSE_TYPE) {
         responseBuffer.push(packet);
     } else {
         printf("Invalid packet type for command buffer\n");
@@ -180,7 +180,7 @@ int FLOCBufferManager::command_handler() {
         commandBuffer.pop(); // Remove from buffer
         transmissionCounts.erase(packet_id); // Remove from map
 
-        floc_error_send(1,  packet.header.dest_addr, pack); // Send error packet
+        floc_error_send(1, packet_id, packet.header.src_addr); // Send error packet
         return 0;
     }
 
