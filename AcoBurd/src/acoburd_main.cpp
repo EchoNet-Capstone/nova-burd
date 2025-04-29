@@ -1,5 +1,7 @@
 #include <safe_arduino.hpp>
 
+#include <EEPROM.h>
+
 #include <stdint.h>
 
 #include <activity_period.hpp>
@@ -12,10 +14,28 @@
 #include <services.hpp>
 #include <watchdog.hpp>
 
-void 
+const uint8_t EEPROM_MAGIC = 0x42;
+const int MAGIC_ADDR = 0;
+
+const int DEVICE_ID_ADDR = 1;
+const int NETWORK_ID_ADDR = 3;
+const int SET_BYTE_ADDR = 5;
+
+void
 setup(
     void
 ){
+    uint8_t magic;
+    EEPROM.get(MAGIC_ADDR, magic);
+
+    if(magic != EEPROM_MAGIC) {
+        // Initialize EEPROM
+        EEPROM.put(MAGIC_ADDR, (uint8_t) EEPROM_MAGIC);
+        EEPROM.put(DEVICE_ID_ADDR, (uint16_t) 0x0000);
+        EEPROM.put(NETWORK_ID_ADDR, (uint16_t) 0x0000);
+        EEPROM.put(SET_BYTE_ADDR, (uint8_t) 0x00);
+    }
+
     // Debug messages to USB connection
     NEST_SERIAL_CONNECTION.begin(115200, SERIAL_8N1);
 
@@ -28,6 +48,26 @@ setup(
     Serial.printf("Booting up...\r\n");
 #endif // DEBUG_ON
 
+    uint8_t set;
+    EEPROM.get(SET_BYTE_ADDR, set);
+
+    if(set != 0x01) {
+        // TODO: wait for device id's to come in through serial and display this on the device's screen
+
+        EEPROM.put(DEVICE_ID_ADDR, (uint16_t) 0x0001);
+        EEPROM.put(NETWORK_ID_ADDR, (uint16_t) 0x0001);
+        EEPROM.put(SET_BYTE_ADDR, (uint8_t) 0x01);
+    }
+
+    uint16_t t_device_id;
+    uint16_t t_network_id;
+
+    EEPROM.get(DEVICE_ID_ADDR, t_device_id);
+    EEPROM.get(NETWORK_ID_ADDR, t_network_id);
+
+    set_device_id(t_device_id);
+    set_network_id(t_network_id);
+
     noInterrupts();
 
     motor_init();
@@ -36,23 +76,23 @@ setup(
 
     oled_initialize();
 
+    activitity_init();
+
     interrupts();
 
     registerAllServices();
-
-    activitity_init();
 }
 
-void 
+void
 loop(
     void
 ){
-    // we are going to have a command activitiy variable 
-    
+    // we are going to have a command activitiy variable
+
     auto& svcs = ServiceRegistry::instance().services();
     uint32_t now = millis();
     bool anyBusy = false;
-  
+
     for (auto* s : svcs) {
         if (s->period == 0 || now - s->lastRun >= s->period) {
             s->busy     = false;
@@ -61,7 +101,7 @@ loop(
             anyBusy   |= s->busy;
         }
     }
-  
+
     if (!anyBusy) {
     #ifdef DEBUG_ON // DEBUG_ON
         Serial.printf("Going to sleep...");
