@@ -123,7 +123,7 @@ motor_reverse(
     void
 ){
     digitalWrite(MOTOR_DRIVER_A, HIGH);
-    digitalWrite(MOTOR_DRIVER_B, LOW);
+    digitalWrite(MOTOR_DRIVER_B, HIGH);
 }
 
 // Run Motor Forward
@@ -132,7 +132,7 @@ motor_forward(
     void
 ){
     digitalWrite(MOTOR_DRIVER_A, HIGH);
-    digitalWrite(MOTOR_DRIVER_B, HIGH);
+    digitalWrite(MOTOR_DRIVER_B, LOW);
 }
 
 // Set motor target position
@@ -220,18 +220,17 @@ motorService(
             if (!wiggleInitialized[WIGGLE_FINAL]) {
                 set_motor_target(wrapTarget(get_wiggle_start_pos()));
                 motor_wake_up();
-                
-                // decide direction based on current pos vs target
-                int pos = wrappedPos();          // in [0…TICKS_PER_REV–1]
-                int tgt = get_motor_target();    // already wrapped
-                int diff = circularDiff(pos, tgt);
 
-                if (diff > 0) {
-                    motor_forward();    // target is ahead in the positive direction
-                }
-                else {
-                    motor_reverse();    // target is behind or equal—go the other way
-                }
+                int pos = wrappedPos();           // 0…TICKS_PER_REV-1
+                int tgt = get_motor_target();     // also wrapped
+                int diff = circularDiff(pos, tgt);
+                
+                if (diff >  MOTOR_DEADBAND)      // target is ahead in the + direction
+                    motor_forward();
+                else if (diff < -MOTOR_DEADBAND) // target is behind
+                    motor_reverse();
+                else
+                    motor_off();                  // we’re within dead-band, just coast
 
                 set_is_motor_running(true);
                 motorServiceDesc.busy = true;
