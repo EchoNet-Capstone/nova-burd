@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#define debug true
 #define ON_DEVICE
 
 #define NEST_SERIAL_CONNECTION Serial

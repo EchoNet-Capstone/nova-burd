@@ -8,8 +8,8 @@
 
 #include "motor.hpp"
 
-GET_SET_FUNC_DEF(int, motor_target, 0);
-GET_SET_FUNC_DEF(bool, is_motor_running, false);
+GET_SET_FUNC_DEF(int, motor_target, 0)
+GET_SET_FUNC_DEF(bool, is_motor_running, false)
 
 void motor_init(void){
   // Setup motor quadrature and interrupt
@@ -30,6 +30,7 @@ void motor_init(void){
   //delay(5000);
   motor_run_to_position(OPEN_POSITION);
   //delay(5000);
+  Asr_Timer_Init();
 }
 
 // Wiggle the motor to clear barnacles

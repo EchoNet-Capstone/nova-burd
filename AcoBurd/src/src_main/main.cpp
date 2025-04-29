@@ -15,7 +15,6 @@
 #include <nmv3_api.hpp>
 
 // Testing define
-// #define MASTER_NODE
 
 #ifdef MASTER_NODE // MASTER_NODE
     // Defined if the serial port (not serial1) is used to receive data from the NeST
