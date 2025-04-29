@@ -29,18 +29,18 @@ static uint8_t packetBuffer_nest_idx = 0;
 static uint8_t packetBuffer_modem[FLOC_MAX_SIZE] = {0};
 static uint8_t packetBuffer_modem_idx = 0;
 
+FLOCBufferManager flocBuffer;
 
-void setup(){
+void 
+setup(
+    void
+){
 
     // Debug messages to USB connection
     NEST_SERIAL_CONNECTION.begin(115200, SERIAL_8N1);
 
     // Serial connection to modem
     MODEM_SERIAL_CONNECTION.begin(9600, SERIAL_8N1);
-
-    // TimerReset(0);
-    // Hopefully reset onboard timers
-    // boardInitMcu();
 
     delay(100);
 
@@ -52,48 +52,17 @@ void setup(){
 
     motor_init();
 
-    //Enable the WDT.
-    // innerWdtEnable(true);
-
-    // VextOFF();
-
-    // init_sleep();
-
-    // go_to_sleep();
-
     interrupts();
 
     oled_initialize();
 
     activitity_init();
-
-#ifdef MASTER_NODE // MASTER_NODE
-    if (MODEM_SERIAL_CONNECTION.availableForWrite()) {
-        // Master node address will be 1
-        set_address(MODEM_SERIAL_CONNECTION, 1);
-
-        delay(500);
-        query_status(MODEM_SERIAL_CONNECTION);
-
-        delay(500);
-        // If there is a slave node, ping address 2
-        ping(MODEM_SERIAL_CONNECTION, 2);
-    }
-#else // !MASTER_NODE
-    if (MODEM_SERIAL_CONNECTION.availableForWrite()) {
-        set_address(MODEM_SERIAL_CONNECTION, 4);
-
-        delay(300);
-        query_status(MODEM_SERIAL_CONNECTION);
-
-        delay(300);
-        // If there is a master node, ping address 1
-        ping(MODEM_SERIAL_CONNECTION, 1);
-    }
-#endif // MASTER_NODE
 }
 
-void loop(){
+void 
+loop(
+    void
+){
 
     activity_update();
 

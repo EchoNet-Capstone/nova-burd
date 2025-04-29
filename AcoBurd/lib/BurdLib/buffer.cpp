@@ -1,7 +1,7 @@
-/* This is going to be the buffer protocol file. 
- * 
+/* This is going to be the buffer protocol file.
+ *
  * all use FIFO
- * 
+ *
  * Retransmission buffer
  * - priority 1
  * Response buffer
@@ -23,7 +23,7 @@
 #include <map>
 
 #include <Arduino.h>
-  
+
 #include <nmv3_api.hpp>
 
 #include "globals.hpp"
@@ -32,14 +32,18 @@
 
 #define DEBUG 1
 
-void FLOCBufferManager::addPacket(const FlocPacket_t& packet, int retrans) {
+void
+FLOCBufferManager::addPacket(
+    const FlocPacket_t& packet,
+    int retrans
+){
     // identify if the packet is a retransmission
     if (retrans) {
         retransmissionBuffer.push(packet);
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Packet added to retransmission buffer\n");
     #endif // DEBUG_ON
- 
+
         return;
     }
 
@@ -54,26 +58,29 @@ void FLOCBufferManager::addPacket(const FlocPacket_t& packet, int retrans) {
 }
 
 // blocking check call
-int FLOCBufferManager::queuehandler(){
+int
+FLOCBufferManager::queuehandler(
+    void
+){
     if(!retransmissionBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Retransmission buffer is not empty\n");
     #endif // DEBUG_ON
- 
+
         retransmission_handler();
         return 1;
     } else if (!responseBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Response buffer is not empty\n");
     #endif // DEBUG_ON
- 
+
         response_handler();
         return 2;
     } else if (!commandBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Command buffer is not empty\n");
     #endif // DEBUG_ON
- 
+
         command_handler();
         return 3;
     } else {
@@ -82,24 +89,27 @@ int FLOCBufferManager::queuehandler(){
 }
 
 // check if buffer is empty
-int FLOCBufferManager::checkqueueStatus(){
+int
+FLOCBufferManager::checkqueueStatus(
+    void
+){
     if(!retransmissionBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Retransmission buffer is not empty\n");
     #endif // DEBUG_ON
- 
+
         return 1;
     } else if (!responseBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Response buffer is not empty\n");
     #endif // DEBUG_ON
- 
+
         return 2;
     } else if (!commandBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Command buffer is not empty\n");
     #endif // DEBUG_ON
- 
+
         return 3;
     } else {
         return 0;
@@ -107,7 +117,10 @@ int FLOCBufferManager::checkqueueStatus(){
 }
 
 // retransmit and remove from vector
-int FLOCBufferManager::retransmission_handler() {
+int
+FLOCBufferManager::retransmission_handler(
+    void
+){
     FlocPacket_t packet = retransmissionBuffer.front();
 
     uint16_t packet_id = packet.header.pid;
@@ -117,7 +130,7 @@ int FLOCBufferManager::retransmission_handler() {
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Ack ID %d found and removed\n", packet_id);
     #endif // DEBUG_ON
- 
+
         commandBuffer.pop(); // Remove from buffer
         return 1;
     }
@@ -130,7 +143,10 @@ int FLOCBufferManager::retransmission_handler() {
     return 0;
 }
 
-int FLOCBufferManager::response_handler() {
+int
+FLOCBufferManager::response_handler(
+    void
+){
     FlocPacket_t packet = responseBuffer.front();
 
     uint16_t packet_id = packet.header.pid;
@@ -140,7 +156,7 @@ int FLOCBufferManager::response_handler() {
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Ack ID %d found and removed\n", packet_id);
     #endif // DEBUG_ON
- 
+
         commandBuffer.pop(); // Remove from buffer
         return 1;
     }
@@ -150,10 +166,13 @@ int FLOCBufferManager::response_handler() {
     return 0;
 }
 
-int FLOCBufferManager::command_handler() {
+int
+FLOCBufferManager::command_handler(
+    void
+){
     // copy the packet from the front of the queue
     FlocPacket_t packet = commandBuffer.front();
-    
+
     uint8_t packet_id = packet.header.pid;
 
     // if message is an ack, remove from buffer
@@ -161,7 +180,7 @@ int FLOCBufferManager::command_handler() {
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Ack ID %d found and removed\n", packet_id);
     #endif // DEBUG_ON
- 
+
         commandBuffer.pop(); // Remove from buffer
         return 1;
     }
@@ -176,7 +195,7 @@ int FLOCBufferManager::command_handler() {
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Max transmissions reached for packet ID %d\n", packet_id);
     #endif // DEBUG_ON
- 
+
         commandBuffer.pop(); // Remove from buffer
         transmissionCounts.erase(packet_id); // Remove from map
 
@@ -192,21 +211,27 @@ int FLOCBufferManager::command_handler() {
 }
 
 // list of ackIDs
-void FLOCBufferManager::add_ackID(uint8_t ackID) {
+void
+FLOCBufferManager::add_ackID(
+    uint8_t ackID
+){
     ackIDs[ackID] = 1;
 #ifdef DEBUG_ON // DEBUG_ON
     printf("Ack ID %d added\n", ackID);
 #endif // DEBUG_ON
- 
+
 }
 
-int FLOCBufferManager::checkackID(uint8_t ackID) {
+int
+FLOCBufferManager::checkackID(
+    uint8_t ackID
+){
     if (ackIDs.find(ackID) != ackIDs.end()) {
         ackIDs.erase(ackID);
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Ack ID %d found and removed\n", ackID);
     #endif // DEBUG_ON
- 
+
         return 1;
     } else {
         return 0;

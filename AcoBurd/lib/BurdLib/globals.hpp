@@ -12,11 +12,19 @@
 // #define SOUND_SPEED 343     // Sound speed through air
 #define SOUND_SPEED 1500    // Sound speed through water
 
-static inline uint16_t htons(uint16_t val) {
+static inline
+uint16_t
+htons(
+    uint16_t val
+){
     return __builtin_bswap16(val);
 }
 
-static inline uint16_t ntohs(uint16_t val) {
+static inline
+uint16_t
+ntohs(
+    uint16_t val
+){
     return __builtin_bswap16(val);
 }
 

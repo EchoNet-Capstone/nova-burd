@@ -20,15 +20,54 @@
 // #define CLOSED_POSITION (0.550 * GEARBOX_RATIO * PULSES_PER_MOTOR_ROTATION)
 #define OPEN_POSITION 0
 
-void motor_init(void);
-void motor_service(void);
-void set_motor_state(void);
-void motor_sleep(void);
-void motor_wake_up(void);
-void motor_off(void);
-void motor_reverse(void);
-void motor_forward(void);
-void motor_quadrature_interrupt(void);
-void motor_run_to_position(int target);
+void
+motor_init(
+    void
+);
+
+void
+motor_service(
+    void
+);
+
+void
+set_motor_state(
+    void
+);
+
+void
+motor_sleep(
+    void
+);
+
+void
+motor_wake_up(
+    void
+);
+
+void
+motor_off(
+    void
+);
+
+void
+motor_reverse(
+    void
+);
+
+void
+motor_forward(
+    void
+);
+
+void
+motor_quadrature_interrupt(
+    void
+);
+
+void
+motor_run_to_position(
+    int target
+);
 
 #endif

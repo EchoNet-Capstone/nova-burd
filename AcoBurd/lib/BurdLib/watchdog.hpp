@@ -48,30 +48,84 @@ compatable with platform.io
 extern cyisraddress CyRamVectors[CYINT_IRQ_BASE + CY_NUM_INTERRUPTS];
 
 /* Declared in startup, used to set unused interrupts to. */
-CY_ISR_PROTO(IntDefaultHandler);
+CY_ISR_PROTO(
+    IntDefaultHandler
+);
 
 /* Interrupt Controller API. */
-void wdt_isr_Start(void);
-void wdt_isr_StartEx(cyisraddress address);
-void wdt_isr_Stop(void);
+void
+wdt_isr_Start(
+    void
+);
 
-CY_ISR_PROTO(wdt_isr_Interrupt);
+void
+wdt_isr_StartEx(
+    cyisraddress
+    address
+);
 
-void wdt_isr_SetVector(cyisraddress address);
-cyisraddress wdt_isr_GetVector(void);
+void
+wdt_isr_Stop(
+    void
+);
 
-void wdt_isr_SetPriority(uint8 priority);
-uint8 wdt_isr_GetPriority(void);
+CY_ISR_PROTO(
+    wdt_isr_Interrupt
+);
 
-void wdt_isr_Enable(void);
-uint8 wdt_isr_GetState(void);
-void wdt_isr_Disable(void);
+void
+wdt_isr_SetVector(
+    cyisraddress
+    address
+);
+cyisraddress
+wdt_isr_GetVector(
+    void
+);
 
-void wdt_isr_SetPending(void);
-void wdt_isr_ClearPending(void);
+void
+wdt_isr_SetPriority(
+    uint8 priority
+);
+uint8
+wdt_isr_GetPriority(
+    void
+);
 
-void feedInnerWdt();
-void innerWdtEnable(bool feed);
+void
+wdt_isr_Enable(
+    void
+);
+
+uint8
+wdt_isr_GetState(
+    void
+);
+
+void
+wdt_isr_Disable(
+    void
+);
+
+void
+wdt_isr_SetPending(
+    void
+);
+
+void
+wdt_isr_ClearPending(
+    void
+);
+
+void
+feedInnerWdt(
+    void
+);
+
+void
+innerWdtEnable(bool
+    feed
+);
 
 #endif
 #endif

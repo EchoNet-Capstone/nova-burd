@@ -4,7 +4,6 @@
 #include "get_set_macros.hpp"
 
 #define UNIT_ID 1                             // Set individual hardware number
-#define DEBUG false                           // Debug mode
 #define LEAK_DETECT true                      // Leak Detection
 #define LORA_ENABLE false                     // LoRa Radio
 #define GPS_ENABLE false                      // GPS
@@ -31,5 +30,8 @@ GET_SET_FUNC_PROTO(bool, waiting_to_be_retrieved)
 GET_SET_FUNC_PROTO(bool, release_is_open)
 GET_SET_FUNC_PROTO(bool, release_last_position)
 
-void am_i_waiting_to_be_recovered(void);
+void
+am_i_waiting_to_be_recovered(
+    void
+);
 #endif

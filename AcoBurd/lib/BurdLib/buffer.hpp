@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BUFFER_H
+#define BUFFER_H
 
 #include <stdint.h>
 #include "floc.hpp"
@@ -25,24 +26,54 @@
 #include <utility>
 #include <cstdint>
 
-class FLOCBufferManager {
+class 
+FLOCBufferManager {
     public:
-        void addPacket(const FlocPacket_t& packet, int retrans = 0);
-        int checkqueueStatus();
-        int queuehandler();
-        void add_ackID(uint8_t ackID);
+        void
+        addPacket(
+            const FlocPacket_t& packet, int retrans = 0
+        );
+
+        int
+        checkqueueStatus(
+            void
+        );
+
+        int
+        queuehandler(
+            void
+        );
+
+        void
+        add_ackID(
+            uint8_t ackID
+        );
 
     private:
+        int
+        retransmission_handler(
+            void
+        );
 
-        int retransmission_handler();
-        int response_handler();
-        int command_handler();
-        int checkackID(uint8_t ackID);
+        int
+        response_handler(
+            void
+        );
+
+        int
+        command_handler(
+            void
+        );
+
+        int
+        checkackID(
+            uint8_t ackID
+        );
 
         std::queue<FlocPacket_t> commandBuffer;
         std::queue<FlocPacket_t> responseBuffer;
 
-        // this is going to be different 
+        // this is going to be different
         std::queue<FlocPacket_t> retransmissionBuffer;
 
         std::map<uint8_t, int> ackIDs;
@@ -51,3 +82,5 @@ class FLOCBufferManager {
 };
 
 extern FLOCBufferManager flocBuffer;
+
+#endif

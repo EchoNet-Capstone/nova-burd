@@ -15,16 +15,19 @@
 #define LORA_INTERVAL 60                      // Time between LoRa transmits
 #define GPS_INTERVAL 3600                     // Time between GPS updates
 
-GET_SET_FUNC_PROTO(long, lora_timer);
-GET_SET_FUNC_PROTO(long, display_timer);
-GET_SET_FUNC_PROTO(long, encoder_timer);
-GET_SET_FUNC_PROTO(long, release_timer);
-GET_SET_FUNC_PROTO(long, release_timer1);
-GET_SET_FUNC_PROTO(long, release_timer2);
-GET_SET_FUNC_PROTO(long, battery_timer);
-GET_SET_FUNC_PROTO(long, time_until_release);
-GET_SET_FUNC_PROTO(long, wiggle_timer);
+GET_SET_FUNC_PROTO(long, lora_timer)
+GET_SET_FUNC_PROTO(long, display_timer)
+GET_SET_FUNC_PROTO(long, encoder_timer)
+GET_SET_FUNC_PROTO(long, release_timer)
+GET_SET_FUNC_PROTO(long, release_timer1)
+GET_SET_FUNC_PROTO(long, release_timer2)
+GET_SET_FUNC_PROTO(long, battery_timer)
+GET_SET_FUNC_PROTO(long, time_until_release)
+GET_SET_FUNC_PROTO(long, wiggle_timer)
 
-void release_service(void);
+void
+release_service(
+    void
+);
 
 #endif
