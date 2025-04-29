@@ -8,7 +8,9 @@
 #include <motor.hpp>
 #include <watchdog.hpp>
 #include <buffer.hpp>
-#include <activityperiod.hpp>
+#include <activity_period.hpp>
+
+#include <services.hpp>
 
 #include <floc.hpp>
 
@@ -35,7 +37,6 @@ void
 setup(
     void
 ){
-
     // Debug messages to USB connection
     NEST_SERIAL_CONNECTION.begin(115200, SERIAL_8N1);
 
@@ -51,6 +52,8 @@ setup(
     noInterrupts();
 
     motor_init();
+
+    nmv3_init();
 
     interrupts();
 
@@ -144,5 +147,24 @@ loop(
             packetBuffer_modem[packetBuffer_modem_idx] = modem_char;
             packetBuffer_modem_idx++;
         }
+    }
+    
+    auto& svcs = ServiceRegistry::instance().services();
+    uint32_t now = millis();
+    bool anyBusy = false;
+  
+    for (auto* s : svcs) {
+        if (s->period == 0 || now - s->lastRun >= s->period) {
+            s->busy     = false;
+            s->fn();
+            s->lastRun = now;
+            anyBusy   |= s->busy;
+        }
+    }
+  
+    if (!anyBusy) {
+    #ifdef DEBUG_ON // DEBUG_ON
+        Serial.printf("Going to sleep...");
+    #endif
     }
 }

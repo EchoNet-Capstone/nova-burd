@@ -16,7 +16,7 @@
 #include <timer.h>
 #include <Arduino.h>
 
-#include "activityperiod.hpp"
+#include "activity_period.hpp"
 
 static activityState activity_state = LISTENING;
 

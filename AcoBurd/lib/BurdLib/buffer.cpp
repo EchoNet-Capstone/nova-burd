@@ -28,9 +28,7 @@
 
 #include "globals.hpp"
 #include "buffer.hpp"
-#include "activityperiod.hpp"
-
-#define DEBUG 1
+#include "activity_period.hpp"
 
 void
 FLOCBufferManager::addPacket(
