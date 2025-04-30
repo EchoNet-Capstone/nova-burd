@@ -41,6 +41,13 @@ Service modemServiceDesc = {
     false
 };
 
+Service neighborServiceDesc = {
+    neighborService,
+    0,
+    0,
+    false
+};
+
 #ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
 Service nestSerialServiceDesc = {
     nestSerialService,
@@ -61,6 +68,7 @@ static Service* allServices[] = {
     &activityServiceDesc,
     &bufferServiceDesc,
     &motorServiceDesc,
+    &neighborServiceDesc,
 };
 
 static constexpr size_t numServices = sizeof(allServices) / sizeof(allServices[0]);

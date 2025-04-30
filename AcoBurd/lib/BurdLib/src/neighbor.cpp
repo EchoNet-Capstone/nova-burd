@@ -2,40 +2,19 @@
 #include "neighbor.hpp"
 #include "safe_arduino.hpp"
 #include <map>
+#include <vector>
+#include <algorithm>
+#include <iostream>
+#include <iterator>
 #include <stdint.h>
 #include <utils.hpp>
 #include <globals.hpp>
 #include <device_actions.hpp>
+#include "services.hpp"
 
 // add to neighbor list and pupulate data
 
-#define TIMEOUT 10000000 // 100 seconds?
-
-
-void 
-NeighborManager::neighborService(
-    void
-) {
-
-    // Check for timeout
-    neighborManager.timeout_neighbors();
-
-    // Check for new neighbors
-    if (millis() - neighborManager.lastUpdateTime > neighborManager.updateInterval) {
-        neighborManager.lastUpdateTime = millis();
-        neighborManager.print_neighbors();
-
-#ifdef DEBUG_ON // DEBUG_ON
-        Serial.printf("Checking for new neighbors...\n");
-#endif // DEBUG_ON
-
-
-    }
-
-
-
-}
-
+#define TIMEOUT 100000000 // 1000 seconds?
 
 
 
@@ -107,7 +86,7 @@ NeighborManager::timeout_neighbors(
     uint64_t currentTime = millis();
     for (auto it = neighbors.begin(); it != neighbors.end();) {
         if (currentTime - it->second.lastSeen > TIMEOUT) { // 30 seconds
-            
+
 #ifdef DEBUG_ON // DEBUG_ON
     Serial.printf("Neighbor timed out: devAdd=%d\n", it->first); 
 #endif // DEBUG_ON
@@ -125,6 +104,82 @@ NeighborManager::check_for_neighbors(
 ) {
     if (neighbors.find(dev_add) != neighbors.end()) {
         neighbors[dev_add].lastSeen = millis();
+        return 1;
+    }
+    return 0;
+}
+
+
+extern Service neighborServiceDesc;
+
+void 
+neighborService(
+    void
+) {
+
+    neighborServiceDesc.busy = false;
+
+    // Check for new neighbors
+    if (neighborManager.rangeTimeout()) {
+
+        neighborServiceDesc.busy = true;
+
+
+
+
+    }
+
+
+
+
+}
+
+
+// void 
+// NeighborManager::ping_recent_neighbors(
+
+// ) {
+//     // Step 1: Copy the neighbors into a vector
+//     std::vector<Neighbor> neighborList;
+//     for (const auto& pair : neighbors) {
+//         neighborList.push_back(pair.second);
+//     }
+
+//     // Step 2: Sort by lastSeen descending
+//     std::sort(neighborList.begin(), neighborList.end(), 
+//         [](const Neighbor& a, const Neighbor& b) {
+//             return a.lastSeen > b.lastSeen;
+//         });
+
+//     // Step 3: Ping the top 5 (or fewer if not enough)
+//     int count = 0;
+//     for (const auto& neighbor : neighborList) {
+//         if (count >= 5) break;
+//         std::cout << "Pinging Neighbor: devAdd=" << neighbor.devAdd
+//                   << ", modAdd=" << (int)neighbor.modAdd << std::endl;
+
+//         // Call your actual ping logic here
+//         // ping(neighbor.devAdd, neighbor.modAdd);
+
+//         ++count;
+//     }
+// }
+
+
+
+
+
+int
+NeighborManager::rangeTimeout(
+    void
+) {
+    if (millis() - neighborManager.lastUpdateTime > neighborManager.updateInterval) {
+        neighborManager.lastUpdateTime = millis();
+        neighborManager.print_neighbors();
+
+#ifdef DEBUG_ON // DEBUG_ON
+            Serial.printf("Starting ranging period\n");   
+#endif // DEBUG_ON
         return 1;
     }
     return 0;

@@ -1,8 +1,16 @@
 #pragma once
 
 #include <stdint.h>
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
 
 #include <map>
+
 
 typedef struct Neighbor {
     uint16_t    devAdd; // Device address
@@ -21,14 +29,18 @@ class NeighborManager {
         void print_neighbors();
         void clear_neighbors();
         void timeout_neighbors();
-        void neighborService();
+        int  rangeTimeout();
     private:
         int check_for_neighbors(uint16_t dev_add);
         uint64_t lastUpdateTime = 0;
-        const uint64_t updateInterval = 10000; // 10 seconds
+        const uint64_t updateInterval = 300000; // 300 seconds
+
+        void ping_recent_neighbors(void);
 
         std::map<uint16_t, Neighbor> neighbors;
 };
 
 
 extern NeighborManager neighborManager;
+
+void neighborService(void);
