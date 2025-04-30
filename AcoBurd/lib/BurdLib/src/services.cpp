@@ -65,7 +65,10 @@ static Service* allServices[] = {
 
 static constexpr size_t numServices = sizeof(allServices) / sizeof(allServices[0]);
 
-void registerAllServices() {
+void 
+registerAllServices(
+    void
+) {
     auto& reg = ServiceRegistry::instance();
     for (size_t i = 0; i < numServices; ++i) {
     #ifdef DEBUG_ON // DEBUG_ON
@@ -77,15 +80,24 @@ void registerAllServices() {
 
 // ----- Registry -----
 
-ServiceRegistry& ServiceRegistry::instance() {
+ServiceRegistry& 
+ServiceRegistry::instance(
+
+) {
     static ServiceRegistry inst;
     return inst;
 }
 
-void ServiceRegistry::registerService(Service* s) {
+void 
+ServiceRegistry::registerService(
+    Service* s
+) {
     services_.push_back(s);
 }
 
-const std::vector<Service*>& ServiceRegistry::services() const {
+const 
+std::vector<Service*>& ServiceRegistry::services(
+    void
+) const {
     return services_;
 }

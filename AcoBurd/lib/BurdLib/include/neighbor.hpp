@@ -24,8 +24,12 @@ class NeighborManager {
         void clear_neighbors();
         void update_neighbors();
     private:
+        void check_for_neighbors(void);
         uint64_t lastUpdateTime = 0;
         const uint64_t updateInterval = 10000; // 10 seconds
 
         std::map<uint16_t, Neighbor> neighbors;
 };
+
+
+extern NeighborManager neighborManager;
