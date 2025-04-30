@@ -9,7 +9,35 @@
 
 // add to neighbor list and pupulate data
 
-#define TIMEOUT 1000000 // 100 seconds?
+#define TIMEOUT 10000000 // 100 seconds?
+
+
+void 
+NeighborManager::neighborService(
+    void
+) {
+
+    // Check for timeout
+    neighborManager.timeout_neighbors();
+
+    // Check for new neighbors
+    if (millis() - neighborManager.lastUpdateTime > neighborManager.updateInterval) {
+        neighborManager.lastUpdateTime = millis();
+        neighborManager.print_neighbors();
+
+#ifdef DEBUG_ON // DEBUG_ON
+        Serial.printf("Checking for new neighbors...\n");
+#endif // DEBUG_ON
+
+
+    }
+
+
+
+}
+
+
+
 
 void 
 NeighborManager::add_neighbor(
@@ -38,18 +66,6 @@ NeighborManager::add_neighbor(
 
 
 void 
-NeighborManager::update_neighbor(
-    uint16_t devAdd, uint8_t modAdd
-) {
-    if (neighbors.find(devAdd) != neighbors.end()) {
-        neighbors[devAdd].modAdd = modAdd;
-        neighbors[devAdd].lastSeen = millis();
-    } else {
-        add_neighbor(devAdd, modAdd);
-    }
-}
-
-void 
 NeighborManager::remove_neighbor(
     uint16_t devAdd
 ) {
@@ -67,14 +83,6 @@ NeighborManager::update_neighbor_range(
     }
 }
 
-void 
-NeighborManager::update_neighbor_last_seen(
-    uint16_t devAdd
-) {
-    if (neighbors.find(devAdd) != neighbors.end()) {
-        neighbors[devAdd].lastSeen = millis();
-    }
-}
 
 void NeighborManager::print_neighbors(
 
@@ -93,12 +101,17 @@ NeighborManager::clear_neighbors(
 }
 
 void 
-NeighborManager::update_neighbors(
+NeighborManager::timeout_neighbors(
     void
 ) {
     uint64_t currentTime = millis();
     for (auto it = neighbors.begin(); it != neighbors.end();) {
         if (currentTime - it->second.lastSeen > TIMEOUT) { // 30 seconds
+            
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Neighbor timed out: devAdd=%d\n", it->first); 
+#endif // DEBUG_ON
+
             it = neighbors.erase(it);
         } else {
             ++it;

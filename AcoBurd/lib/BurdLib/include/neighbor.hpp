@@ -16,15 +16,14 @@ typedef struct Neighbor {
 class NeighborManager {
     public: 
         void add_neighbor(uint16_t devAdd, uint8_t modAdd);
-        void update_neighbor(uint16_t devAdd, uint8_t modAdd);
         void remove_neighbor(uint16_t devAdd);
         void update_neighbor_range(uint16_t devAdd, uint16_t range);
-        void update_neighbor_last_seen(uint16_t devAdd);
         void print_neighbors();
         void clear_neighbors();
-        void update_neighbors();
+        void timeout_neighbors();
+        void neighborService();
     private:
-        void check_for_neighbors(void);
+        int check_for_neighbors(uint16_t dev_add);
         uint64_t lastUpdateTime = 0;
         const uint64_t updateInterval = 10000; // 10 seconds
 
