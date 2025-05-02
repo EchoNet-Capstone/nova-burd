@@ -1,6 +1,6 @@
 #pragma once
 
-long 
+uint32_t 
 InternalClock(
     void
 );
