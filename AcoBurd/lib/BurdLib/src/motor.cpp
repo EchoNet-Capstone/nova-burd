@@ -1,75 +1,40 @@
 #include "safe_arduino.hpp"
-
 #include "device_state.hpp"
 #include "get_set_macros.hpp"
 #include "my_clock.hpp"
 #include "services.hpp"
-
 #include "motor.hpp"
 
 extern Service motorServiceDesc;
 
-enum wiggleStates {
+enum WiggleState {
     WIGGLE_OFF,
-    WIGGLE_1,
-    WIGGLE_2,
-    WIGGLE_FINAL,
+    WIGGLE_OUT,
+    WIGGLE_BACK,
+    WIGGLE_HOME,
+
+    NUM_WIGGLE_STATES
 };
 
 GET_SET_FUNC_DEF(int, motor_position, 0)
 GET_SET_FUNC_DEF(int, motor_target, 0)
-
 GET_SET_FUNC_DEF(bool, is_motor_running, false)
-
 GET_SET_FUNC_DEF(int, wiggle_state, WIGGLE_OFF)
 GET_SET_FUNC_DEF(int, wiggle_start_pos, 0)
 
 volatile bool motorQuadratureEvent = false;
 
-#define TICKS_PER_REV 2695
-
-void motor_quadrature_interrupt() {
+void
+motor_quadrature_interrupt(
+    void
+){
     int delta = digitalRead(MOTOR_QUAD_B) ? +1 : -1;
-    int raw = get_motor_position() + delta;
-    set_motor_position(raw);
+    set_motor_position(get_motor_position() + delta);
+
     motorQuadratureEvent = true;
 }
 
-// Wiggle the motor to clear barnacles
-void
-wiggle_motor(
-    void
-){
-    set_wiggle_state(WIGGLE_1);
-}
-
-void
-motor_init(
-    void
-){
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("Motor Init...\r\n");
-#endif // DEBUG_ON
-
-    // Setup motor quadrature and interrupt
-    pinMode(MOTOR_QUAD_A, INPUT);
-    pinMode(MOTOR_QUAD_B, INPUT);
-    attachInterrupt(MOTOR_QUAD_A, motor_quadrature_interrupt, RISING);
-
-    // Setup motor driver - Uses 1-2 mA
-    pinMode(MOTOR_DRIVER_POWER, OUTPUT);
-    pinMode(MOTOR_DRIVER_A, OUTPUT);
-    pinMode(MOTOR_DRIVER_B, OUTPUT);
-    digitalWrite(MOTOR_DRIVER_POWER, LOW);
-    digitalWrite(MOTOR_DRIVER_A, LOW);
-    digitalWrite(MOTOR_DRIVER_B, LOW);
-
-    Asr_Timer_Init();
-    Asr_Timer_RegisterAlarmCallback(wiggle_motor);
-    Asr_SetTimeout(WIGGLE_INTERVAL_MS);
-}
-
-// Motor Power Save
+// Low‑level controls
 void
 motor_sleep(
     void
@@ -77,7 +42,6 @@ motor_sleep(
     digitalWrite(MOTOR_DRIVER_POWER, LOW);
 }
 
-// Motor Wake Up
 void
 motor_wake_up(
     void
@@ -85,7 +49,6 @@ motor_wake_up(
     digitalWrite(MOTOR_DRIVER_POWER, HIGH);
 }
 
-// Turn Motor Off
 void
 motor_off(
     void
@@ -94,16 +57,6 @@ motor_off(
     digitalWrite(MOTOR_DRIVER_B, LOW);
 }
 
-// Run Motor Reverse
-void
-motor_reverse(
-    void
-){
-    digitalWrite(MOTOR_DRIVER_A, HIGH);
-    digitalWrite(MOTOR_DRIVER_B, HIGH);
-}
-
-// Run Motor Forward
 void
 motor_forward(
     void
@@ -112,167 +65,176 @@ motor_forward(
     digitalWrite(MOTOR_DRIVER_B, LOW);
 }
 
-static uint32_t    stopTime             = 0;
-static bool        wiggleInitialized[4] = {false,false,false,false};
-static int         lastState            = -1;
+void
+motor_reverse(
+    void
+){
+    digitalWrite(MOTOR_DRIVER_A, HIGH);
+    digitalWrite(MOTOR_DRIVER_B, HIGH);
+}
 
-// wrap any raw value into [0 .. TICKS_PER_REV-1]
-static int wrapTarget(int raw) {
-    int w = raw % TICKS_PER_REV;
-    if (w < 0) w += TICKS_PER_REV;
+static int
+wrap(
+    int v
+){
+    int w = v % TICKS_PER_REV;
+
+    if (w<0)
+        w+=TICKS_PER_REV;
+
     return w;
 }
 
-// signed shortest-path diff in [−TICKS_PER_REV/2 .. +TICKS_PER_REV/2]
-static int circularDiff(int from, int to) {
-    int d = (to - from) % TICKS_PER_REV;
-    if (d < -TICKS_PER_REV/2)    d += TICKS_PER_REV;
-    else if (d >  TICKS_PER_REV/2) d -= TICKS_PER_REV;
+static int
+diff(
+    int a,
+    int b
+){
+    int d=(b-a)%TICKS_PER_REV;
+
+    if(d<-TICKS_PER_REV/2)
+        d+=TICKS_PER_REV;
+    else if(d>TICKS_PER_REV/2)
+        d-=TICKS_PER_REV;
+
     return d;
 }
 
-// get the current wrapped position
-static int wrappedPos() {
-    return wrapTarget(get_motor_position());
+static int
+wrappedPos(
+    void
+){
+    return wrap(get_motor_position());
 }
 
-// Set motor target position
 void
 motor_run_to_position(
     int target
 ){
-    set_motor_target(wrapTarget(target));
-    motor_wake_up();
+    set_motor_target(wrap(target));
 }
 
+// Schedule next wiggle by setting state and computing target
+static void
+scheduleWiggle(
+    void
+){
+    set_wiggle_state(WIGGLE_OUT);
+}
 
 void
 motorService(
     void
 ){
     motorServiceDesc.busy = false;
-    int s = get_wiggle_state();
 
-    // clear "init" flag on state change
-    if (s != lastState) {
-        wiggleInitialized[s] = false;
-        lastState = s;
+    static long settle = 0;
+
+    int pos = wrappedPos();
+    int target = get_motor_target();
+    int remain = diff(pos, target);
+    int wiggleState = get_wiggle_state();
+
+#ifdef DEBUG_ON // DEBUG_ON
+    static uint32_t lastPos = 0;
+
+    Serial.printf("motorService: state=%d running=%d event=%d",
+        wiggleState,
+        get_is_motor_running(),
+        motorQuadratureEvent);
+
+    if (pos != lastPos) {
+        Serial.printf(" pos=%d tgt=%d",
+            pos,
+            get_motor_target());
+
+        lastPos = pos;
     }
 
-    // 1) Stop‐by‐timeout logic
-    if (get_is_motor_running() && stopTime != 0 && InternalClock() >= stopTime) {
-        motor_off();
-        set_is_motor_running(false);
-        stopTime = 0;
+    Serial.printf("\r\n");
+#endif // DEBUG_ON
+
+    if (pos != target || wiggleState != WIGGLE_OFF){
+        switch(wiggleState){
+            case WIGGLE_OUT:
+                if(!get_is_motor_running()){
+                    set_wiggle_start_pos(pos);
+                    motor_run_to_position(get_wiggle_start_pos() + WIGGLE_OFFSET);
+                }
+
+                break;
+            case WIGGLE_BACK:
+                if(!get_is_motor_running()){
+                    motor_run_to_position(get_wiggle_start_pos() + WIGGLE_OFFSET);
+                }
+
+                break;
+            case WIGGLE_HOME:
+                if(!get_is_motor_running()){
+                    motor_run_to_position(get_wiggle_start_pos());
+                }
+
+                break;
+            default:
+                break;
+        }
+
+        motor_wake_up();
+
+        if (remain < 0) motor_forward();
+        else            motor_reverse();
+        
+        set_is_motor_running(true);
+
         motorServiceDesc.busy = true;
     }
 
-    // 2) Wiggle state‐machine
-    switch (s) {
-        case WIGGLE_OFF:
-            if (!wiggleInitialized[WIGGLE_OFF]) {
-                motor_off();
-                set_is_motor_running(false);
-                wiggleInitialized[WIGGLE_OFF] = true;
-            }
-            break;
-
-        case WIGGLE_1:
-            if (!wiggleInitialized[WIGGLE_1]) {
-                int start = wrappedPos();
-                set_wiggle_start_pos(start);
-                set_motor_target(wrapTarget(start + WIGGLE_OFFSET));
-
-                motor_wake_up();
-                motor_forward();              // enable=A=HIGH, phase=B=LOW
-                set_is_motor_running(true);
-
-                motorServiceDesc.busy = true;
-                wiggleInitialized[WIGGLE_1] = true;
-            }
-            else if (!get_is_motor_running()) {
-                set_wiggle_state(WIGGLE_2);
-            }
-            break;
-
-        case WIGGLE_2:
-            if (!wiggleInitialized[WIGGLE_2]) {
-                int start = get_wiggle_start_pos();
-                set_motor_target(wrapTarget(start - WIGGLE_OFFSET));
-
-                motor_wake_up();
-                motor_reverse();              // enable=A=HIGH, phase=B=HIGH
-                set_is_motor_running(true);
-
-                motorServiceDesc.busy = true;
-                wiggleInitialized[WIGGLE_2] = true;
-            }
-            else if (!get_is_motor_running()) {
-                set_wiggle_state(WIGGLE_FINAL);
-            }
-            break;
-
-        case WIGGLE_FINAL: {
-            static bool finalHomed = false;
-        
-            // first entry: do the normal return‐to‐start wiggle
-            if (!wiggleInitialized[WIGGLE_FINAL]) {
-                int start = get_wiggle_start_pos();
-                int tgt   = wrapTarget(start);
-                set_motor_target(tgt);
-        
-                motor_wake_up();
-                // shortest‐arc drive
-                if (circularDiff(wrappedPos(), tgt) > 0) motor_forward();
-                else                                     motor_reverse();
-                set_is_motor_running(true);
-        
-                motorServiceDesc.busy = true;
-                wiggleInitialized[WIGGLE_FINAL] = true;
-                finalHomed = false;              // reset the homing flag
-            }
-            // once that move finishes, kick off the precise homing pass
-            else if (!get_is_motor_running() && !finalHomed) {
-                int start = get_wiggle_start_pos();
-                int tgt   = wrapTarget(start);
-                set_motor_target(tgt);
-        
-                // if we’re already within dead‐band, skip straight to done:
-                if (abs(circularDiff(wrappedPos(), tgt)) <= MOTOR_DEADBAND) {
-                    finalHomed = true;
-                }
-                else {
-                    motor_wake_up();
-                    if (circularDiff(wrappedPos(), tgt) > 0) motor_forward();
-                    else                                     motor_reverse();
-                    set_is_motor_running(true);
-                }
-                motorServiceDesc.busy = true;
-            }
-            // after the homing pass actually stops, we can finally shut down
-            else if (!get_is_motor_running() && finalHomed) {
-                set_wiggle_state(WIGGLE_OFF);
-                Asr_SetTimeout(WIGGLE_INTERVAL_MS);
-            }
-        } break;
-    }
-
-    // 3) On each encoder tick, arm the settle timer when within dead-band
     if (motorQuadratureEvent) {
         motorQuadratureEvent = false;
 
-        int pos  = wrappedPos();
-        int tgt  = get_motor_target();
-        int diff = circularDiff(pos, tgt);
+        if (abs(remain) <= MOTOR_DEADBAND && settle == 0) {
+            motor_off();
 
-        if (abs(diff) <= MOTOR_DEADBAND) {
-            stopTime = InternalClock() + MOTOR_SETTLE_MS;
+            settle = InternalClock() + MOTOR_SETTLE_MS;
         }
-        motorServiceDesc.busy = true;
-    }
 
-    // 4) Stay busy until wiggle is fully complete
-    if (get_is_motor_running() || s != WIGGLE_OFF) {
+        if (settle <= InternalClock()){
+            set_is_motor_running(false);
+            
+            if (wiggle_state != WIGGLE_OFF){
+                set_wiggle_state(wiggle_state % NUM_WIGGLE_STATES);
+            }
+
+            settle = 0;
+
+            motor_sleep();
+        }
+
         motorServiceDesc.busy = true;
     }
+}
+
+void
+motor_init(
+    void
+){
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Motor Init...\r\n");
+#endif  // DEBUG_ON
+
+    pinMode(MOTOR_QUAD_A, INPUT);
+    pinMode(MOTOR_QUAD_B, INPUT);
+
+    attachInterrupt(MOTOR_QUAD_A, motor_quadrature_interrupt, RISING);
+
+    pinMode(MOTOR_DRIVER_POWER, OUTPUT);
+    pinMode(MOTOR_DRIVER_A, OUTPUT);
+    pinMode(MOTOR_DRIVER_B, OUTPUT);
+
+    motor_off();
+    motor_sleep();
+
+    Asr_Timer_Init();
+    Asr_Timer_RegisterAlarmCallback(scheduleWiggle);
+    Asr_SetTimeout(WIGGLE_INTERVAL_MS);
 }

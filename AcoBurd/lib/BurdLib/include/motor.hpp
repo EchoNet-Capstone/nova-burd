@@ -9,18 +9,14 @@
 
 // Motor and Gearbox Configuration
 #define GEARBOX_RATIO 499
-#define PULSES_PER_MOTOR_ROTATION 11
+#define PULSES_PER_MOTOR_ROTATION 12 // Single Quadtrature
 #define MOTOR_DEADBAND 3
 #define MOTOR_SETTLE_MS 50
 #define WIGGLE_DEADBAND 259200                // If release will occur in next x seconds, then don't wiggle
 #define WIGGLE_INTERVAL_MS 10000
 #define WIGGLE_OFFSET 250
 
-// Silver AliExpress Motors - 2695 counts per rev
-#define CLOSED_POSITION (0.490 * GEARBOX_RATIO * PULSES_PER_MOTOR_ROTATION)
-// Red Mark Pololu Motors
-// #define CLOSED_POSITION (0.550 * GEARBOX_RATIO * PULSES_PER_MOTOR_ROTATION)
-#define OPEN_POSITION 0
+#define TICKS_PER_REV    499 * 12
 
 void
 motor_quadrature_interrupt(

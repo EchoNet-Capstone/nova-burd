@@ -28,7 +28,7 @@ execute_command_1(
     uint8_t dataSize
 ){
     // TODO : Code to release buoy goes here
-    motor_run_to_position(CLOSED_POSITION);
+    // motor_run_to_position(CLOSED_POSITION);
 }
 
 void
