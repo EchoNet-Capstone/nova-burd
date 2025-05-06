@@ -1,5 +1,8 @@
 #pragma once
 
+#define NEIGHBOR_BLOCK 1
+#define NEIGHBOR_UNBLOCK 0
+
 enum
 activityState {
     LISTENING,

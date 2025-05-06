@@ -6,11 +6,16 @@
 #include <globals.hpp>
 #include <device_actions.hpp>
 #include "services.hpp"
+#include "activity_period.hpp"
+#include "stdlib.h"
 
 // add to neighbor list and pupulate data
 
-#define TIMEOUT 100000000 // 1000 seconds?
+#define TIMOUT_NEIGHBORS (60 * 60 * 1000 * 6) // 6 hours
 
+#define STALE(a) (a < (60 * 60 * 1000)) // 60 minutes
+#define UNKNOWN 0xFFFF
+#define SEND_AMOUNT 3
 
 
 void 
@@ -19,6 +24,7 @@ NeighborManager::add_neighbor(
     uint8_t modAdd
 ) {
     // check for devAdd in the list
+
     if (check_for_neighbors(devAdd)) {
 #ifdef DEBUG_ON // DEBUG_ON
         Serial.printf("Neighbor already exists: devAdd=%d\n", devAdd);
@@ -88,7 +94,15 @@ void
 NeighborManager::clear_neighbors(
     void
 ) {
-    memset(neighbors, 0, sizeof(neighbors));
+    for (int i = 0; i < 10; i++) {
+        neighbors[i].devAdd = UNKNOWN;
+        neighbors[i].modAdd = 0;
+        neighbors[i].lastSeen = 0;
+        neighbors[i].range = UNKNOWN;
+    }
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Cleared all neighbors\n");
+#endif // DEBUG_ON
 }
 
 void 
@@ -97,15 +111,16 @@ NeighborManager::timeout_neighbors(
 ) {
     uint64_t currentTime = millis();
     for (int i = 0; i < 10; i++) {
-        if (neighbors[i].devAdd != 0xFFFF && (currentTime - neighbors[i].lastSeen > TIMEOUT)) {
+        if (neighbors[i].devAdd != UNKNOWN && (currentTime - neighbors[i].lastSeen > updateInterval)) {
+            // Neighbor has timed out
 
 #ifdef DEBUG_ON
             Serial.printf("Neighbor timed out: devAdd=%d\n", neighbors[i].devAdd);
 #endif
 
             // Mark the slot as unused
-            neighbors[i].devAdd = 0xFFFF;
-            neighbors[i].range = 0xFFFF;
+            neighbors[i].devAdd = UNKNOWN;
+            neighbors[i].range = UNKNOWN;
             neighbors[i].modAdd = 0;
             neighbors[i].lastSeen = 0;
         }
@@ -147,40 +162,12 @@ neighborService(
 }
 
 
-// void 
-// NeighborManager::ping_recent_neighbors(
-
-// ) {
-//     // Step 1: Copy the neighbors into a vector
-//     std::vector<Neighbor> neighborList;
-//     for (const auto& pair : neighbors) {
-//         neighborList.push_back(pair.second);
-//     }
-
-//     // Step 2: Sort by lastSeen descending
-//     std::sort(neighborList.begin(), neighborList.end(), 
-//         [](const Neighbor& a, const Neighbor& b) {
-//             return a.lastSeen > b.lastSeen;
-//         });
-
-//     // Step 3: Ping the top 5 (or fewer if not enough)
-//     int count = 0;
-//     for (const auto& neighbor : neighborList) {
-//         if (count >= 5) break;
-//         std::cout << "Pinging Neighbor: devAdd=" << neighbor.devAdd
-//                   << ", modAdd=" << (int)neighbor.modAdd << std::endl;
-
-//         // Call your actual ping logic here
-//         // ping(neighbor.devAdd, neighbor.modAdd);
-
-//         ++count;
-//     }
-// }
 
 
 
 
 
+// fix
 int
 NeighborManager::rangeTimeout(
     void
@@ -194,5 +181,55 @@ NeighborManager::rangeTimeout(
 #endif // DEBUG_ON
         return 1;
     }
+    return 0;
+}
+
+// start ranging protocol
+void
+NeighborManager::start_ranging(
+    void
+) {
+    for (int i = 0; i < MAX_NEIGHBORS; i++) {
+        if (neighbors[i].devAdd != UNKNOWN) {
+            // Send a ping to the neighbor
+            // ping(neighbors[i].devAdd, neighbors[i].modAdd);
+
+        }
+    }
+}
+
+// helper functions
+
+// get most recent 3 
+void 
+NeighborManager::get_top_3(
+    Neighbor *rec_neighbors[SEND_AMOUNT]
+) {
+    Neighbor *temp[MAX_NEIGHBORS];
+    int count = 0;
+
+    for (int i = 0; i < MAX_NEIGHBORS; i++) {
+        if (neighbors[i].devAdd != UNKNOWN) {
+            temp[count++] = &neighbors[i];
+        }
+    }
+
+    qsort(temp, count, sizeof(Neighbor *), compare_recent);
+
+    for (int i = 0; i < SEND_AMOUNT && i < count; i++) {
+        rec_neighbors[i] = temp[i];
+    }
+}
+
+int 
+NeighborManager::compare_recent(
+    const void *a, 
+    const void *b
+) {
+    Neighbor *neighborA = *(Neighbor **)a;
+    Neighbor *neighborB = *(Neighbor **)b;
+
+    if (neighborA->lastSeen > neighborB->lastSeen) return -1;
+    if (neighborA->lastSeen < neighborB->lastSeen) return 1;
     return 0;
 }
