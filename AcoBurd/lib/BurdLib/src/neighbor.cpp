@@ -1,11 +1,6 @@
 
 #include "neighbor.hpp"
 #include "safe_arduino.hpp"
-#include <map>
-#include <vector>
-#include <algorithm>
-#include <iostream>
-#include <iterator>
 #include <stdint.h>
 #include <utils.hpp>
 #include <globals.hpp>
@@ -20,7 +15,8 @@
 
 void 
 NeighborManager::add_neighbor(
-    uint16_t devAdd, uint8_t modAdd
+    uint16_t devAdd, 
+    uint8_t modAdd
 ) {
     // check for devAdd in the list
     if (check_for_neighbors(devAdd)) {
@@ -48,8 +44,14 @@ void
 NeighborManager::remove_neighbor(
     uint16_t devAdd
 ) {
-    if (neighbors.find(devAdd) != neighbors.end()) {
-        neighbors.erase(devAdd);
+    for (int i = 0; i < MAX_NEIGHBORS; i++) {
+        if (neighbors[i].devAdd == devAdd) {
+#ifdef DEBUG_ON // DEBUG_ON
+            Serial.printf("Removing neighbor: devAdd=%d\n", devAdd);
+#endif // DEBUG_ON
+            // Mark the slot as unused
+            memset(&neighbors[i], 0, sizeof(Neighbor));
+        }
     }
 }
 
@@ -57,8 +59,11 @@ void
 NeighborManager::update_neighbor_range(
     uint16_t devAdd, uint16_t range
 ){
-    if (neighbors.find(devAdd) != neighbors.end()) {
-        neighbors[devAdd].range = range;
+    for (int i = 0; i < MAX_NEIGHBORS; i++) {
+        if (neighbors[i].devAdd == devAdd) {
+            neighbors[i].range = range;
+            neighbors[i].lastSeen = millis(); // update timestamp
+        }
     }
 }
 
@@ -66,9 +71,16 @@ NeighborManager::update_neighbor_range(
 void NeighborManager::print_neighbors(
 
 ) {
-    for (const auto& pair : neighbors) {
-        const Neighbor& neighbor = pair.second;
-        Serial.printf("Neighbor: devAdd=%d, modAdd=%d, lastSeen=%lu, range=%d\n", neighbor.devAdd, neighbor.modAdd, neighbor.lastSeen, neighbor.range);
+    for (int i = 0; i < 10; i++) {
+        if (neighbors[i].devAdd != 0xFFFF) {  // assuming 0xFFFF = unused slot
+            Serial.printf(
+                "Neighbor: devAdd=%d, modAdd=%d, lastSeen=%lu, range=%d\n",
+                neighbors[i].devAdd,
+                neighbors[i].modAdd,
+                neighbors[i].lastSeen,
+                neighbors[i].range
+            );
+        }
     }
 }
 
@@ -76,7 +88,7 @@ void
 NeighborManager::clear_neighbors(
     void
 ) {
-    neighbors.clear();
+    memset(neighbors, 0, sizeof(neighbors));
 }
 
 void 
@@ -84,29 +96,34 @@ NeighborManager::timeout_neighbors(
     void
 ) {
     uint64_t currentTime = millis();
-    for (auto it = neighbors.begin(); it != neighbors.end();) {
-        if (currentTime - it->second.lastSeen > TIMEOUT) { // 30 seconds
+    for (int i = 0; i < 10; i++) {
+        if (neighbors[i].devAdd != 0xFFFF && (currentTime - neighbors[i].lastSeen > TIMEOUT)) {
 
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("Neighbor timed out: devAdd=%d\n", it->first); 
-#endif // DEBUG_ON
+#ifdef DEBUG_ON
+            Serial.printf("Neighbor timed out: devAdd=%d\n", neighbors[i].devAdd);
+#endif
 
-            it = neighbors.erase(it);
-        } else {
-            ++it;
+            // Mark the slot as unused
+            neighbors[i].devAdd = 0xFFFF;
+            neighbors[i].range = 0xFFFF;
+            neighbors[i].modAdd = 0;
+            neighbors[i].lastSeen = 0;
         }
     }
 }
+
 
 int
 NeighborManager::check_for_neighbors(
     uint16_t dev_add
 ) {
-    if (neighbors.find(dev_add) != neighbors.end()) {
-        neighbors[dev_add].lastSeen = millis();
-        return 1;
+    for (int i = 0; i < MAX_NEIGHBORS; i++) {
+        if (neighbors[i].devAdd == dev_add) {
+            neighbors[i].lastSeen = millis(); // update timestamp
+            return 1; // found
+        }
     }
-    return 0;
+    return 0; // not found
 }
 
 
@@ -125,12 +142,7 @@ neighborService(
         neighborServiceDesc.busy = true;
 
 
-
-
     }
-
-
-
 
 }
 

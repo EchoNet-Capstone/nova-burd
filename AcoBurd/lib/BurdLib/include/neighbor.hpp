@@ -9,7 +9,7 @@
 #undef max
 #endif
 
-#include <map>
+#define MAX_NEIGHBORS 10
 
 
 typedef struct Neighbor {
@@ -18,6 +18,7 @@ typedef struct Neighbor {
     uint64_t    lastSeen;
     uint16_t    range = 0xFFFF; // 0xFFFF means unknown
 } Neighbor;
+
 
 
 
@@ -37,7 +38,8 @@ class NeighborManager {
 
         void ping_recent_neighbors(void);
 
-        std::map<uint16_t, Neighbor> neighbors;
+        Neighbor neighbors[MAX_NEIGHBORS];
+
 };
 
 
