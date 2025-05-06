@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <map>
+#define MAX_NEIGHBORS 10
 
 typedef struct 
 Neighbor {
@@ -10,6 +10,7 @@ Neighbor {
     uint64_t    lastSeen;
     uint16_t    range = 0xFFFF; // 0xFFFF means unknown
 } Neighbor;
+
 
 class 
 NeighborManager {
@@ -54,7 +55,8 @@ NeighborManager {
         uint64_t lastUpdateTime = 0;
         const uint64_t updateInterval = 300000; // 300 seconds
 
-        std::map<uint16_t, Neighbor> neighbors;
+        Neighbor neighbors[MAX_NEIGHBORS];
+
 
         int 
         check_for_neighbors(
