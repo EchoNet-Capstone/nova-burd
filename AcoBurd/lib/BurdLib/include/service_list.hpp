@@ -6,4 +6,5 @@
 #include "display.hpp"
 #include "motor.hpp"
 #include "nmv3_service.hpp"
-// #include "neighbor.hpp"
+#include "neighbor.hpp"
+#include "display.hpp"

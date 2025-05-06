@@ -1,12 +1,14 @@
 #include <CubeCell_NeoPixel.h>
+#include <HT_SSD1306Wire.h>
 
 #include "safe_arduino.hpp"
 
-#include <HT_SSD1306Wire.h>
-
 #include <stdio.h>
 
+#include <nmv3_api.hpp>
+
 #include "display.hpp"
+#include "services.hpp"
 
 SSD1306Wire oled(0x3c, 500000, SDA, SCL, GEOMETRY_128_64, GPIO10); // addr , freq , SDA, SCL, resolution , rst
 
@@ -56,18 +58,20 @@ oled_initialize(
     oled.init();
     oled.clear();
     oled.setFont(ArialMT_Plain_10);
-
-    oled.drawString(0, 0, "  Modem ID : UNKNOWN");
-
-    oled.display();
 }
 
 void
 display_modem_id(
-    int modem_id
+    void
 ){
     oled.clear();
-    oled.drawString(0, 0, "  Modem ID : " + (String)modem_id);
+
+    if(get_modem_id_set()){
+        oled.drawString(0, 0, "  Modem ID : " + String(get_modem_id(), DEC));
+    }else{
+        oled.drawString(0, 0, "  Modem ID : UNKNOWN");
+    }
+
     oled.display();
 }
 
@@ -153,3 +157,21 @@ rgb_led(
         rgbpixel.show();
     }
 }*/
+
+extern Service displayServiceDesc;
+
+void
+displayService(
+    void
+){
+    displayServiceDesc.busy = false;
+
+    static int old_modem_id = -1;
+
+    if ( old_modem_id != get_modem_id()){
+        old_modem_id = get_modem_id();
+
+        display_modem_id();
+    }
+
+}

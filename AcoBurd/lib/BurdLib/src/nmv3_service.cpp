@@ -68,7 +68,7 @@ modemService(
             // TODO: handle status query response
             break;
         case SET_ADDR_TYPE:
-            display_modem_id(r.set_addr.new_addr);
+            // TODO: handle set_addr_type
             break;
         default:
             break;

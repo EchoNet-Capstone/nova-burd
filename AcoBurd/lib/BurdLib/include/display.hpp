@@ -27,3 +27,8 @@ display_modem_packet_data(
     uint8_t *packetBuffer,
     uint8_t size
 );
+
+void
+displayService(
+    void
+);
