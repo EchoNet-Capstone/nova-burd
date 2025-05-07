@@ -1,5 +1,3 @@
-#include <EEPROM.h>
-
 #include <stdint.h>
 
 #include <floc.hpp>
