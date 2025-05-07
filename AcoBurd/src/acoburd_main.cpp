@@ -8,10 +8,11 @@
 
 #include <activity_period.hpp>
 #include <buffer.hpp>
+#include <burd_EEPROM.hpp>
 #include <device_actions.hpp>
 #include <display.hpp>
-#include <globals.hpp>
 #include <motor.hpp>
+#include <nest_serial.hpp>
 #include <nmv3_service.hpp>
 #include <services.hpp>
 
@@ -19,56 +20,36 @@ void
 setup(
     void
 ){
-    uint8_t magic;
-    EEPROM.get(MAGIC_ADDR, magic);
-
-    if(magic != EEPROM_MAGIC) {
-        // Initialize EEPROM
-        EEPROM.put(MAGIC_ADDR, (uint8_t) EEPROM_MAGIC);
-        EEPROM.put(DEVICE_ID_ADDR, (uint16_t) 0x0000);
-        EEPROM.put(NETWORK_ID_ADDR, (uint16_t) 0x0000);
-        EEPROM.put(SET_BYTE_ADDR, (uint8_t) 0x00);
-    }
-
+#ifdef DEBUG_ON // DEBUG_ON
     // Debug messages to USB connection
-    NEST_SERIAL_CONNECTION.begin(115200, SERIAL_8N1);
-
-    // Serial connection to modem
-    MODEM_SERIAL_CONNECTION.begin(9600, SERIAL_8N1);
+    Serial.begin(115200, SERIAL_8N1);
 
     delay(100);
+#endif // DEBUG_ON
 
 #ifdef DEBUG_ON // DEBUG_ON
     Serial.printf("Booting up...\r\n");
 #endif // DEBUG_ON
 
-    uint8_t set;
-    EEPROM.get(SET_BYTE_ADDR, set);
+    EEPROM_firstTime();
 
-    if(set != 0x01) {
+    if(EEPROM_getDeviceIdNetworkIdSet() != 0x01) {
         // TODO: wait for device id's to come in through serial and display this on the device's screen
-
-        EEPROM.put(DEVICE_ID_ADDR, (uint16_t) 0x0001);
-        EEPROM.put(NETWORK_ID_ADDR, (uint16_t) 0x0001);
-        EEPROM.put(SET_BYTE_ADDR, (uint8_t) 0x01);
+    
+        EEPROM_setDeviceIdNetworkId((uint16_t) 0x0001, (uint16_t) 0x00001);
     }
 
-    uint16_t t_device_id;
-    uint16_t t_network_id;
-
-    EEPROM.get(DEVICE_ID_ADDR, t_device_id);
-    EEPROM.get(NETWORK_ID_ADDR, t_network_id);
-
-    set_device_id(t_device_id);
-    set_network_id(t_network_id);
-
-    motor_init();
+#ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
+    nestSerial_init();
+#endif // RECV_SERIAL_NEST
 
     nmv3_init();
 
-    display_init();
-
     activitity_init();
+
+    motor_init();
+
+    display_init();
 
     registerAllServices();
 }

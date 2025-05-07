@@ -18,9 +18,9 @@ NeighborManager::add_neighbor(
 ){
     // check for devAdd in the list
     if (check_for_neighbors(devAdd)) {
-#ifdef DEBUG_ON // DEBUG_ON
+    #ifdef DEBUG_ON // DEBUG_ON
         Serial.printf("Neighbor already exists: devAdd=%d\n", devAdd);
-#endif // DEBUG_ON
+    #endif // DEBUG_ON
 
         return;
     }
@@ -44,9 +44,9 @@ NeighborManager::remove_neighbor(
 ){
     for (int i = 0; i < MAX_NEIGHBORS; i++) {
         if (neighbors[i].devAdd == devAdd) {
-#ifdef DEBUG_ON // DEBUG_ON
+        #ifdef DEBUG_ON // DEBUG_ON
             Serial.printf("Removing neighbor: devAdd=%d\n", devAdd);
-#endif // DEBUG_ON
+        #endif // DEBUG_ON
             // Mark the slot as unused
             memset(&neighbors[i], 0, sizeof(Neighbor));
         }
@@ -99,9 +99,9 @@ NeighborManager::timeout_neighbors(
     for (int i = 0; i < 10; i++) {
         if (neighbors[i].devAdd != 0xFFFF && (currentTime - neighbors[i].lastSeen > TIMEOUT)) {
 
-#ifdef DEBUG_ON
+        #ifdef DEBUG_ON
             Serial.printf("Neighbor timed out: devAdd=%d\n", neighbors[i].devAdd);
-#endif
+        #endif
 
             // Mark the slot as unused
             neighbors[i].devAdd = 0xFFFF;
@@ -183,11 +183,12 @@ neighborService(
 // ) {
 //     if (millis() - neighborManager.lastUpdateTime > neighborManager.updateInterval) {
 //         neighborManager.lastUpdateTime = millis();
+//     #ifdef DEBUG_ON // DEBUG_ON
 //         neighborManager.print_neighbors();
-
-// #ifdef DEBUG_ON // DEBUG_ON
-//             Serial.printf("Starting ranging period\n");   
-// #endif // DEBUG_ON
+//     #endif // DEBUG_ON
+//     #ifdef DEBUG_ON // DEBUG_ON
+//         Serial.printf("Starting ranging period\n");   
+//     #endif // DEBUG_ON
 //         return 1;
 //     }
 //     return 0;

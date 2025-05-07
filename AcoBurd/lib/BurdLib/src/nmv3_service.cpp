@@ -7,6 +7,8 @@
 
 #include "device_actions.hpp"
 #include "display.hpp"
+#include "burd_EEPROM.hpp"
+#include "nmv3_service.hpp"
 #include "globals.hpp"
 #include "services.hpp"
 
@@ -16,6 +18,8 @@ extern Service modemServiceDesc;
 static uint8_t packetBuffer_modem[FLOC_MAX_SIZE] = {0};
 static uint8_t packetBuffer_modem_idx = 0;
 
+HardwareSerial& modem_connection = MODEM_SERIAL_CONNECTION;
+
 void
 modemService(
     void
@@ -24,8 +28,8 @@ modemService(
 
     ParseResult r;
 
-    while (MODEM_SERIAL_CONNECTION.available() > 0) {
-        char modem_char = MODEM_SERIAL_CONNECTION.read();
+    while (modem_connection.available() > 0) {
+        char modem_char = modem_connection.read();
 
         // Check for <CR><LF> sequence
         if (modem_char == '\n' && packetBuffer_modem_idx > 0 && packetBuffer_modem[packetBuffer_modem_idx - 1] == '\r') {
@@ -75,52 +79,6 @@ modemService(
     }
 }
 
-#ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
-extern Service nestSerialServiceDesc;
-
-// Packet buffer for data received from the ship terminal (NeST) serial line
-static uint8_t packetBuffer_nest[SERIAL_FLOC_MAX_SIZE] = {0};
-static uint8_t packetBuffer_nest_idx = 0;
-
-void
-nestSerialService(
-    void
-){
-    nestSerialServiceDesc.busy = false;
-
-    while (NEST_SERIAL_CONNECTION.available() > 0) {
-        char nest_char = NEST_SERIAL_CONNECTION.read();
-
-        // Check for <CR><LF> sequence
-        if (nest_char == '\n' && packetBuffer_nest_idx > 0 && packetBuffer_nest[packetBuffer_nest_idx - 1] == '\r') {
-            // Remove the <CR> from the buffer
-            packetBuffer_nest[packetBuffer_nest_idx - 1] = 0;
-
-            DeviceAction_t da;
-            init_da(&da);
-
-            packet_received_nest(packetBuffer_nest, packetBuffer_nest_idx - 1, &da);
-
-            act_upon(&da);
-            
-            memset(packetBuffer_nest, 0 , sizeof(packetBuffer_nest)); // Clear the buffer
-            packetBuffer_nest_idx = 0;
-        } else {
-            if (packetBuffer_nest_idx >= sizeof(packetBuffer_nest)) {
-                // Some error has occurred, clear the packet
-                memset(packetBuffer_nest, 0 , sizeof(packetBuffer_nest));
-                packetBuffer_nest_idx = 0;
-            }
-            // Append character to the buffer
-            packetBuffer_nest[packetBuffer_nest_idx] = nest_char;
-            packetBuffer_nest_idx++;
-        }
-
-        nestSerialServiceDesc.busy = true;
-    }
-}
-#endif
-
 void
 nmv3_init(
     void
@@ -129,11 +87,16 @@ nmv3_init(
     Serial.printf("Initializing NMV3...\r\n");
 #endif // DEBUG_ON
 
-    uint16_t t_device_id;
-    uint16_t t_network_id;
+    // Serial connection to modem
+    modem_connection.begin(9600, SERIAL_8N1);
 
-    EEPROM.get(DEVICE_ID_ADDR, t_device_id);
-    EEPROM.get(NETWORK_ID_ADDR, t_network_id);
+    delay(100);
+
+    uint16_t t_device_id = EEPROM_getDeviceID();
+    uint16_t t_network_id = EEPROM_getNetworkID();
+
+    set_device_id(t_device_id);
+    set_network_id(t_device_id);
 
 #ifdef DEBUG_ON // DEBUG_ON
     Serial.printf("Got DID, NID. Setting Modem ID...\r\n");
@@ -142,7 +105,7 @@ nmv3_init(
     // hash
     uint8_t new_modem_id = (t_device_id * 31 + t_network_id) & 0xFF;
 
-    set_address(MODEM_SERIAL_CONNECTION, new_modem_id);
+    set_address(new_modem_id);
 
 #ifdef DEBUG_ON // DEBUG_ON
     Serial.printf("Modem ID set...\r\n");

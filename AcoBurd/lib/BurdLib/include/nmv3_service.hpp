@@ -1,16 +1,15 @@
 #pragma once
 
+#include <stdint.h>
+
+#include <HardwareSerial.h>
+
+#define MODEM_SERIAL_CONNECTION Serial1
+
 void
 modemService(
     void
 );
-
-#ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
-void
-nestSerialService(
-    void
-);
-#endif
 
 void
 nmv3_init(

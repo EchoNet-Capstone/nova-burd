@@ -26,7 +26,6 @@
 
 #include <nmv3_api.hpp>
 
-#include "globals.hpp"
 #include "buffer.hpp"
 #include "activity_period.hpp"
 #include "services.hpp"
@@ -42,7 +41,7 @@ FLOCBufferManager::addPacket(
     if (retrans) {
         retransmissionBuffer.push(packet);
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Packet added to retransmission buffer\n");
+        Serial.printf("Packet added to retransmission buffer\n");
     #endif // DEBUG_ON
 
         return;
@@ -54,7 +53,9 @@ FLOCBufferManager::addPacket(
     } else if (packet.header.type == FLOC_RESPONSE_TYPE) {
         responseBuffer.push(packet);
     } else {
-        printf("Invalid packet type for command buffer\n");
+    #ifdef DEBUG_ON // DEBUG_ON
+        Serial.printf("Invalid packet type for command buffer\n");
+    #endif // DEBUG_ON
     }
 }
 
@@ -65,21 +66,21 @@ FLOCBufferManager::queuehandler(
 ){
     if(!retransmissionBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Retransmission buffer is not empty\n");
+        Serial.printf("Retransmission buffer is not empty\n");
     #endif // DEBUG_ON
 
         retransmission_handler();
         return 1;
     } else if (!responseBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Response buffer is not empty\n");
+        Serial.printf("Response buffer is not empty\n");
     #endif // DEBUG_ON
 
         response_handler();
         return 2;
     } else if (!commandBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Command buffer is not empty\n");
+        Serial.printf("Command buffer is not empty\n");
     #endif // DEBUG_ON
 
         command_handler();
@@ -96,19 +97,19 @@ FLOCBufferManager::checkqueueStatus(
 ){
     if(!retransmissionBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Retransmission buffer is not empty\n");
+        Serial.printf("Retransmission buffer is not empty\n");
     #endif // DEBUG_ON
 
         return 1;
     } else if (!responseBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Response buffer is not empty\n");
+        Serial.printf("Response buffer is not empty\n");
     #endif // DEBUG_ON
 
         return 2;
     } else if (!commandBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Command buffer is not empty\n");
+        Serial.printf("Command buffer is not empty\n");
     #endif // DEBUG_ON
 
         return 3;
@@ -129,7 +130,7 @@ FLOCBufferManager::retransmission_handler(
     // if message is an ack, remove from buffer
     if (checkackID(packet_id)) {
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Ack ID %d found and removed\n", packet_id);
+        Serial.printf("Ack ID %d found and removed\n", packet_id);
     #endif // DEBUG_ON
 
         commandBuffer.pop(); // Remove from buffer
@@ -138,7 +139,7 @@ FLOCBufferManager::retransmission_handler(
 
     // send packet
     // FIX THE SIZE ASPECT
-    broadcast(MODEM_SERIAL_CONNECTION, (char*)&packet, DATA_PACKET_ACTUAL_SIZE(&packet));
+    broadcast((char*)&packet, DATA_PACKET_ACTUAL_SIZE(&packet));
 
     retransmissionBuffer.pop(); // Remove from buffer
     return 0;
@@ -155,14 +156,14 @@ FLOCBufferManager::response_handler(
     // if message is an ack, remove from buffer
     if (checkackID(packet_id)) {
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Ack ID %d found and removed\n", packet_id);
+        Serial.printf("Ack ID %d found and removed\n", packet_id);
     #endif // DEBUG_ON
 
         commandBuffer.pop(); // Remove from buffer
         return 1;
     }
     // send packet
-    broadcast(MODEM_SERIAL_CONNECTION, (char*)&packet, RESPONSE_PACKET_ACTUAL_SIZE(&packet));
+    broadcast((char*)&packet, RESPONSE_PACKET_ACTUAL_SIZE(&packet));
     responseBuffer.pop(); // Remove from buffer
     return 0;
 }
@@ -179,7 +180,7 @@ FLOCBufferManager::command_handler(
     // if message is an ack, remove from buffer
     if (checkackID(packet_id)) {
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Ack ID %d found and removed\n", packet_id);
+        Serial.printf("Ack ID %d found and removed\n", packet_id);
     #endif // DEBUG_ON
 
         commandBuffer.pop(); // Remove from buffer
@@ -194,7 +195,7 @@ FLOCBufferManager::command_handler(
     // Check if the packet has been transmitted the maximum number of times
     if(transmissionCounts[packet_id] >= maxTransmissions) {
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Max transmissions reached for packet ID %d\n", packet_id);
+        Serial.printf("Max transmissions reached for packet ID %d\n", packet_id);
     #endif // DEBUG_ON
 
         commandBuffer.pop(); // Remove from buffer
@@ -206,7 +207,7 @@ FLOCBufferManager::command_handler(
 
     transmissionCounts[packet_id]++; // Increment transmission count for this packet ID
 
-    broadcast(MODEM_SERIAL_CONNECTION, (char*)&packet, COMMAND_PACKET_ACTUAL_SIZE(&packet));
+    broadcast((char*)&packet, COMMAND_PACKET_ACTUAL_SIZE(&packet));
     // send packet
     return 0;
 }
@@ -218,7 +219,7 @@ FLOCBufferManager::add_ackID(
 ){
     ackIDs[ackID] = 1;
 #ifdef DEBUG_ON // DEBUG_ON
-    printf("Ack ID %d added\n", ackID);
+    Serial.printf("Ack ID %d added\n", ackID);
 #endif // DEBUG_ON
 
 }
@@ -230,7 +231,7 @@ FLOCBufferManager::checkackID(
     if (ackIDs.find(ackID) != ackIDs.end()) {
         ackIDs.erase(ackID);
     #ifdef DEBUG_ON // DEBUG_ON
-        printf("Ack ID %d found and removed\n", ackID);
+        Serial.printf("Ack ID %d found and removed\n", ackID);
     #endif // DEBUG_ON
 
         return 1;

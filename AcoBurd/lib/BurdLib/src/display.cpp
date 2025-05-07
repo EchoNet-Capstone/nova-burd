@@ -189,8 +189,8 @@ display_init(
     oled.clear();
     oled.setFont(ArialMT_Plain_10);
 
-    oled.drawRect(0,0, 16, 16);
-    //oled.drawXbm(0, 0, NR_diagonal_width, NR_diagonal_height, NR_diagonal_bits);
+    // oled.drawRect(0,0, 16, 16);
+    oled.drawXbm(0, 0, NR_diagonal_width, NR_diagonal_height, NR_diagonal_bits);
     oled.display();
 }
 
