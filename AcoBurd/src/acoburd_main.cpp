@@ -1,5 +1,4 @@
 #include <LoRaWan_APP.h>
-#include <EEPROM.h>
 
 // Kill it with fire
 #include <safe_arduino.hpp>
