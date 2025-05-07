@@ -3,5 +3,9 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
-debug/output.map
+
 debug/disassemblies
+
+debug/text_dump
+debug/output.map
+
