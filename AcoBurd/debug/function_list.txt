@@ -12,6 +12,7 @@
 #                                            #
 # Example:                                   #
 # // my_file.cpp                             #
+# ...                                        #
 # void                                       #
 # myFunc(                                    #
 #   int arg1,                                #
@@ -19,8 +20,10 @@
 # ){                                         #
 #   ...                                      # 
 # }                                          #
+# ...                                        #
 #                                            #
 # // myClassFile.cpp                         #
+# ...                                        #
 # bool                                       #
 # MyClass::myClassFunc(                      #
 #   int arg1,                                #
@@ -29,20 +32,30 @@
 # ){                                         #
 #   ...                                      #
 # }                                          #
+# ...                                        #
 #                                            #                                        
 # // function_list.txt                       #
+# ...                                        #
 # ######################                     #
 # #Start Function List #                     #
 # ######################                     #                                       
 #                                            #
 # myFunc                                     #
-# myClassFunc                                #
+# #myClassFunc <- Commented Out, No Output   #
 # ...                                        #
-# <New Line at End of File>                  #
+#                                            #
+# #######################                    #
+# #  End Function List  #                    #
+# #######################                    #
+#                                            #
 ##############################################
 
 #######################
 # Start Function List #
 #######################
 
-#nmv3_init
+# nmv3_init
+
+#######################
+#  End Function List  #
+#######################
