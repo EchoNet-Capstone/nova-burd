@@ -8,8 +8,11 @@
 #include "services.hpp"
 #include "activity_period.hpp"
 #include "stdlib.h"
+#include "nmv3_api.hpp"
 
 // add to neighbor list and pupulate data
+
+NeighborManager neighborManager;
 
 #define TIMOUT_NEIGHBORS (60 * 60 * 1000 * 6) // 6 hours
 
@@ -189,13 +192,22 @@ void
 NeighborManager::start_ranging(
     void
 ) {
-    for (int i = 0; i < MAX_NEIGHBORS; i++) {
-        if (neighbors[i].devAdd != UNKNOWN) {
-            // Send a ping to the neighbor
-            // ping(neighbors[i].devAdd, neighbors[i].modAdd);
+    Neighbor *rec_neighbors[SEND_AMOUNT];
+    get_top_3(rec_neighbors);
 
+    for (int i = 0; i < SEND_AMOUNT; i++) {
+
+        if (rec_neighbors[i] != NULL) {            
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Requesting range from neighbor: devAdd=%d, modAdd=%d\n",
+        neighbors[i].devAdd,
+        neighbors[i].modAdd
+    );
+#endif
+            ping(rec_neighbors[i]->devAdd, rec_neighbors[i]->modAdd);
         }
     }
+
 }
 
 // helper functions
@@ -211,6 +223,7 @@ NeighborManager::get_top_3(
     for (int i = 0; i < MAX_NEIGHBORS; i++) {
         if (neighbors[i].devAdd != UNKNOWN) {
             temp[count++] = &neighbors[i];
+
         }
     }
 

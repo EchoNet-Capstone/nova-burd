@@ -35,7 +35,7 @@ class NeighborManager {
         int check_for_neighbors(uint16_t dev_add);
         uint64_t lastUpdateTime = 0;
         const uint64_t updateInterval = (60*60*1000); // 1 hour
-        uint8_t neighnorCount = 0;
+
         void ping_recent_neighbors(void);
         void start_ranging(void);
         void get_top_3(Neighbor *rec_neighbors[3]);
