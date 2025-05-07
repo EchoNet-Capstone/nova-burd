@@ -4,8 +4,4 @@
 .vscode/launch.json
 .vscode/ipch
 
-debug/disassemblies
-
-debug/text_dump
-debug/output.map
-
+debug/outputs

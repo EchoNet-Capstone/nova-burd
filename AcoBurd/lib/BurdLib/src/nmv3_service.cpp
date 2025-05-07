@@ -3,11 +3,11 @@
 #include <floc.hpp>
 #include <nmv3_api.hpp>
 
+#include "burd_EEPROM.hpp"
 #include "device_actions.hpp"
 #include "display.hpp"
-#include "burd_EEPROM.hpp"
-#include "nmv3_service.hpp"
 #include "globals.hpp"
+#include "nmv3_service.hpp"
 #include "services.hpp"
 
 extern Service modemServiceDesc;

@@ -7,6 +7,7 @@
 #include <nmv3_api.hpp>
 
 #include "device_actions.hpp"
+#include "globals.hpp"
 #include "nest_serial.hpp"
 #include "services.hpp"
 #include "utils.cpp"
