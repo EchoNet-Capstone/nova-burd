@@ -1,8 +1,11 @@
 #!/usr/bin/bash
 cd "$(dirname "$0")"
 
-ELF_FILE_DIR="../.pio/build/dev-slave"
+ELF_FILE_DIR="${1}"
 ELF_FILE="$(realpath $ELF_FILE_DIR/firmware.elf)"
+
+TEXT_DUMP_FILE="$(realpath text_dump)"
+
 FUNCTION_LIST="function_list"
 OUTDIR="disassemblies"
 
@@ -43,3 +46,6 @@ while read -r funcname; do
         echo "Warning: Function '$funcname' not found in ELF"
     fi
 done < "$FUNCTION_LIST"
+
+echo "Writing text dump → $TEXT_DUMP_FILE"
+arm-none-eabi-objdump -D -Mforce-thumb $ELF_FILE > $TEXT_DUMP_FILE

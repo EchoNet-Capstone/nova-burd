@@ -2,11 +2,7 @@
 #ifdef RECV_SERIAL_NEST
 #include <stdint.h>
 
-#include <HardwareSerial.h>
-
 #include "device_actions.hpp"
-
-#define NEST_SERIAL_CONNECTION Serial
 
 void
 packet_received_nest(
