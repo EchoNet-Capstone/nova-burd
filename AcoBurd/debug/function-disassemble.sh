@@ -6,7 +6,7 @@ ELF_FILE="$(realpath $ELF_FILE_DIR/firmware.elf)"
 
 TEXT_DUMP_FILE="$(realpath text_dump)"
 
-FUNCTION_LIST="function_list"
+FUNCTION_LIST="function_list.txt"
 OUTDIR="disassemblies"
 
 mkdir -p "$OUTDIR"
