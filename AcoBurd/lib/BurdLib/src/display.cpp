@@ -10,6 +10,27 @@
 #include "display.hpp"
 #include "services.hpp"
 
+#define NR_diagonal_width 16
+#define NR_diagonal_height 16
+static const uint8_t NR_diagonal_bits[] = {
+   0x81,0x00,  /* row 0:    N:  1000_0001....... */
+   0x83,0x00,  /* row 1:    N:  1000_0011....... */
+   0x85,0x00,  /* row 2:    N:  1000_0101....... */
+   0x89,0x00,  /* row 3:    N:  1000_1001....... */
+   0x91,0x00,  /* row 4:    N:  1001_0001....... */
+   0xA1,0x00,  /* row 5:    N:  1010_0001....... */
+   0xC1,0x00,  /* row 6:    N:  1100_0001....... */
+   0x81,0x00,  /* row 7:    N:  1000_0001....... */
+   0x00,0x0F,  /* row 8:    R:  ........00001111 (R top bar) */
+   0x00,0x09,  /* row 9:    R:  ........00001001 */
+   0x00,0x09,  /* row 10:   R:  ........00001001 */
+   0x00,0x0F,  /* row 11:   R:  ........00001111 (R bowl bottom) */
+   0x00,0x05,  /* row 12:   R:  ........00000101 (R leg diag) */
+   0x00,0x09,  /* row 13:   R:  ........00001001 */
+   0x00,0x11,  /* row 14:   R:  ........00010001 */
+   0x00,0x21   /* row 15:   R:  ........00100001 */
+};
+
 SSD1306Wire oled(0x3c, 500000, SDA, SCL, GEOMETRY_128_64, GPIO10); // addr , freq , SDA, SCL, resolution , rst
 
 void
@@ -45,27 +66,9 @@ oled_wake(
 }
 
 void
-oled_initialize(
-    void
-){
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("OLED Init...\r\n");
-#endif // DEBUG_ON
-
-    VextON();// oled power on;
-    delay(10);
-
-    oled.init();
-    oled.clear();
-    oled.setFont(ArialMT_Plain_10);
-}
-
-void
 display_modem_id(
     void
 ){
-    oled.clear();
-
     if(get_modem_id_set()){
         oled.drawString(0, 0, "  Modem ID : " + String(get_modem_id(), DEC));
     }else{
@@ -73,6 +76,13 @@ display_modem_id(
     }
 
     oled.display();
+}
+
+void
+display_devicd_id(
+    void
+){
+
 }
 
 /*void
@@ -161,17 +171,39 @@ rgb_led(
 extern Service displayServiceDesc;
 
 void
+display_init(
+    void
+){
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("OLED Init...\r\n");
+#endif // DEBUG_ON
+
+    VextON();// oled power on;
+    delay(100);
+
+    oled.init();
+    delay(100);
+
+    oled.wakeup();
+
+    oled.clear();
+    oled.setFont(ArialMT_Plain_10);
+
+    oled.drawRect(0,0, 16, 16);
+    //oled.drawXbm(0, 0, NR_diagonal_width, NR_diagonal_height, NR_diagonal_bits);
+    oled.display();
+}
+
+void
 displayService(
     void
 ){
     displayServiceDesc.busy = false;
 
-    static int old_modem_id = -1;
+    static int old_modem_id = 257;
 
-    if ( old_modem_id != get_modem_id()){
+    if (old_modem_id != get_modem_id()){
         old_modem_id = get_modem_id();
-
-        display_modem_id();
     }
 
 }

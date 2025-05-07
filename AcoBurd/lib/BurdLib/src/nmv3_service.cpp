@@ -135,8 +135,16 @@ nmv3_init(
     EEPROM.get(DEVICE_ID_ADDR, t_device_id);
     EEPROM.get(NETWORK_ID_ADDR, t_network_id);
 
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Got DID, NID. Setting Modem ID...\r\n");
+#endif // DEBUG_ON
+
     // hash
     uint8_t new_modem_id = (t_device_id * 31 + t_network_id) & 0xFF;
 
     set_address(MODEM_SERIAL_CONNECTION, new_modem_id);
+
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Modem ID set...\r\n");
+#endif // DEBUG_ON
 }

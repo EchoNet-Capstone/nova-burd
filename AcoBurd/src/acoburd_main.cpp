@@ -62,17 +62,13 @@ setup(
     set_device_id(t_device_id);
     set_network_id(t_network_id);
 
-    noInterrupts();
-
     motor_init();
 
     nmv3_init();
 
-    oled_initialize();
+    display_init();
 
     activitity_init();
-
-    interrupts();
 
     registerAllServices();
 }
@@ -81,6 +77,16 @@ void
 loop(
     void
 ){
+#ifdef DEBUG_ON // DEBUG_ON
+    static bool print_start_loop = true;
+
+    if(print_start_loop){
+        Serial.printf(" Initialization Completed. Starting Services...\r\n");
+
+        print_start_loop = false;
+    }
+#endif // DEBUG_ON
+    
     // we are going to have a command activitiy variable
 
     auto& svcs = ServiceRegistry::instance().services();

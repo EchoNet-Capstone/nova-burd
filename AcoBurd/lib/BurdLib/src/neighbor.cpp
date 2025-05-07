@@ -136,13 +136,13 @@ neighborService(
 
     neighborServiceDesc.busy = false;
 
-    // Check for new neighbors
-    if (neighborManager.rangeTimeout()) {
+    // // Check for new neighbors
+    // if (neighborManager.rangeTimeout()) {
 
-        neighborServiceDesc.busy = true;
+    //     neighborServiceDesc.busy = true;
 
 
-    }
+    // }
 
 }
 
@@ -177,18 +177,18 @@ neighborService(
 //     }
 // }
 
-int
-NeighborManager::rangeTimeout(
-    void
-) {
-    if (millis() - neighborManager.lastUpdateTime > neighborManager.updateInterval) {
-        neighborManager.lastUpdateTime = millis();
-        neighborManager.print_neighbors();
+// int
+// NeighborManager::rangeTimeout(
+//     void
+// ) {
+//     if (millis() - neighborManager.lastUpdateTime > neighborManager.updateInterval) {
+//         neighborManager.lastUpdateTime = millis();
+//         neighborManager.print_neighbors();
 
-#ifdef DEBUG_ON // DEBUG_ON
-            Serial.printf("Starting ranging period\n");   
-#endif // DEBUG_ON
-        return 1;
-    }
-    return 0;
-}
+// #ifdef DEBUG_ON // DEBUG_ON
+//             Serial.printf("Starting ranging period\n");   
+// #endif // DEBUG_ON
+//         return 1;
+//     }
+//     return 0;
+// }

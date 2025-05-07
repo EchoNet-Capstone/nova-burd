@@ -13,13 +13,8 @@ oled_wake(
 );
 
 void
-oled_initialize(
+display_init(
     void
-);
-
-void
-display_modem_id(
-    int modem_id
 );
 
 void

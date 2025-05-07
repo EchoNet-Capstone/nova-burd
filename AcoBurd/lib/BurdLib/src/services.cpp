@@ -53,7 +53,7 @@ Service displayServiceDesc = {
     0,
     0,
     false
-}
+};
 
 #ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
 Service nestSerialServiceDesc = {
