@@ -1,6 +1,17 @@
-#include "safe_arduino.hpp"
-
 #include <stdint.h>
+
+#ifdef ARDUINO // ARDUINO
+#include <Arduino.h>
+
+#ifdef min // min
+#undef min
+#endif //min
+
+#ifdef max //min
+#undef max
+#endif //min
+
+#endif // ARDUINO
 
 void
 printBufferContents(

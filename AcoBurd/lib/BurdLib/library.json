@@ -5,7 +5,21 @@
     "keywords": "internal, device",
     "authors": [
       {
-        "name": "Your Name"
+        "name": "Cooper Mattern",
+        "email": "cnamattern@gmail.com",
+        "url": "https://github.com/bobjoe400"
+      },
+      {
+        "name": "Daniel Brathwaite"
+      },
+      {
+        "name": "Nina St. John"
+      },
+      {
+        "name": "Armaan Oberai"
       }
-    ]
+    ],
+    "build": { 
+      "flags": ["-Wall", "-Wextra"]
+    }
   }

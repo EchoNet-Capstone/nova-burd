@@ -10,7 +10,7 @@
 #include "globals.hpp"
 #include "nest_serial.hpp"
 #include "services.hpp"
-#include "utils.cpp"
+#include "utils.hpp"
 
 // Packet buffer for data received from the ship terminal (NeST) serial line
 static uint8_t packetBuffer_nest[SERIAL_FLOC_MAX_SIZE] = {0};
@@ -21,8 +21,7 @@ HardwareSerial& nest_connection = NEST_SERIAL_CONNECTION;
 void
 packet_received_nest(
     uint8_t* packetBuffer,
-    uint8_t size,
-    DeviceAction_t* da
+    uint8_t size
 ){
 
     if (size < 3) {
@@ -92,12 +91,11 @@ nestSerialService(
             // Remove the <CR> from the buffer
             packetBuffer_nest[packetBuffer_nest_idx - 1] = 0;
 
-            DeviceAction_t da;
-            init_da(&da);
+            init_da();
 
-            packet_received_nest(packetBuffer_nest, packetBuffer_nest_idx - 1, &da);
+            packet_received_nest(packetBuffer_nest, packetBuffer_nest_idx - 1);
 
-            act_upon(&da);
+            act_upon();
             
             memset(packetBuffer_nest, 0 , sizeof(packetBuffer_nest)); // Clear the buffer
             packetBuffer_nest_idx = 0;

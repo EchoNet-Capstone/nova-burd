@@ -2,25 +2,14 @@
 
 #include <stdint.h>
 
+#include <floc.hpp>
+
 #include "device_state.hpp"
 #include "display.hpp"
-#include "floc.hpp"
-#include "globals.hpp"
+
 #include "motor.hpp"
 
 #include "device_actions.hpp"
-
-void
-init_da(
-    DeviceAction_t* da
-){
-    da->modemRespType = -1;
-    da->flocType = -1;
-    da->commandType = -1;
-    da->srcAddr = -1;
-    da->dataSize = -1;
-    da->data = NULL;
-}
 
 void
 execute_command_1(
@@ -89,13 +78,13 @@ act_upon_response(
 
 void
 act_upon(
-    DeviceAction_t* da
+    void
 ){
-    switch(da->flocType){
+    switch(da.flocType){
         case FLOC_DATA_TYPE:
             break;
         case FLOC_COMMAND_TYPE:
-            act_upon_command(da->srcAddr, da->commandType, da->data, da->dataSize);
+            act_upon_command(da.srcAddr, da.commandType, da.data, da.dataSize);
             break;
         case FLOC_ACK_TYPE:
             break;

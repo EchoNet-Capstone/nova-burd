@@ -35,9 +35,29 @@ modemService(
             packetBuffer_modem[packetBuffer_modem_idx - 1] = 0;
 
             r = packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx - 1);
-
-            // TODO : Handle the result of the packet processing
             
+            // Packet Received Parse the response;
+            switch (r.type) {
+                case BROAD_RECV_TYPE:
+                    init_da();
+        
+                    floc_broadcast_received(r.broadcast.payload, r.broadcast.payload_size);
+        
+                    act_upon();
+                    break;
+                case PING_RESP_TYPE:
+                    // TODO: Handle ping response
+                    break;
+                case STATUS_QUERY_TYPE:
+                    // TODO: handle status query response
+                    break;
+                case SET_ADDR_TYPE:
+                    // TODO: handle set_addr_type
+                    break;
+                default:
+                    break;
+            }
+    
             memset(packetBuffer_modem, 0 , sizeof(packetBuffer_modem)); // Clear the buffer
             packetBuffer_modem_idx = 0;
         } else {
@@ -52,28 +72,6 @@ modemService(
         }
 
         modemServiceDesc.busy = true;
-    }
-
-    switch (r.type) {
-        case BROAD_RECV_TYPE:
-            DeviceAction_t da;
-            init_da(&da);
-
-            floc_broadcast_received(r.broadcast.payload, r.broadcast.payload_size, &da);
-
-            act_upon(&da);
-            break;
-        case PING_RESP_TYPE:
-            // TODO: Handle ping response
-            break;
-        case STATUS_QUERY_TYPE:
-            // TODO: handle status query response
-            break;
-        case SET_ADDR_TYPE:
-            // TODO: handle set_addr_type
-            break;
-        default:
-            break;
     }
 }
 
