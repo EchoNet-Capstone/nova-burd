@@ -11,6 +11,8 @@
 
 #include "device_actions.hpp"
 
+DeviceAction_t da = {0};
+
 void
 execute_command_1(
     uint8_t* data,
