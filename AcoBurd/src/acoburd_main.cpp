@@ -1,9 +1,6 @@
-#include <LoRaWan_APP.h>
-
-// Kill it with fire
-#include <safe_arduino.hpp>
-
 #include <stdint.h>
+
+#include <safe_arduino.hpp>
 
 #include <activity_period.hpp>
 #include <buffer.hpp>
@@ -14,6 +11,7 @@
 #include <nest_serial.hpp>
 #include <nmv3_service.hpp>
 #include <services.hpp>
+#include <sleep.hpp>
 
 void
 setup(
@@ -80,9 +78,6 @@ loop(
     }
 
     if (!anyBusy) {
-    #ifdef DEBUG_ON // DEBUG_ON
-        Serial.printf("Going to sleep...\r\n");
-    #endif
-        LoRaWAN.sleep();
+        goToSleep();
     }
 }
