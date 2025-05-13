@@ -16,12 +16,12 @@
 
 // Motor and Gearbox Configuration
 #define GEARBOX_RATIO 499
-#define PULSES_PER_MOTOR_ROTATION 12 // Single Quadtrature
+#define PULSES_PER_MOTOR_ROTATION 48          // Full quadrature (12 pulses × 4)
 #define MOTOR_DEADBAND 3
 #define MOTOR_SETTLE_MS 50
 #define WIGGLE_DEADBAND 259200                // If release will occur in next x seconds, then don't wiggle
 #define WIGGLE_INTERVAL_MS 10000
-#define WIGGLE_OFFSET 250
+#define WIGGLE_OFFSET 1000
 
 #define TICKS_PER_REV    (GEARBOX_RATIO * PULSES_PER_MOTOR_ROTATION)
 
@@ -31,6 +31,7 @@ enum WiggleState {
     WIGGLE_OFF,
     WIGGLE_OUT,
     WIGGLE_BACK,
+    WIGGLE_HOME_PREP,
     WIGGLE_HOME,
 
     NUM_WIGGLE_STATES
@@ -43,13 +44,55 @@ GET_SET_FUNC_DEF(bool, is_motor_running, false)
 GET_SET_FUNC_DEF(int, wiggle_state, WIGGLE_OFF)
 GET_SET_FUNC_DEF(int, wiggle_start_pos, 0)
 
-void
-motor_quadrature_interrupt(
+static int original_home_pos = 0;
+static bool home_initialized = false;
+
+// Add these global variables
+volatile uint8_t encoder_last_state = 0;
+
+// Add this common encoder processing function
+void process_encoder_change(void) {
+    // Read current state of both encoder channels
+    uint8_t current_state = (digitalRead(MOTOR_QUAD_A) << 1) | digitalRead(MOTOR_QUAD_B);
+    
+    // Lookup table for the state transitions
+    // Each row represents previous state (0-3)
+    // Each column represents current state (0-3)
+    // Values: 0 = invalid/no change, 1 = clockwise, -1 = counter-clockwise
+    static const int8_t state_table[4][4] = {
+        {0, 1, -1, 0},  // Changed signs compared to original
+        {-1, 0, 0, 1},
+        {1, 0, 0, -1},
+        {0, -1, 1, 0}
+    };
+    
+    // Get direction from the lookup table
+    int8_t delta = state_table[encoder_last_state][current_state];
+    
+    // Update position
+    if (delta != 0) {
+        set_motor_position(get_motor_position() + delta);
+    }
+    
+    // Save current state for next time
+    encoder_last_state = current_state;
+}
+
+// Replace the existing interrupt handler with these two functions
+void 
+motor_quad_a_interrupt(
     void
 ){
-    int delta = digitalRead(MOTOR_QUAD_B) ? +1 : -1;
-    set_motor_position(get_motor_position() + delta);
+    process_encoder_change();
 }
+
+void
+motor_quad_b_interrupt(
+    void
+){
+    process_encoder_change();
+}
+
 
 // Low‑level controls
 void
@@ -90,41 +133,65 @@ motor_reverse(
     digitalWrite(MOTOR_DRIVER_B, HIGH);
 }
 
-static int
+int
 wrap(
     int v
 ){
+    // If we're setting a special target (like home position), 
+    // we want to use absolute positioning
+    if (v == original_home_pos) {
+        return v; // Don't wrap the home position
+    }
+    
+    // Otherwise use modular arithmetic
     int w = v % TICKS_PER_REV;
-
-    if (w<0)
-        w+=TICKS_PER_REV;
-
+    
+    if (w < 0)
+        w += TICKS_PER_REV;
+        
     return w;
 }
 
-static int
+int
 diff(
     int a,
     int b
 ){
-    int d=(b-a)%TICKS_PER_REV;
-
-    if(d<-TICKS_PER_REV/2)
-        d+=TICKS_PER_REV;
-    else if(d>TICKS_PER_REV/2)
-        d-=TICKS_PER_REV;
-
+    // If target is home position, use shortest path
+    if (b == original_home_pos) {
+        // Calculate both possible paths
+        int direct_diff = b - a;
+        int wrapped_diff;
+        
+        if (direct_diff > 0) {
+            wrapped_diff = direct_diff - TICKS_PER_REV;
+        } else {
+            wrapped_diff = direct_diff + TICKS_PER_REV;
+        }
+        
+        // Return the smallest absolute difference
+        return (abs(direct_diff) < abs(wrapped_diff)) ? direct_diff : wrapped_diff;
+    }
+    
+    // Regular modular arithmetic for other positions
+    int d = (b-a) % TICKS_PER_REV;
+    
+    if(d < -TICKS_PER_REV/2)
+        d += TICKS_PER_REV;
+    else if(d > TICKS_PER_REV/2)
+        d -= TICKS_PER_REV;
+        
     return d;
 }
 
-static int
+int
 wrappedPos(
     void
 ){
     return wrap(get_motor_position());
 }
 
-static void 
+void 
 driveToward(
     int remain
 ){
@@ -150,7 +217,13 @@ scheduleWiggle(
     Asr_Timer_Disable();
 
     set_wiggle_state(WIGGLE_OUT);
-    set_wiggle_start_pos(wrappedPos());
+
+    if(!home_initialized){
+        original_home_pos = wrappedPos();
+        home_initialized = true;
+    }
+
+    set_wiggle_start_pos(original_home_pos);
 }
 
 void
@@ -227,10 +300,22 @@ wiggleState(
             }
 
             break;
+        case WIGGLE_HOME_PREP:
+            if(!get_is_motor_running()){
+            #ifdef DEBUG_ON // DEBUG_ON
+                Serial.printf("Preparing for home approach at pos=%d, home=%d\r\n", 
+                    wrappedPos(), 
+                    get_wiggle_start_pos());
+            #endif
+
+                newMotorTarget(get_wiggle_start_pos() - 100);
+            }
+
+            break;
         case WIGGLE_HOME:
             if(!get_is_motor_running()){
             #ifdef DEBUG_ON // DEBUG_ON
-                Serial.printf("Starting wiggle home at pos=%d, home=%d\r\n", 
+                Serial.printf("Starting final approach at pos=%d, home=%d\r\n", 
                     wrappedPos(), 
                     get_wiggle_start_pos());
             #endif
@@ -302,6 +387,10 @@ motorService(
 
                 break;
             case WIGGLE_BACK:
+                set_wiggle_state(WIGGLE_HOME_PREP);
+
+                break;
+            case WIGGLE_HOME_PREP:
                 set_wiggle_state(WIGGLE_HOME);
 
                 break;
@@ -311,7 +400,7 @@ motorService(
             #endif 
 
                 set_wiggle_state(WIGGLE_OFF);
-                set_motor_target(pos);
+                set_motor_target(get_wiggle_start_pos());
 
                 Asr_SetTimeout(WIGGLE_INTERVAL_MS);
 
@@ -336,10 +425,15 @@ motor_init(
     Serial.printf("Motor Init...\r\n");
 #endif  // DEBUG_ON
 
+    original_home_pos = 0;
+    home_initialized = false;
+
     pinMode(MOTOR_QUAD_A, INPUT);
     pinMode(MOTOR_QUAD_B, INPUT);
-
-    attachInterrupt(MOTOR_QUAD_A, motor_quadrature_interrupt, RISING);
+    
+    // Attach interrupts to BOTH channels, detecting BOTH edges
+    attachInterrupt(MOTOR_QUAD_A, motor_quad_a_interrupt, CHANGE);
+    attachInterrupt(MOTOR_QUAD_B, motor_quad_b_interrupt, CHANGE);
 
     pinMode(MOTOR_DRIVER_POWER, OUTPUT);
     pinMode(MOTOR_DRIVER_A, OUTPUT);

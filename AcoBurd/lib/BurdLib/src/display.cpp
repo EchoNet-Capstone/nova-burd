@@ -182,10 +182,6 @@ updateTextArea(
         clearWidth = (oldWidth > newWidth) ? oldWidth : newWidth;
     }
 
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("Clearing rect of width %d\r\n", clearWidth);
-#endif
-
     oled.setColor(BLACK);
     oled.fillRect(area.x, area.y + area.clearOffsetY, clearWidth, area.font[1] - area.clearOffsetY);
 
