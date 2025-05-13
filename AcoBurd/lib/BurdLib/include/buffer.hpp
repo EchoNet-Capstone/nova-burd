@@ -26,6 +26,12 @@
 #include <utility>
 #include <cstdint>
 
+struct ping_device {
+    uint16_t devAdd;
+    uint8_t modAdd;
+    uint8_t pingCount;
+};
+
 class 
 FLOCBufferManager {
     public:
@@ -49,7 +55,20 @@ FLOCBufferManager {
             uint8_t ackID
         );
 
+        void
+        add_pinglist(
+            uint8_t index,
+            uint16_t devAdd,
+            uint8_t modAdd
+        );
+
     private:
+
+        int
+        ping_handler(
+            void
+        );
+
         int
         retransmission_handler(
             void
@@ -70,6 +89,9 @@ FLOCBufferManager {
             uint8_t ackID
         );
 
+
+        ping_device pingDevice[3];;
+
         std::queue<FlocPacket_t> commandBuffer;
         std::queue<FlocPacket_t> responseBuffer;
 
@@ -80,6 +102,8 @@ FLOCBufferManager {
         std::map<uint8_t, int> transmissionCounts;
         const int maxTransmissions = 5;
 };
+
+
 
 extern FLOCBufferManager flocBuffer;
 

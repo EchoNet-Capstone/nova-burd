@@ -81,19 +81,3 @@ is_activity_period_open(
     return get_activity_state() == SENDING;
 }
 
-// MIGHT NEED TO COME BACK TO THIS
-// Maybe add a flag check in the activity period
-void 
-interrupt_activity_period(
-    int handle
-){
-    if (handle == NEIGHBOR_BLOCK) {
-        activity_state = LISTENING;
-    
-    }
-
-    else if (handle == NEIGHBOR_UNBLOCK) {
-        activity_state = SENDING;
-    }
-
-}

@@ -117,6 +117,29 @@ FLOCBufferManager::checkqueueStatus(
     }
 }
 
+int
+FLOCBufferManager::ping_handler(
+    void
+){
+    for (int i = 0; i < 3; i++) {
+        ping_device& dev = pingDevice[i]; // Reference the real item
+
+        if (checkackID(dev.devAdd)) {
+            memset(&dev, 0, sizeof(dev));
+#ifdef DEBUG_ON
+            printf("Ping ID %d found and removed\n", dev.devAdd);
+#endif
+            return 1; // No need to ping if ACK received
+        }
+
+        if (dev.pingCount < maxTransmissions) {
+            dev.pingCount++;
+            ping(dev.devAdd, dev.modAdd);
+        }
+    }
+
+    return 0;
+}
 // retransmit and remove from vector
 int
 FLOCBufferManager::retransmission_handler(
@@ -239,6 +262,17 @@ FLOCBufferManager::checkackID(
     }
 }
 
+void
+FLOCBufferManager::add_pinglist(
+    uint8_t index,
+    uint16_t devAdd,
+    uint8_t modAdd
+){
+    pingDevice[index].devAdd = devAdd;
+    pingDevice[index].modAdd = modAdd;
+    pingDevice[index].pingCount = 0;
+}
+
 extern Service bufferServiceDesc;
 
 void
@@ -268,3 +302,4 @@ bufferService(
         }
     }
 }
+

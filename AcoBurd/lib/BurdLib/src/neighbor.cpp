@@ -9,6 +9,7 @@
 #include "activity_period.hpp"
 #include "stdlib.h"
 #include "nmv3_api.hpp"
+#include "buffer.hpp"
 
 // add to neighbor list and pupulate data
 
@@ -204,11 +205,14 @@ NeighborManager::start_ranging(
         neighbors[i].modAdd
     );
 #endif
-            ping(rec_neighbors[i]->devAdd, rec_neighbors[i]->modAdd);
+            flocBuffer.add_pinglist(i, rec_neighbors[i]->devAdd, rec_neighbors[i]->modAdd);
+
         }
     }
 
 }
+
+
 
 // helper functions
 
@@ -246,3 +250,4 @@ NeighborManager::compare_recent(
     if (neighborA->lastSeen < neighborB->lastSeen) return 1;
     return 0;
 }
+
