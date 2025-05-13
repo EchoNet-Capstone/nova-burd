@@ -5,11 +5,21 @@
 #include "globals.hpp"
 #include "neighbor.hpp"
 #include "services.hpp"
-#include "utils.hpp"
+#include "activity_period.hpp"
+#include "stdlib.h"
+#include "nmv3_api.hpp"
+#include "buffer.hpp"
 
 // add to neighbor list and pupulate data
 
-#define TIMEOUT 100000000 // 1000 seconds?
+NeighborManager neighborManager;
+
+#define TIMOUT_NEIGHBORS (60 * 60 * 1000 * 6) // 6 hours
+
+#define STALE(a) (a < (60 * 60 * 1000)) // 60 minutes
+#define UNKNOWN 0xFFFF
+#define SEND_AMOUNT 3
+
 
 void 
 NeighborManager::add_neighbor(
@@ -17,6 +27,7 @@ NeighborManager::add_neighbor(
     uint8_t modAdd
 ){
     // check for devAdd in the list
+
     if (check_for_neighbors(devAdd)) {
     #ifdef DEBUG_ON // DEBUG_ON
         Serial.printf("Neighbor already exists: devAdd=%d\n", devAdd);
@@ -29,14 +40,12 @@ NeighborManager::add_neighbor(
     Serial.printf("Adding neighbor: devAdd=%d, modAdd=%d\n", devAdd, modAdd);
 #endif // DEBUG_ON
 
-
     Neighbor neighbor;
     neighbor.devAdd = devAdd;
     neighbor.modAdd = modAdd;
     neighbor.lastSeen = millis();
     neighbors[devAdd] = neighbor;
 }
-
 
 void 
 NeighborManager::remove_neighbor(
@@ -66,7 +75,6 @@ NeighborManager::update_neighbor_range(
     }
 }
 
-
 void 
 NeighborManager::print_neighbors(
     void
@@ -87,8 +95,16 @@ NeighborManager::print_neighbors(
 void 
 NeighborManager::clear_neighbors(
     void
-){
-    memset(neighbors, 0, sizeof(neighbors));
+) {
+    for (int i = 0; i < 10; i++) {
+        neighbors[i].devAdd = UNKNOWN;
+        neighbors[i].modAdd = 0;
+        neighbors[i].lastSeen = 0;
+        neighbors[i].range = UNKNOWN;
+    }
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Cleared all neighbors\n");
+#endif // DEBUG_ON
 }
 
 void 
@@ -97,21 +113,21 @@ NeighborManager::timeout_neighbors(
 ){
     uint64_t currentTime = millis();
     for (int i = 0; i < 10; i++) {
-        if (neighbors[i].devAdd != 0xFFFF && (currentTime - neighbors[i].lastSeen > TIMEOUT)) {
+        if (neighbors[i].devAdd != UNKNOWN && (currentTime - neighbors[i].lastSeen > updateInterval)) {
+            // Neighbor has timed out
 
         #ifdef DEBUG_ON
             Serial.printf("Neighbor timed out: devAdd=%d\n", neighbors[i].devAdd);
         #endif
 
             // Mark the slot as unused
-            neighbors[i].devAdd = 0xFFFF;
-            neighbors[i].range = 0xFFFF;
+            neighbors[i].devAdd = UNKNOWN;
+            neighbors[i].range = UNKNOWN;
             neighbors[i].modAdd = 0;
             neighbors[i].lastSeen = 0;
         }
     }
 }
-
 
 int
 NeighborManager::check_for_neighbors(
@@ -126,7 +142,6 @@ NeighborManager::check_for_neighbors(
     return 0; // not found
 }
 
-
 extern Service neighborServiceDesc;
 
 void 
@@ -137,59 +152,99 @@ neighborService(
     neighborServiceDesc.busy = false;
 
     // // Check for new neighbors
-    // if (neighborManager.rangeTimeout()) {
+    if (neighborManager.rangeTimeout()) {
 
-    //     neighborServiceDesc.busy = true;
-
-
-    // }
-
+        neighborServiceDesc.busy = true;
+    }
 }
 
+// fix
+int
+NeighborManager::rangeTimeout(
+    void
+) {
+    if (millis() - neighborManager.lastUpdateTime > neighborManager.updateInterval) {
+        neighborManager.lastUpdateTime = millis();
+        neighborManager.print_neighbors();
 
-// void 
-// NeighborManager::ping_recent_neighbors(
+        #ifdef DEBUG_ON // DEBUG_ON
+            Serial.printf("Starting ranging period\n");   
+        #endif // DEBUG_ON
+        return 1;
+    }
+    return 0;
+}
 
-// ) {
-//     // Step 1: Copy the neighbors into a vector
-//     std::vector<Neighbor> neighborList;
-//     for (const auto& pair : neighbors) {
-//         neighborList.push_back(pair.second);
-//     }
+// start ranging protocol
+void
+NeighborManager::start_ranging(
+    void
+) {
+    Neighbor *rec_neighbors[SEND_AMOUNT];
+    get_top_3(rec_neighbors);
 
-//     // Step 2: Sort by lastSeen descending
-//     std::sort(neighborList.begin(), neighborList.end(), 
-//         [](const Neighbor& a, const Neighbor& b) {
-//             return a.lastSeen > b.lastSeen;
-//         });
+    for (int i = 0; i < SEND_AMOUNT; i++) {
 
-//     // Step 3: Ping the top 5 (or fewer if not enough)
-//     int count = 0;
-//     for (const auto& neighbor : neighborList) {
-//         if (count >= 5) break;
-//         std::cout << "Pinging Neighbor: devAdd=" << neighbor.devAdd
-//                   << ", modAdd=" << (int)neighbor.modAdd << std::endl;
+        if (rec_neighbors[i] != NULL) {            
+        #ifdef DEBUG_ON // DEBUG_ON
+            Serial.printf("Requesting range from neighbor: devAdd=%d, modAdd=%d\n",
+                neighbors[i].devAdd,
+                neighbors[i].modAdd
+            );
+        #endif
 
-//         // Call your actual ping logic here
-//         // ping(neighbor.devAdd, neighbor.modAdd);
+            flocBuffer.add_pinglist(i, rec_neighbors[i]->devAdd, rec_neighbors[i]->modAdd);
+        }
+    }
+}
 
-//         ++count;
-//     }
-// }
+// ikykyk
+void
+NeighborManager::update_neighbors(
+    uint16_t devAdd,
+    uint16_t range
+) {
+    for (int i = 0; i < MAX_NEIGHBORS; i++) {
+        if (neighbors[i].devAdd == devAdd) {
+            neighbors[i].range = range;
+            neighbors[i].lastSeen = millis(); // update timestamp
+        }
+    }
+}
 
-// int
-// NeighborManager::rangeTimeout(
-//     void
-// ) {
-//     if (millis() - neighborManager.lastUpdateTime > neighborManager.updateInterval) {
-//         neighborManager.lastUpdateTime = millis();
-//     #ifdef DEBUG_ON // DEBUG_ON
-//         neighborManager.print_neighbors();
-//     #endif // DEBUG_ON
-//     #ifdef DEBUG_ON // DEBUG_ON
-//         Serial.printf("Starting ranging period\n");   
-//     #endif // DEBUG_ON
-//         return 1;
-//     }
-//     return 0;
-// }
+// helper functions
+
+// get most recent 3 
+void 
+NeighborManager::get_top_3(
+    Neighbor *rec_neighbors[SEND_AMOUNT]
+) {
+    Neighbor *temp[MAX_NEIGHBORS];
+    int count = 0;
+
+    for (int i = 0; i < MAX_NEIGHBORS; i++) {
+        if (neighbors[i].devAdd != UNKNOWN) {
+            temp[count++] = &neighbors[i];
+
+        }
+    }
+
+    qsort(temp, count, sizeof(Neighbor *), compare_recent);
+
+    for (int i = 0; i < SEND_AMOUNT && i < count; i++) {
+        rec_neighbors[i] = temp[i];
+    }
+}
+
+int 
+NeighborManager::compare_recent(
+    const void *a, 
+    const void *b
+) {
+    Neighbor *neighborA = *(Neighbor **)a;
+    Neighbor *neighborB = *(Neighbor **)b;
+
+    if (neighborA->lastSeen > neighborB->lastSeen) return -1;
+    if (neighborA->lastSeen < neighborB->lastSeen) return 1;
+    return 0;
+}

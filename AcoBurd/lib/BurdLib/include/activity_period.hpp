@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 enum
 activityState {
     LISTENING,
@@ -20,3 +22,4 @@ bool
 is_activity_period_open(
     void
 );
+

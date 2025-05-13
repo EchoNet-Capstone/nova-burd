@@ -64,6 +64,10 @@ int
 FLOCBufferManager::queuehandler(
     void
 ){
+    if (check_pinglist()) {
+        ping_handler();
+    }
+
     if(!retransmissionBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
         Serial.printf("Retransmission buffer is not empty\n");
@@ -117,6 +121,43 @@ FLOCBufferManager::checkqueueStatus(
         return 0;
     }
 }
+
+// this will send out all the pings
+int
+FLOCBufferManager::ping_handler(
+    void
+){
+    for (int i = 0; i < 3; i++) {
+        ping_device& dev = pingDevice[i]; // Reference the real item
+
+        if (checkackID(dev.devAdd)) {
+            memset(&dev, 0, sizeof(dev));
+#ifdef DEBUG_ON
+            printf("Ping ID %d found and removed\n", dev.devAdd);
+#endif
+            return 1; // No need to ping if ACK received
+        }
+
+        if (dev.pingCount < maxTransmissions) {
+            dev.pingCount++;
+            ping(dev.devAdd, dev.modAdd);
+        }
+    }
+
+    return 0;
+}
+
+bool
+FLOCBufferManager::check_pinglist(
+    void
+){
+    if (pingDevice[0].devAdd != 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 
 // retransmit and remove from vector
 int
@@ -240,6 +281,17 @@ FLOCBufferManager::checkackID(
     }
 }
 
+void
+FLOCBufferManager::add_pinglist(
+    uint8_t index,
+    uint16_t devAdd,
+    uint8_t modAdd
+){
+    pingDevice[index].devAdd = devAdd;
+    pingDevice[index].modAdd = modAdd;
+    pingDevice[index].pingCount = 0;
+}
+
 extern Service bufferServiceDesc;
 
 void
@@ -269,3 +321,4 @@ bufferService(
         }
     }
 }
+

@@ -51,12 +51,39 @@ NeighborManager {
         rangeTimeout(
             void
         );
+
+        void 
+        update_neighbors(
+            uint16_t devAdd,
+            uint16_t range
+        );
+
     private:
         uint64_t lastUpdateTime = 0;
-        const uint64_t updateInterval = 300000; // 300 seconds
+        const uint64_t updateInterval = (60*60*1000); // 1 hour
 
         Neighbor neighbors[MAX_NEIGHBORS];
 
+        void 
+        ping_recent_neighbors(
+            void
+        );
+
+        void 
+        start_ranging(
+            void
+        );
+
+        void 
+        get_top_3(
+            Neighbor *rec_neighbors[3]
+        );
+
+        static int 
+        compare_recent(
+            const void *a, 
+            const void *b
+        );
 
         int 
         check_for_neighbors(

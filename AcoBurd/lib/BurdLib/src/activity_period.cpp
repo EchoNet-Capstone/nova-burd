@@ -80,3 +80,4 @@ is_activity_period_open(
 ){
     return get_activity_state() == SENDING;
 }
+
