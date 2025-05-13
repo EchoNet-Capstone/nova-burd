@@ -386,8 +386,18 @@ displayService(
     displayServiceDesc.busy = false;
 
     static bool changed = false;
+    
     static int old_modem_id = 257;
     static int old_motor_status = -1;
+    static int old_battery_pct = -1;
+
+    if (old_battery_pct != get_battery_percent()){
+        old_battery_pct == get_battery_percent();
+
+        draw_battery_pct();
+
+        changed = true;
+    }
 
     if (old_modem_id != get_modem_id()){
         old_modem_id = get_modem_id();
@@ -404,8 +414,6 @@ displayService(
 
         changed = true;
     }
-
-    getBatteryVoltage();
 
     if(changed){
         oled.display();
