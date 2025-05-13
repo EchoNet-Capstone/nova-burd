@@ -392,7 +392,7 @@ displayService(
     static int old_battery_pct = -1;
 
     if (old_battery_pct != get_battery_percent()){
-        old_battery_pct == get_battery_percent();
+        old_battery_pct = get_battery_percent();
 
         draw_battery_pct();
 
@@ -419,6 +419,8 @@ displayService(
         oled.display();
 
         displayServiceDesc.busy = true;
+
+        changed = false;
     }
 }
 
