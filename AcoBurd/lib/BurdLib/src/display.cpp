@@ -1,4 +1,3 @@
-#include <CubeCell_NeoPixel.h>
 #include <HT_SSD1306Wire.h>
 
 #include "safe_arduino.hpp"
