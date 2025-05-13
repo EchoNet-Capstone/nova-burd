@@ -55,6 +55,13 @@ Service displayServiceDesc = {
     false
 };
 
+Service loraServiceDesc = {
+    loraService,
+    0,
+    0,
+    false
+};
+
 #ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
 Service nestSerialServiceDesc = {
     nestSerialService,
@@ -74,9 +81,14 @@ static Service* allServices[] = {
     &modemServiceDesc,
     &activityServiceDesc,
     &bufferServiceDesc,
+
+#ifndef RECV_SERIAL_NEST // !RECV_SERIAL_NEST
     &motorServiceDesc,
+#endif // !RECV_SERIAL_NEST
+
     &neighborServiceDesc,
-    &displayServiceDesc
+    &displayServiceDesc,
+    // &loraServiceDesc
 };
 
 static constexpr size_t numServices = sizeof(allServices) / sizeof(allServices[0]);

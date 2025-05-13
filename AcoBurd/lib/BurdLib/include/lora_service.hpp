@@ -1,11 +1,11 @@
 #pragma once
 
 void
-wakeUp(
+loraService(
     void
 );
 
 void
-goToSleep(
+lora_init(
     void
 );

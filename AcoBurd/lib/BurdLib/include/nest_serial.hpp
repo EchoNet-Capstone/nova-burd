@@ -7,8 +7,7 @@
 void
 packet_received_nest(
     uint8_t* packetBuffer,
-    uint8_t size,
-    DeviceAction_t* da
+    uint8_t size
 );
 
 void

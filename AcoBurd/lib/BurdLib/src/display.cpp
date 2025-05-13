@@ -296,8 +296,11 @@ draw_main_screen(
     draw_modem_id();
     draw_device_id();
     draw_network_id();
-    draw_motor_status();
+
+#ifndef RECV_SERIAL_NEST // !RECV_SERIAL_NEST
     draw_battery_pct();
+    draw_motor_status();
+#endif // !RECV_SERIAL_NEST
 
     oled.display();
 }
@@ -386,19 +389,20 @@ displayService(
     static int old_motor_status = -1;
     static int old_battery_pct = -1;
 
-    if (old_battery_pct != get_battery_percent()){
-        old_battery_pct = get_battery_percent();
-
-        draw_battery_pct();
-
-        changed = true;
-    }
-
     if (old_modem_id != get_modem_id()){
         old_modem_id = get_modem_id();
 
         draw_modem_id();
         
+        changed = true;
+    }
+
+#ifndef RECV_SERIAL_NEST // !RECV_SERIAL_NEST
+    if (old_battery_pct != get_battery_percent()){
+        old_battery_pct = get_battery_percent();
+
+        draw_battery_pct();
+
         changed = true;
     }
 
@@ -409,6 +413,7 @@ displayService(
 
         changed = true;
     }
+#endif // !RECV_SERIAL_NEST
 
     if(changed){
         oled.display();

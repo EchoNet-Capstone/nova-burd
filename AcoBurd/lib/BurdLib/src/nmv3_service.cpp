@@ -25,12 +25,18 @@ void
 modemService(
     void
 ){
+    static bool in_frame = false;
+
     modemServiceDesc.busy = false;
 
     ParseResult r;
 
     while (modem_connection.available() > 0) {
         char modem_char = modem_connection.read();
+
+        #ifdef DEBUG_ON // DEBUG_ON
+            Serial.printf("Read char: %c\r\n", modem_char);
+        #endif // DEBUG_ON
 
         // Check for <CR><LF> sequence
         if (modem_char == '\n' && packetBuffer_modem_idx > 0 && packetBuffer_modem[packetBuffer_modem_idx - 1] == '\r') {
@@ -76,15 +82,34 @@ modemService(
     
             memset(packetBuffer_modem, 0 , sizeof(packetBuffer_modem)); // Clear the buffer
             packetBuffer_modem_idx = 0;
+
+            in_frame = false;
         } else {
             if (packetBuffer_modem_idx >= sizeof(packetBuffer_modem)) {
                 // Some error has occurred, clear the packet
                 memset(packetBuffer_modem, 0 , sizeof(packetBuffer_modem));
                 packetBuffer_modem_idx = 0;
             }
+
+            #ifdef DEBUG_ON // DEBUG_ON
+                Serial.printf("Index start %i\r\n", packetBuffer_modem_idx);
+            #endif // DEBUG_ON
             // Append character to the buffer
-            packetBuffer_modem[packetBuffer_modem_idx] = modem_char;
-            packetBuffer_modem_idx++;
+
+            if (!in_frame && (modem_char == '$' || modem_char == '#')){
+                in_frame = true;
+            #ifdef DEBUG_ON // DEBUG_ON
+                Serial.printf("In frame\r\n");
+            #endif // DEBUG_ON
+            } 
+            
+            if (in_frame){
+            #ifdef DEBUG_ON // DEBUG_ON
+                Serial.printf("add char\r\n");
+            #endif // DEBUG_ON
+                packetBuffer_modem[packetBuffer_modem_idx] = modem_char;
+                packetBuffer_modem_idx++;
+            }
         }
 
         modemServiceDesc.busy = true;
@@ -104,11 +129,16 @@ nmv3_init(
 
     delay(100);
 
-    uint16_t t_device_id = EEPROM_getDeviceID();
-    uint16_t t_network_id = EEPROM_getNetworkID();
+#ifdef RECV_SERIAL_NEST
+    uint16_t t_device_id = 0x0001;
+#else
+    uint16_t t_device_id = 0x0002;
+#endif
+
+    uint16_t t_network_id = 0x0001;
 
     set_device_id(t_device_id);
-    set_network_id(t_device_id);
+    set_network_id(t_network_id);
 
 #ifdef DEBUG_ON // DEBUG_ON
     Serial.printf("Got DID, NID. Setting Modem ID...\r\n");

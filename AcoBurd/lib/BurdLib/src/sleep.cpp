@@ -3,26 +3,22 @@
 #include "display.hpp"
 
 void
-goToSleep(
-
+wakeUp(
+    void
 ){
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("Going to sleep...\r\n");
-    delay(1000);
-#endif
+    VextON();
+    delay(100);
 
+    oled_wakeup();
+}
+
+void
+goToSleep(
+    void
+){
     oled_sleep();
 
     VextOFF();
 
     lowPowerHandler();
-
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.print("Waking up....\r\n");
-#endif
-
-    VextON();
-    delay(100);
-
-    oled_wakeup();
 }

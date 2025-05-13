@@ -7,6 +7,7 @@
 #include <burd_EEPROM.hpp>
 #include <device_actions.hpp>
 #include <display.hpp>
+#include <lora_service.hpp>
 #include <motor.hpp>
 #include <nest_serial.hpp>
 #include <nmv3_service.hpp>
@@ -32,8 +33,11 @@ setup(
 
     if(EEPROM_getDeviceIdNetworkIdSet() != 0x01) {
         // TODO: wait for device id's to come in through serial and display this on the device's screen
-    
-        EEPROM_setDeviceIdNetworkId((uint16_t) 0x0001, (uint16_t) 0x00001);
+    #ifdef RECV_SERIAL_NEST
+        EEPROM_setDeviceIdNetworkId((uint16_t) 0x0001, (uint16_t) 0x0001);
+    #else
+        EEPROM_setDeviceIdNetworkId((uint16_t) 0x0002, (uint16_t) 0x0001);
+    #endif
     }
 
 #ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
@@ -42,9 +46,13 @@ setup(
 
     nmv3_init();
 
+    // lora_init();
+
     activitity_init();
 
+#ifndef RECV_SERIAL_NEST // !RECV_SERIAL_NEST
     motor_init();
+#endif // !RECV_SERIAL_NEST
 
     display_init();
 
@@ -81,7 +89,19 @@ loop(
         anyBusy |= s->busy;
     }
 
-    if (!anyBusy) {
-        goToSleep();
-    }
+#ifndef RECV_SERIAL_NEST // !RECV_SERIAL_NEST
+    // if (!anyBusy) {
+    // #ifdef DEBUG_ON // DEBUG_ON
+    //     Serial.printf("Going to sleep...\r\n");
+    // #endif
+    
+    //     goToSleep();
+    
+    // #ifdef DEBUG_ON // DEBUG_ON
+    //     Serial.print("Waking up....\r\n");
+    // #endif
+        
+    //     wakeUp();
+    // }
+#endif // !RECV_SERIAL_NEST
 }
