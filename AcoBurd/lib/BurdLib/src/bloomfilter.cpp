@@ -4,7 +4,6 @@
  * 
  * */
 #include "bloomfilter.hpp"
-#include <bits/stdc++.h>
 
 #define BLOOM_FILTER_BITS 64
 #define BLOOM_FILTER_BYTES (BLOOM_FILTER_BITS / 8)

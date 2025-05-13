@@ -1,8 +1,6 @@
 #pragma once
 
-#include <bits/stdc++.h>
-
-
+#include <stdint.h>
 
 uint32_t 
 hash_packet_buffer(
