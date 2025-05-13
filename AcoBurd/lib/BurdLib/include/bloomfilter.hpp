@@ -8,14 +8,11 @@ hash_packet_buffer(
     uint8_t size
 );
 
-
-
 bool 
 bloom_check_packet(
     uint8_t* packetBuffer,
      uint8_t size
 );
-
 
 void bloom_add_packet(
     uint8_t* packetBuffer,
@@ -29,4 +26,4 @@ bloom_add(
 
 void maybe_reset_bloom_filter(
     void
-) ;
+);

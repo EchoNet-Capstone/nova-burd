@@ -3,12 +3,15 @@
 #include <floc.hpp>
 #include <nmv3_api.hpp>
 
+#include "bloomfilter.hpp"
 #include "burd_EEPROM.hpp"
 #include "device_actions.hpp"
 #include "display.hpp"
 #include "globals.hpp"
-#include "nmv3_service.hpp"
+#include "neighbor.hpp"
 #include "services.hpp"
+
+#include "nmv3_service.hpp"
 
 extern Service modemServiceDesc;
 
@@ -34,7 +37,18 @@ modemService(
             // Remove the <CR> from the buffer
             packetBuffer_modem[packetBuffer_modem_idx - 1] = 0;
 
-            r = packet_received_modem(packetBuffer_modem, packetBuffer_modem_idx - 1);
+            uint8_t packet_size = packetBuffer_modem_idx - 1;
+
+            if (bloom_check_packet(packetBuffer_modem, packet_size)) {
+            #ifdef DEBUG_ON
+                Serial.printf("Duplicate packet (raw hash), dropping.\n");
+            #endif
+            }
+                
+            maybe_reset_bloom_filter();
+            bloom_add_packet(packetBuffer_modem, packet_size);
+
+            r = packet_received_modem(packetBuffer_modem, packet_size);
             
             // Packet Received Parse the response;
             switch (r.type) {
@@ -47,6 +61,8 @@ modemService(
                     break;
                 case PING_RESP_TYPE:
                     // TODO: Handle ping response
+
+                    neighborManager.update_neighbors(r.ping.src_addr, r.ping.meter_range);
                     break;
                 case STATUS_QUERY_TYPE:
                     // TODO: handle status query response
