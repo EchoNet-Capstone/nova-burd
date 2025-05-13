@@ -106,13 +106,16 @@ const uint8_t vertSep2[] = { 95, 38, 25 };
 
 const uint8_t bottomLine[] = {0, 38, 128 };
 
+#define TEXT_BUFF_SIZE 40
+
 typedef struct TextArea_t {
     const uint8_t x;
     const uint8_t y;
     const uint8_t* font;
     const uint8_t clearOffsetY;
-    String currentText;
-    uint8_t width; // Maximum expected width or 0 for auto-calculate
+    const uint8_t width; // Maximum expected width or 0 for auto-calculate
+    char currentText[TEXT_BUFF_SIZE];
+    char newText[TEXT_BUFF_SIZE];
 };
 
 TextArea_t batteryText = {
@@ -120,8 +123,9 @@ TextArea_t batteryText = {
     .y = 3,
     .font = ArialMT_Plain_16,
     .clearOffsetY = 0,
-    .currentText = "",
-    .width = 0
+    .width = 0,
+    .currentText = {0},
+    .newText = {0}
 };
 
 TextArea_t modemIdText = {
@@ -129,8 +133,9 @@ TextArea_t modemIdText = {
     .y = 25,
     .font = ArialMT_Plain_10,
     .clearOffsetY = 1,
-    .currentText = "",
-    .width = 0
+    .width = 0,
+    .currentText = {0},
+    .newText = {0}
 };
 
 TextArea_t motorStatusText = {
@@ -138,8 +143,9 @@ TextArea_t motorStatusText = {
     .y = 25,
     .font = ArialMT_Plain_10,
     .clearOffsetY = 1,
-    .currentText = "",
-    .width = 0
+    .width = 0,
+    .currentText = {0},
+    .newText = {0}
 };
 
 TextArea_t networkIdText = {
@@ -147,8 +153,9 @@ TextArea_t networkIdText = {
     .y = 39,
     .font = ArialMT_Plain_10,
     .clearOffsetY = 0,
-    .currentText = "",
-    .width = 0
+    .width = 0,
+    .currentText = {0},
+    .newText = {0}
 };
 
 TextArea_t deviceIdText = {
@@ -156,23 +163,22 @@ TextArea_t deviceIdText = {
     .y = 51,
     .font = ArialMT_Plain_10,
     .clearOffsetY = 1,
-    .currentText = "",
-    .width = 0
+    .width = 0,
+    .currentText = {0},
+    .newText = {0}
 };
-
 
 SSD1306Wire oled(0x3c, 500000, SDA, SCL, GEOMETRY_128_64, GPIO10); // addr , freq , SDA, SCL, resolution , rst
 
 void
 updateTextArea(
-    TextArea_t& area, 
-    String newText
+    TextArea_t& area
 ){
     int clearWidth = area.width;
 
     if( clearWidth == 0 ){
         int oldWidth = oled.getStringWidth(area.currentText);
-        int newWidth = oled.getStringWidth(newText);
+        int newWidth = oled.getStringWidth(area.newText);
 
         clearWidth = (oldWidth > newWidth) ? oldWidth : newWidth;
     }
@@ -186,184 +192,89 @@ updateTextArea(
 
     oled.setColor(WHITE);
     oled.setFont(area.font);
-    oled.drawString(area.x, area.y, newText);
+    oled.drawString(area.x, area.y, area.newText);
 
-    area.currentText = newText;
+    strcpy(area.currentText, area.newText);
 }
 
 void
 draw_battery_pct(
     void
 ){
-    String batteryTextStr = "Battery: " + String(get_battery_percent(), DEC) + "%";
+    memset(batteryText.newText, 0, TEXT_BUFF_SIZE);
 
-    updateTextArea(batteryText, batteryTextStr);
+    sprintf(batteryText.newText, "Battery: %d%%", get_battery_percent());
+
+    updateTextArea(batteryText);
 }
 
 void
 draw_modem_id(
     void
 ){
-    String modemIdStr = "";
+    memset(modemIdText.newText, 0, TEXT_BUFF_SIZE);
 
     if(get_modem_id_set()){
-        modemIdStr = "Modem ID: " + String(get_modem_id(), DEC);
+        sprintf(modemIdText.newText, "Modem ID: %d", get_modem_id());
     }else{
-        modemIdStr = "Modem ID: UKN";
+        sprintf(modemIdText.newText, "Modem ID: UKN");
     }
 
-    updateTextArea(modemIdText, modemIdStr);
+    updateTextArea(modemIdText);
 }
 
 void
 draw_motor_status(
     void
 ){
-    String motorStatus = "";
+    memset(motorStatusText.newText, 0, TEXT_BUFF_SIZE);
 
     switch(get_motor_status()){
         case STOPPED:
-            motorStatus = "Stopped";
+            sprintf(motorStatusText.newText, "Stopped");
             break;
 
         case RUNNING:
-            motorStatus = "Running";
+            sprintf(motorStatusText.newText, "Running");
             break;
 
         case WIGGLING:
-            motorStatus = "Wiggling";
+            sprintf(motorStatusText.newText, "Wiggling");
             break;
 
         default:
-            motorStatus = "Unknown";
+            sprintf(motorStatusText.newText, "Unknown");
             break;
     }
 
-    updateTextArea(motorStatusText, motorStatus);
-}
-
-// Format the device ID as a hex string
-String 
-idFormat(
-    uint16_t id
-){
-    String idStr = "";
-    
-    // High byte with leading zero if needed
-    uint8_t highByte = (id >> 8) & 0xFF;
-    if (highByte < 0x10) idStr += "0";
-    idStr += String(highByte, HEX);
-    
-    idStr += "_";
-    
-    // Low byte with leading zero if needed
-    uint8_t lowByte = id & 0xFF;
-    if (lowByte < 0x10) idStr += "0";
-    idStr += String(lowByte, HEX);
-    
-    return idStr;
+    updateTextArea(motorStatusText);
 }
 
 void
 draw_device_id(
     void
 ){
-    String deviceIdStr = "Device ID: " + idFormat(get_device_id());
+    memset(deviceIdText.newText, 0, TEXT_BUFF_SIZE);
 
-    updateTextArea(deviceIdText, deviceIdStr);
+    uint16_t deviceId = get_device_id();
+
+    sprintf(deviceIdText.newText, "Device ID:   %02X_%02X", (uint8_t) ((deviceId >> 8) & 0xFF), (uint8_t) (deviceId & 0xFF));
+
+    updateTextArea(deviceIdText);
 }
 
 void
 draw_network_id(
     void
 ){
-    String networkIdStr = "Network ID: " + idFormat(get_network_id());
+    memset(networkIdText.newText, 0, TEXT_BUFF_SIZE);
 
-    updateTextArea(networkIdText, networkIdStr);
+    uint16_t networkId = get_network_id();
+
+    sprintf(networkIdText.newText, "Network ID: %02X_%02X", (uint8_t) ((networkId >> 8) & 0xFF), (uint8_t) (networkId & 0xFF));
+
+    updateTextArea(networkIdText);
 }
-
-/*void
-display_modem_packet_data(
-    String packetBuffer
-){
-        oled.drawString(0, 20, "  Packet : " + packetBuffer);
-        oled.display();
-}*/
-
-void
-display_modem_packet_data(
-    uint8_t *packetBuffer,
-    uint8_t size
-){
-    char hexString[size * 2 + 1] = {0};  // 2 chars per byte + null terminator
-    for (size_t i = 0; i < size; ++i) {
-        snprintf(hexString + (i * 2), 3, "%02X", packetBuffer[i]);
-    }
-
-    oled.drawString(0, 20, hexString);
-    oled.display();
-}
-
-/*
-void
-update_display(
-    void
-){
-    // Time until release
-    set_time_until_release(get_release_timer() - InternalClock());
-
-    if(get_time_until_release() < 0){
-        set_time_until_release(0);
-    }
-
-    int release_days = get_time_until_release() / 86400;
-    int release_hours = (get_time_until_release() - (release_days * 86400) ) / 3600;
-    int release_minutes = (get_time_until_release() - (release_days * 86400) - (release_hours * 3600) ) / 60;
-    int release_seconds = (get_time_until_release() - (release_days * 86400) - (release_hours * 3600) - (release_minutes * 60) );
-
-    // 9 pixel height works well for line spacing
-    oled_wake();
-    oled.clear();
-    oled.setFont(ArialMT_Plain_10);
-    oled.drawString(0, 0, "Battery: " + (String)get_battery_percent() + "%");
-
-    draw_gps_string();
-
-    if(get_time_until_release() > 0){
-        draw_main_view(release_days, release_hours, release_minutes, release_seconds);
-    }
-    else{
-        draw_secondary_view();
-    }
-
-    // Reset font back to small
-    oled.setFont(ArialMT_Plain_10);
-
-    oled.display();
-}
-
-void
-rgb_led(
-    uint8_t red,
-    uint8_t green,
-    uint8_t blue
-){
-    if((red > 0) || (green > 0) || (blue > 0)){
-        //VextON();
-        rgbpixel.begin(); // INITIALIZE RGB strip object (REQUIRED)
-        rgbpixel.clear(); // Set all pixel colors to 'off'
-        rgbpixel.setPixelColor(0, rgbpixel.Color(red, green, blue));
-        // Send the updated pixel colors to the hardware.
-        rgbpixel.show();
-    }
-    else{
-        rgbpixel.begin(); // INITIALIZE RGB strip object (REQUIRED)
-        rgbpixel.setPixelColor(0, rgbpixel.Color(red, green, blue));
-        //rgbpixel.clear(); // Set all pixel colors to 'off'
-        // Send the updated pixel colors to the hardware.
-        rgbpixel.show();
-    }
-}*/
 
 void
 draw_main_screen(
@@ -494,7 +405,112 @@ displayService(
         changed = true;
     }
 
+    getBatteryVoltage();
+
     if(changed){
         oled.display();
+
+        displayServiceDesc.busy = true;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+void
+update_display(
+    void
+){
+    // Time until release
+    set_time_until_release(get_release_timer() - InternalClock());
+
+    if(get_time_until_release() < 0){
+        set_time_until_release(0);
+    }
+
+    int release_days = get_time_until_release() / 86400;
+    int release_hours = (get_time_until_release() - (release_days * 86400) ) / 3600;
+    int release_minutes = (get_time_until_release() - (release_days * 86400) - (release_hours * 3600) ) / 60;
+    int release_seconds = (get_time_until_release() - (release_days * 86400) - (release_hours * 3600) - (release_minutes * 60) );
+
+    // 9 pixel height works well for line spacing
+    oled_wake();
+    oled.clear();
+    oled.setFont(ArialMT_Plain_10);
+    oled.drawString(0, 0, "Battery: " + (String)get_battery_percent() + "%");
+
+    draw_gps_string();
+
+    if(get_time_until_release() > 0){
+        draw_main_view(release_days, release_hours, release_minutes, release_seconds);
+    }
+    else{
+        draw_secondary_view();
+    }
+
+    // Reset font back to small
+    oled.setFont(ArialMT_Plain_10);
+
+    oled.display();
+}
+
+void
+rgb_led(
+    uint8_t red,
+    uint8_t green,
+    uint8_t blue
+){
+    if((red > 0) || (green > 0) || (blue > 0)){
+        //VextON();
+        rgbpixel.begin(); // INITIALIZE RGB strip object (REQUIRED)
+        rgbpixel.clear(); // Set all pixel colors to 'off'
+        rgbpixel.setPixelColor(0, rgbpixel.Color(red, green, blue));
+        // Send the updated pixel colors to the hardware.
+        rgbpixel.show();
+    }
+    else{
+        rgbpixel.begin(); // INITIALIZE RGB strip object (REQUIRED)
+        rgbpixel.setPixelColor(0, rgbpixel.Color(red, green, blue));
+        //rgbpixel.clear(); // Set all pixel colors to 'off'
+        // Send the updated pixel colors to the hardware.
+        rgbpixel.show();
+    }
+}*/
+
+/*void
+display_modem_packet_data(
+    String packetBuffer
+){
+        oled.drawString(0, 20, "  Packet : " + packetBuffer);
+        oled.display();
+}*/
+
+// void
+// display_modem_packet_data(
+//     uint8_t *packetBuffer,
+//     uint8_t size
+// ){
+//     char hexString[size * 2 + 1] = {0};  // 2 chars per byte + null terminator
+//     for (size_t i = 0; i < size; ++i) {
+//         snprintf(hexString + (i * 2), 3, "%02X", packetBuffer[i]);
+//     }
+
+//     oled.drawString(0, 20, hexString);
+//     oled.display();
+// }

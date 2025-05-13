@@ -217,7 +217,7 @@ wiggleState(
             break;
         case WIGGLE_BACK:
             if(!get_is_motor_running()){
-                #ifdef DEBUG_ON // DEBUG_ON
+            #ifdef DEBUG_ON // DEBUG_ON
                 Serial.printf("Starting wiggle back at pos=%d, home=%d\r\n", 
                     wrappedPos(), 
                     get_wiggle_start_pos());
@@ -264,14 +264,14 @@ motorService(
     int target = get_motor_target();
     int remain = diff(pos, target);
 
-#ifdef DEBUG_ON // DEBUG_ON
-    debugMotorService(
-        pos,
-        target,
-        remain,
-        settle
-    );
-#endif // DEBUG_ON
+// #ifdef DEBUG_ON // DEBUG_ON
+//     debugMotorService(
+//         pos,
+//         target,
+//         remain,
+//         settle
+//     );
+// #endif // DEBUG_ON
 
     if (pos != target && settle == 0) {
         if (get_wiggle_state() == WIGGLE_OFF){
