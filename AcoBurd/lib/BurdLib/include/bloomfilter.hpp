@@ -26,3 +26,7 @@ void
 bloom_add(
     uint32_t key
 );
+
+void maybe_reset_bloom_filter(
+    void
+) ;

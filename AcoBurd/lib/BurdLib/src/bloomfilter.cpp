@@ -1,9 +1,19 @@
 /* 
  * The purpose of this is to reduce overhead and allow the device to 
  * filter out messages it has already seen
+ * Uses the size and packetbuffer to create a hash
  * 
+ * There is around a 15% false positive rate
+ * if you want to reduce this, increase the size of the bloom filter or add 3rd hash
+ * this is at the risk of memory and CPU usage (which we are trying to avoid)
+ * 
+ * ~15-20 unique entries per bloom filter
+ * 
+ * Also if you want to increase accuracy you can reset the bloom filter
+ * every 5-10 minutes?
  * */
 #include "bloomfilter.hpp"
+#include "globals.hpp"
 
 #define BLOOM_FILTER_BITS 64
 #define BLOOM_FILTER_BYTES (BLOOM_FILTER_BITS / 8)
@@ -65,4 +75,23 @@ bloom_add(
 ) {
     bloom_filter[hash1(key) / 8] |= (1 << (hash1(key) % 8));
     bloom_filter[hash2(key) / 8] |= (1 << (hash2(key) % 8));
+}
+
+// MAYBE ADD
+
+#define BLOOM_RESET_INTERVAL_MS 5 * 60 * 1000 // 5 mins
+
+unsigned long last_reset = 0;
+
+void bloom_reset(void) {
+    memset(bloom_filter, 0, sizeof(bloom_filter));
+}
+
+void maybe_reset_bloom_filter(
+    void
+) {
+    if (millis() - last_reset > BLOOM_RESET_INTERVAL_MS) {
+        bloom_reset();
+        last_reset = millis();
+    }
 }
