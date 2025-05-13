@@ -31,6 +31,7 @@ class NeighborManager {
         void clear_neighbors();
         void timeout_neighbors();
         int  rangeTimeout();
+        void update_neighbors(uint16_t devAdd, uint16_t range);
     private:
         int check_for_neighbors(uint16_t dev_add);
         uint64_t lastUpdateTime = 0;

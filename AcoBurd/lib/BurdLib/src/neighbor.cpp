@@ -212,7 +212,19 @@ NeighborManager::start_ranging(
 
 }
 
-
+// ikykyk
+void
+NeighborManager::update_neighbors(
+    uint16_t devAdd,
+    uint16_t range
+) {
+    for (int i = 0; i < MAX_NEIGHBORS; i++) {
+        if (neighbors[i].devAdd == devAdd) {
+            neighbors[i].range = range;
+            neighbors[i].lastSeen = millis(); // update timestamp
+        }
+    }
+}
 
 // helper functions
 
