@@ -89,6 +89,11 @@ FLOCBufferManager {
             uint8_t ackID
         );
 
+        bool
+        check_pinglist(
+            void
+        );
+
 
         ping_device pingDevice[3];;
 

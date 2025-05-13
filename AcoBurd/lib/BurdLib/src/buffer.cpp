@@ -63,6 +63,10 @@ int
 FLOCBufferManager::queuehandler(
     void
 ){
+    if (check_pinglist()) {
+        ping_handler();
+    }
+
     if(!retransmissionBuffer.empty()) {
     #ifdef DEBUG_ON // DEBUG_ON
         printf("Retransmission buffer is not empty\n");
@@ -117,6 +121,7 @@ FLOCBufferManager::checkqueueStatus(
     }
 }
 
+// this will send out all the pings
 int
 FLOCBufferManager::ping_handler(
     void
@@ -140,6 +145,19 @@ FLOCBufferManager::ping_handler(
 
     return 0;
 }
+
+bool
+FLOCBufferManager::check_pinglist(
+    void
+){
+    if (pingDevice[0].devAdd != 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+
 // retransmit and remove from vector
 int
 FLOCBufferManager::retransmission_handler(
