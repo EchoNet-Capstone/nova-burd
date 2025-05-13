@@ -5,9 +5,12 @@
 
 #include <stdio.h>
 
+#include <floc.hpp>
 #include <nmv3_api.hpp>
 
+#include "device_state.hpp"
 #include "display.hpp"
+#include "motor.hpp"
 #include "services.hpp"
 
 #define NR_diagonal_width 16
@@ -93,16 +96,6 @@ const uint8_t logoCircle[] = { 12, 12, 12 };
 
 const uint8_t echoNetLogoPos[] = { 100, 40 };
 
-const uint8_t batteryPos[] = { 28, 3 };
-
-const uint8_t modemIDPos[] = { 0, 25 };
-
-const uint8_t motorStatusPos[] = { 84, 25 };
-
-const uint8_t networkIDPos[] = { 0, 39 };
-
-const uint8_t deviceIDPos[]  = { 0, 51 };
-
 const uint8_t logoRightBorder[] = { 25, 0, 25};
 
 const uint8_t topLine[] = {0, 25, 128 };
@@ -113,58 +106,180 @@ const uint8_t vertSep2[] = { 95, 38, 25 };
 
 const uint8_t bottomLine[] = {0, 38, 128 };
 
+typedef struct TextArea_t {
+    const uint8_t x;
+    const uint8_t y;
+    const uint8_t* font;
+    const uint8_t clearOffsetY;
+    String currentText;
+    uint8_t width; // Maximum expected width or 0 for auto-calculate
+};
+
+TextArea_t batteryText = {
+    .x = 28,
+    .y = 3,
+    .font = ArialMT_Plain_16,
+    .clearOffsetY = 0,
+    .currentText = "",
+    .width = 0
+};
+
+TextArea_t modemIdText = {
+    .x = 0,
+    .y = 25,
+    .font = ArialMT_Plain_10,
+    .clearOffsetY = 1,
+    .currentText = "",
+    .width = 0
+};
+
+TextArea_t motorStatusText = {
+    .x = 84,
+    .y = 25,
+    .font = ArialMT_Plain_10,
+    .clearOffsetY = 1,
+    .currentText = "",
+    .width = 0
+};
+
+TextArea_t networkIdText = {
+    .x = 0,
+    .y = 39,
+    .font = ArialMT_Plain_10,
+    .clearOffsetY = 0,
+    .currentText = "",
+    .width = 0
+};
+
+TextArea_t deviceIdText = {
+    .x = 0,
+    .y = 51,
+    .font = ArialMT_Plain_10,
+    .clearOffsetY = 1,
+    .currentText = "",
+    .width = 0
+};
+
+
 SSD1306Wire oled(0x3c, 500000, SDA, SCL, GEOMETRY_128_64, GPIO10); // addr , freq , SDA, SCL, resolution , rst
 
 void
-VextON(
-    void
+updateTextArea(
+    TextArea_t& area, 
+    String newText
 ){
-    pinMode(Vext, OUTPUT);
-    digitalWrite(Vext, LOW);
-}
+    int clearWidth = area.width;
 
-void
-VextOFF(
-    void
-){
-    pinMode(Vext, OUTPUT);
-    digitalWrite(Vext, HIGH);
-}
+    if( clearWidth == 0 ){
+        int oldWidth = oled.getStringWidth(area.currentText);
+        int newWidth = oled.getStringWidth(newText);
 
-void
-oled_sleep(
-    void
-){
-    oled.sleep();
-}
-
-// Wake up display
-void
-oled_wake(
-    void
-){
-    VextON();
-    oled.wakeup();
-}
-
-void
-display_modem_id(
-    void
-){
-    if(get_modem_id_set()){
-        oled.drawString(0, 0, "  Modem ID : " + String(get_modem_id(), DEC));
-    }else{
-        oled.drawString(0, 0, "  Modem ID : UNKNOWN");
+        clearWidth = (oldWidth > newWidth) ? oldWidth : newWidth;
     }
 
-    oled.display();
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Clearing rect of width %d\r\n", clearWidth);
+#endif
+
+    oled.setColor(BLACK);
+    oled.fillRect(area.x, area.y + area.clearOffsetY, clearWidth, area.font[1] - area.clearOffsetY);
+
+    oled.setColor(WHITE);
+    oled.setFont(area.font);
+    oled.drawString(area.x, area.y, newText);
+
+    area.currentText = newText;
 }
 
 void
-display_devicd_id(
+draw_battery_pct(
     void
 ){
+    String batteryTextStr = "Battery: " + String(get_battery_percent(), DEC) + "%";
 
+    updateTextArea(batteryText, batteryTextStr);
+}
+
+void
+draw_modem_id(
+    void
+){
+    String modemIdStr = "";
+
+    if(get_modem_id_set()){
+        modemIdStr = "Modem ID: " + String(get_modem_id(), DEC);
+    }else{
+        modemIdStr = "Modem ID: UKN";
+    }
+
+    updateTextArea(modemIdText, modemIdStr);
+}
+
+void
+draw_motor_status(
+    void
+){
+    String motorStatus = "";
+
+    switch(get_motor_status()){
+        case STOPPED:
+            motorStatus = "Stopped";
+            break;
+
+        case RUNNING:
+            motorStatus = "Running";
+            break;
+
+        case WIGGLING:
+            motorStatus = "Wiggling";
+            break;
+
+        default:
+            motorStatus = "Unknown";
+            break;
+    }
+
+    updateTextArea(motorStatusText, motorStatus);
+}
+
+// Format the device ID as a hex string
+String 
+idFormat(
+    uint16_t id
+){
+    String idStr = "";
+    
+    // High byte with leading zero if needed
+    uint8_t highByte = (id >> 8) & 0xFF;
+    if (highByte < 0x10) idStr += "0";
+    idStr += String(highByte, HEX);
+    
+    idStr += "_";
+    
+    // Low byte with leading zero if needed
+    uint8_t lowByte = id & 0xFF;
+    if (lowByte < 0x10) idStr += "0";
+    idStr += String(lowByte, HEX);
+    
+    return idStr;
+}
+
+void
+draw_device_id(
+    void
+){
+    String deviceIdStr = "Device ID: " + idFormat(get_device_id());
+
+    updateTextArea(deviceIdText, deviceIdStr);
+}
+
+void
+draw_network_id(
+    void
+){
+    String networkIdStr = "Network ID: " + idFormat(get_network_id());
+
+    updateTextArea(networkIdText, networkIdStr);
 }
 
 /*void
@@ -272,17 +387,64 @@ draw_main_screen(
     oled.drawXbm(echoNetLogoPos[0], echoNetLogoPos[1], buoy_width, buoy_height, buoy_bits);
 #endif // RECV_SERIAL_NEST
 
-    // text
-    oled.setFont(ArialMT_Plain_16);
-    oled.drawString(batteryPos[0], batteryPos[1], "Battery: 100%");
+    draw_modem_id();
+    draw_device_id();
+    draw_network_id();
+    draw_motor_status();
+    draw_battery_pct();
 
-    oled.setFont(ArialMT_Plain_10);
-    oled.drawString(modemIDPos[0], modemIDPos[1], "Modem ID: 255");
-    oled.drawString(motorStatusPos[0], motorStatusPos[1], "Stopped");
-    oled.drawString(networkIDPos[0], networkIDPos[1], "Network ID: AB_CD");
-    oled.drawString(deviceIDPos[0], deviceIDPos[1], "Device ID: 12_34");
-    
     oled.display();
+}
+
+void
+VextON(
+    void
+){
+    pinMode(Vext, OUTPUT);
+    digitalWrite(Vext, LOW);
+}
+
+void
+VextOFF(
+    void
+){
+    pinMode(Vext, OUTPUT);
+    digitalWrite(Vext, HIGH);
+}
+
+void
+oled_off(
+    void
+){
+    oled.sleep();
+}
+
+void
+oled_on(
+    void
+){
+    oled.wakeup();
+}
+
+void
+oled_sleep(
+    void
+){
+    oled.stop();
+}
+
+void
+oled_wakeup(
+    void
+){
+    oled.connect();
+
+    oled.init();
+    delay(100);
+
+    oled.clear();
+
+    draw_main_screen();
 }
 
 extern Service displayServiceDesc;
@@ -301,8 +463,6 @@ display_init(
     oled.init();
     delay(100);
 
-    oled.wakeup();
-
     oled.clear();
 
     draw_main_screen();
@@ -314,10 +474,27 @@ displayService(
 ){
     displayServiceDesc.busy = false;
 
+    static bool changed = false;
     static int old_modem_id = 257;
+    static int old_motor_status = -1;
 
     if (old_modem_id != get_modem_id()){
         old_modem_id = get_modem_id();
+
+        draw_modem_id();
+        
+        changed = true;
     }
 
+    if (old_motor_status != get_motor_status()){
+        old_motor_status = get_motor_status();
+
+        draw_motor_status();
+
+        changed = true;
+    }
+
+    if(changed){
+        oled.display();
+    }
 }

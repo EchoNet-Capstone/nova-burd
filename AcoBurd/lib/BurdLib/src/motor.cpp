@@ -1,8 +1,10 @@
 #include "safe_arduino.hpp"
+
 #include "device_state.hpp"
 #include "get_set_macros.hpp"
 #include "my_clock.hpp"
 #include "services.hpp"
+
 #include "motor.hpp"
 
 // Motor and Encoder GPIO Setup
@@ -34,6 +36,7 @@ enum WiggleState {
     NUM_WIGGLE_STATES
 };
 
+GET_SET_FUNC_DEF(uint8_t, motor_status, STOPPED)
 GET_SET_FUNC_DEF(int, motor_position, 0)
 GET_SET_FUNC_DEF(int, motor_target, 0)
 GET_SET_FUNC_DEF(bool, is_motor_running, false)
@@ -207,7 +210,7 @@ wiggleState(
                     wrappedPos(), 
                     get_wiggle_start_pos());
             #endif
-                
+
                 newMotorTarget(get_wiggle_start_pos() + WIGGLE_OFFSET);
             }
 
@@ -231,7 +234,7 @@ wiggleState(
                     wrappedPos(), 
                     get_wiggle_start_pos());
             #endif
-
+                
                 newMotorTarget(get_wiggle_start_pos());
             }
 
@@ -250,6 +253,8 @@ motorService(
     static uint32_t settle = 0;
 
     if(get_wiggle_state() != WIGGLE_OFF){
+        set_motor_status(WIGGLING);
+
         wiggleState();
 
         motorServiceDesc.busy = true;
@@ -269,6 +274,10 @@ motorService(
 #endif // DEBUG_ON
 
     if (pos != target && settle == 0) {
+        if (get_wiggle_state() == WIGGLE_OFF){
+            set_motor_status(RUNNING);
+        }
+
         driveToward(remain);
 
         motorServiceDesc.busy = true;
@@ -311,6 +320,8 @@ motorService(
                 break;
         }
 
+        set_motor_status(STOPPED);
+
         settle = 0;
 
         motorServiceDesc.busy = true;
@@ -333,6 +344,8 @@ motor_init(
     pinMode(MOTOR_DRIVER_POWER, OUTPUT);
     pinMode(MOTOR_DRIVER_A, OUTPUT);
     pinMode(MOTOR_DRIVER_B, OUTPUT);
+
+    set_motor_status(STOPPED);
 
     motor_off();
     motor_sleep();

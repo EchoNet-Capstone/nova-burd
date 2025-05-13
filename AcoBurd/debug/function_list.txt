@@ -55,7 +55,13 @@
 # Start Function List #
 #######################
 
-# nmv3_init
+updateTextArea
+draw_device_id
+draw_network_id
+draw_battery_pct
+draw_modem_id
+draw_motor_status
+idFormat
 
 #######################
 #  End Function List  #

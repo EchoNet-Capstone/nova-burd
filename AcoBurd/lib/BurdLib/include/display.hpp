@@ -3,12 +3,32 @@
 #include <stdint.h>
 
 void
+VextON(
+    void
+);
+
+void
+VextOFF(
+    void
+);
+
+void
+oled_off(
+    void
+);
+
+void
+oled_on(
+    void
+);
+
+void
 oled_sleep(
     void
 );
 
 void
-oled_wake(
+oled_wakeup(
     void
 );
 
