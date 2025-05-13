@@ -3,7 +3,7 @@
 #include <safe_arduino.hpp>
 
 #include <activity_period.hpp>
-#include <buffer.hpp>
+#include <buffer_service.hpp>
 #include <burd_EEPROM.hpp>
 #include <device_actions.hpp>
 #include <display.hpp>
@@ -63,7 +63,7 @@ loop(
     static bool print_start_loop = true;
 
     if(print_start_loop){
-        Serial.printf(" Initialization Completed. Starting Services...\r\n");
+        Serial.printf("Initialization Completed. Starting Services...\r\n");
 
         print_start_loop = false;
     }

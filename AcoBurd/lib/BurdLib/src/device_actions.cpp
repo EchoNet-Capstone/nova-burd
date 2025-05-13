@@ -6,7 +6,6 @@
 
 #include "device_state.hpp"
 #include "display.hpp"
-
 #include "motor.hpp"
 
 #include "device_actions.hpp"

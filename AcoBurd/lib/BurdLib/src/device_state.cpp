@@ -1,7 +1,6 @@
 #include <stdlib.h>
 
 #include "get_set_macros.hpp"
-#include "motor.hpp"
 
 #include "device_state.hpp"
 

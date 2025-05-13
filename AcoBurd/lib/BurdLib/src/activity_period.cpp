@@ -13,7 +13,6 @@
 #include "safe_arduino.hpp"
 
 #include <stdint.h>
-#include <stddef.h>
 #include <timer.h>
 
 #include "activity_period.hpp"

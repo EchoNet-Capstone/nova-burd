@@ -21,5 +21,9 @@
     ],
     "build": { 
       "flags": ["-Wall", "-Wextra"]
+    },
+    "dependencies": {
+      "Floc": "*",
+      "Nmv3": "*"
     }
   }

@@ -65,11 +65,6 @@ NeighborManager {
         Neighbor neighbors[MAX_NEIGHBORS];
 
         void 
-        ping_recent_neighbors(
-            void
-        );
-
-        void 
         start_ranging(
             void
         );
@@ -88,11 +83,6 @@ NeighborManager {
         int 
         check_for_neighbors(
             uint16_t dev_add
-        );
-
-        void
-        ping_recent_neighbors(
-            void
         );
 };
 

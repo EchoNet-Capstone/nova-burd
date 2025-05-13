@@ -1,14 +1,16 @@
 #include "safe_arduino.hpp"
+
 #include <stdint.h>
+
+#include <nmv3_api.hpp>
+#include <floc_buffer.hpp>
 
 #include "device_actions.hpp"
 #include "globals.hpp"
 #include "neighbor.hpp"
 #include "services.hpp"
 #include "activity_period.hpp"
-#include "stdlib.h"
-#include "nmv3_api.hpp"
-#include "buffer.hpp"
+
 
 // add to neighbor list and pupulate data
 
@@ -19,7 +21,6 @@ NeighborManager neighborManager;
 #define STALE(a) (a < (60 * 60 * 1000)) // 60 minutes
 #define UNKNOWN 0xFFFF
 #define SEND_AMOUNT 3
-
 
 void 
 NeighborManager::add_neighbor(
