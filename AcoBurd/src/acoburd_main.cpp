@@ -18,6 +18,8 @@ void
 setup(
     void
 ){
+    boardInitMcu();
+
 #ifdef DEBUG_ON // DEBUG_ON
     // Debug messages to USB connection
     Serial.begin(115200, SERIAL_8N1);
@@ -63,10 +65,30 @@ setup(
 #endif
 }
 
+extern volatile bool sleep_requested;
+
 void
 loop(
     void
 ){
+    static int noBusy = 0;
+    static bool in_sleep = false;
+
+    if ( sleep_requested && in_sleep ){ // waiting for MCU to actually go to sleep
+        return;
+    } else if ( sleep_requested && !in_sleep ){ // we've asked to sleep, but we haven't told the device yet
+        in_sleep = true;
+        goToSleep();
+        
+        return;
+    } else if ( !sleep_requested && in_sleep ){ // we've woken up from sleep, execute wakeup
+        wakeUp();
+    } else {
+        // Normal Operation
+    }
+
+    in_sleep = sleep_requested;
+
 #ifdef DEBUG_ON // DEBUG_ON
     static bool print_start_loop = true;
 
@@ -77,8 +99,6 @@ loop(
     }
 #endif // DEBUG_ON
     
-    // we are going to have a command activitiy variable
-
     auto& svcs = ServiceRegistry::instance().services();
     uint32_t now = millis();
     bool anyBusy = false;
@@ -90,18 +110,13 @@ loop(
     }
 
 #ifndef RECV_SERIAL_NEST // !RECV_SERIAL_NEST
-    // if (!anyBusy) {
-    // #ifdef DEBUG_ON // DEBUG_ON
-    //     Serial.printf("Going to sleep...\r\n");
-    // #endif
-    
-    //     goToSleep();
-    
-    // #ifdef DEBUG_ON // DEBUG_ON
-    //     Serial.print("Waking up....\r\n");
-    // #endif
-        
-    //     wakeUp();
-    // }
+    if (!anyBusy) {
+        noBusy++;
+
+        if(noBusy > 100){
+            noBusy = 0;
+            sleep_requested = true;
+        }
+    }
 #endif // !RECV_SERIAL_NEST
 }

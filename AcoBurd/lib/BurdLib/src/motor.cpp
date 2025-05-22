@@ -20,8 +20,14 @@
 #define MOTOR_DEADBAND 3
 #define MOTOR_SETTLE_MS 50
 #define WIGGLE_DEADBAND 259200                // If release will occur in next x seconds, then don't wiggle
-#define WIGGLE_INTERVAL_MS 10000
-#define WIGGLE_OFFSET 1000
+#define MILLISECONDS 1000
+#define WIGGLE_OFFSET 4000
+
+#ifndef WIGGLE_INTERVAL_SECONDS
+    //                              min *   hour    *   day *   num_days
+    #define WIGGLE_INTERVAL_SECONDS ( 60  *   60      *   24  *   3 )
+#endif
+#define WIGGLE_INTERVAL_MS (WIGGLE_INTERVAL_SECONDS * MILLISECONDS)
 
 #define TICKS_PER_REV    (GEARBOX_RATIO * PULSES_PER_MOTOR_ROTATION)
 
@@ -210,7 +216,9 @@ newMotorTarget(
 }
 
 // Schedule next wiggle by setting state and computing target
-static void
+extern volatile bool sleep_requested;
+
+void
 scheduleWiggle(
     void
 ){
@@ -224,6 +232,8 @@ scheduleWiggle(
     }
 
     set_wiggle_start_pos(original_home_pos);
+
+    sleep_requested = false;
 }
 
 void
