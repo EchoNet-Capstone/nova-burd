@@ -79,15 +79,16 @@ loop(
     } else if ( sleep_requested && !in_sleep ){ // we've asked to sleep, but we haven't told the device yet
         in_sleep = true;
         goToSleep();
-        
+
         return;
     } else if ( !sleep_requested && in_sleep ){ // we've woken up from sleep, execute wakeup
         wakeUp();
+        
+        in_sleep = false;
+        return;
     } else {
         // Normal Operation
     }
-
-    in_sleep = sleep_requested;
 
 #ifdef DEBUG_ON // DEBUG_ON
     static bool print_start_loop = true;
@@ -117,6 +118,8 @@ loop(
             noBusy = 0;
             sleep_requested = true;
         }
+    }else{
+        noBusy = 0;
     }
 #endif // !RECV_SERIAL_NEST
 }
