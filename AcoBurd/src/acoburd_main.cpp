@@ -71,7 +71,7 @@ void
 loop(
     void
 ){
-    static int noBusy = 0;
+    static uint32_t activityTimeout = 0;
     static bool in_sleep = false;
 
     if ( sleep_requested && in_sleep ){ // waiting for MCU to actually go to sleep
@@ -84,6 +84,7 @@ loop(
     } else if ( !sleep_requested && in_sleep ){ // we've woken up from sleep, execute wakeup
         wakeUp();
         
+        activityTimeout = 0;
         in_sleep = false;
         return;
     } else {
@@ -108,18 +109,21 @@ loop(
         s->busy = false;
         s->fn();
         anyBusy |= s->busy;
+
+        if(s->busy){
+            s->lastRun = now;
+        }
     }
 
 #ifndef RECV_SERIAL_NEST // !RECV_SERIAL_NEST
     if (!anyBusy) {
-        noBusy++;
+        if(activityTimeout == 0 ) activityTimeout = now + 100;
 
-        if(noBusy > 100){
-            noBusy = 0;
+        if( now > activityTimeout ){
             sleep_requested = true;
         }
     }else{
-        noBusy = 0;
+        activityTimeout = 0;
     }
 #endif // !RECV_SERIAL_NEST
 }
