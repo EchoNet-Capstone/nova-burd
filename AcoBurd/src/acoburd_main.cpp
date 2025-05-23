@@ -115,7 +115,7 @@ loop(
     if (!anyBusy) {
         if(activityTimeout == 0 ) activityTimeout = now + 100;
 
-        if( now > activityTimeout ){
+        if( (int32_t) (now - activityTimeout) >= 0 ){
             sleep_requested = true;
         }
     }else{

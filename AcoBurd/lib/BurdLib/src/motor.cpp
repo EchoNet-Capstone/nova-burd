@@ -388,42 +388,44 @@ motorService(
         motorServiceDesc.busy = true;
     }
 
-    if (settle != 0 && (int32_t)(InternalClock() - settle) >= 0){      
-        set_is_motor_running(false);
+    if (settle != 0){
+        if ( (int32_t)(InternalClock() - settle) >= 0 ) {
+            set_is_motor_running(false);
 
-        switch(get_wiggle_state()){
-            case WIGGLE_OUT:
-                set_wiggle_state(WIGGLE_BACK);
+            switch(get_wiggle_state()){
+                case WIGGLE_OUT:
+                    set_wiggle_state(WIGGLE_BACK);
 
-                break;
-            case WIGGLE_BACK:
-                set_wiggle_state(WIGGLE_HOME_PREP);
+                    break;
+                case WIGGLE_BACK:
+                    set_wiggle_state(WIGGLE_HOME_PREP);
 
-                break;
-            case WIGGLE_HOME_PREP:
-                set_wiggle_state(WIGGLE_HOME);
+                    break;
+                case WIGGLE_HOME_PREP:
+                    set_wiggle_state(WIGGLE_HOME);
 
-                break;
-            case WIGGLE_HOME:
-            #ifdef DEBUG_ON // DEBUG_ON
-                Serial.printf("Finished Wiggle :)\r\n");
-            #endif 
+                    break;
+                case WIGGLE_HOME:
+                #ifdef DEBUG_ON // DEBUG_ON
+                    Serial.printf("Finished Wiggle :)\r\n");
+                #endif 
 
-                set_wiggle_state(WIGGLE_OFF);
-                set_motor_target(get_wiggle_start_pos());
+                    set_wiggle_state(WIGGLE_OFF);
+                    set_motor_target(get_wiggle_start_pos());
 
-                Asr_SetTimeout(WIGGLE_INTERVAL_MS);
+                    Asr_SetTimeout(WIGGLE_INTERVAL_MS);
 
-                break;
-            default:
-                break;
+                    break;
+                default:
+                    break;
+            }
+
+            set_motor_status(STOPPED);
+
+            settle = 0;
         }
-
-        set_motor_status(STOPPED);
-
-        settle = 0;
-
-        motorServiceDesc.busy = true;
+        
+        motorServiceDesc.busy = true;        
     }
 }
 
