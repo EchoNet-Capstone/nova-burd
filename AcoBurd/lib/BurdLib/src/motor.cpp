@@ -31,8 +31,6 @@
 
 #define TICKS_PER_REV    (GEARBOX_RATIO * PULSES_PER_MOTOR_ROTATION)
 
-extern Service motorServiceDesc;
-
 enum WiggleState {
     WIGGLE_OFF,
     WIGGLE_OUT,
@@ -205,7 +203,6 @@ driveToward(
     if (remain > 0)  motor_forward();
     else             motor_reverse();
     set_is_motor_running(true);
-    motorServiceDesc.busy = true;
 }
 
 void
@@ -339,6 +336,8 @@ wiggleState(
     }
 }
 
+extern Service motorServiceDesc;
+
 void
 motorService(
     void
@@ -368,7 +367,7 @@ motorService(
 //     );
 // #endif // DEBUG_ON
 
-    if (pos != target && settle == 0) {
+    if (abs(remain) > MOTOR_DEADBAND && settle == 0) {
         if (get_wiggle_state() == WIGGLE_OFF){
             set_motor_status(RUNNING);
         }
@@ -424,7 +423,7 @@ motorService(
 
             settle = 0;
         }
-        
+
         motorServiceDesc.busy = true;        
     }
 }
