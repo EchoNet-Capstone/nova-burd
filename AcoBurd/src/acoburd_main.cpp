@@ -59,10 +59,6 @@ setup(
     display_init();
 
     registerAllServices();
-
-#ifdef DEBUG_ON // DEBUG_ON
-    delay(1000);
-#endif
 }
 
 extern volatile bool sleep_requested;
