@@ -102,20 +102,25 @@ loop(
     bool anyBusy = false;
 
     for (auto* s : svcs) {
-        s->busy = false;
-        s->fn();
-        anyBusy |= s->busy;
+        if (s->period == 0 || (now - s->lastRun) >= s->period) {
+            s->busy = false;
+            s->fn();
 
-        if(s->busy){
-            s->lastRun = now;
+            anyBusy |= s->busy;
+
+            if(s->busy){
+                s->lastRun = now;
+            }
+        }else{
+            /* Do nothing */
         }
     }
 
 #ifndef RECV_SERIAL_NEST // !RECV_SERIAL_NEST
     if (!anyBusy) {
-        if(activityTimeout == 0 ) activityTimeout = now + 100;
+        if( activityTimeout == 0 ) activityTimeout = now + 100;
 
-        if(activityTimeout != 0 && (int32_t)(now - activityTimeout) >= 0){
+        if( activityTimeout != 0 && (int32_t)(now - activityTimeout) >= 0 ){
             sleep_requested = true;
         }
     }else{
