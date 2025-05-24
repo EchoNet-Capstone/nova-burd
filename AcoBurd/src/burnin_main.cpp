@@ -8,7 +8,8 @@
 SSD1306Wire oled(0x3c, 500000, SDA, SCL, GEOMETRY_128_64, GPIO10); // addr , freq , SDA, SCL, resolution , rst
 
 // State tracking
-enum BurninState {
+enum 
+BurninState {
     WAITING_FOR_CLEAR_CONFIRMATION,  // Waiting for button press to clear
     WAITING_FOR_SERIAL_INPUT,        // Waiting for serial number input
     SERIAL_NUMBER_SET                // Process complete
@@ -18,7 +19,10 @@ static BurninState state = WAITING_FOR_CLEAR_CONFIRMATION;
 static char buffer[10] = {0}; // Space for 8 hex chars + terminator
 static int buffer_idx = 0;
 
-void setup(void) {
+void 
+setup(
+    void
+){
     Serial.begin();
 
     pinMode(Vext, OUTPUT);

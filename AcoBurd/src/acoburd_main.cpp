@@ -14,7 +14,7 @@
 #include <services.hpp>
 #include <sleep.hpp>
 
-void
+void 
 setup(
     void
 ){
@@ -33,13 +33,14 @@ setup(
 
     EEPROM_firstTime();
 
-    if(EEPROM_getDeviceIdNetworkIdSet() != 0x01) {
+    if (EEPROM_getDeviceIdNetworkIdSet() != 0x01)
+    {
         // TODO: wait for device id's to come in through serial and display this on the device's screen
-    #ifdef RECV_SERIAL_NEST
-        EEPROM_setDeviceIdNetworkId((uint16_t) 0x0001, (uint16_t) 0x0001);
-    #else
-        EEPROM_setDeviceIdNetworkId((uint16_t) 0x0002, (uint16_t) 0x0001);
-    #endif
+#ifdef RECV_SERIAL_NEST
+        EEPROM_setDeviceIdNetworkId((uint16_t)0x0001, (uint16_t)0x0001);
+#else
+        EEPROM_setDeviceIdNetworkId((uint16_t)0x0002, (uint16_t)0x0001);
+#endif
     }
 
 #ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
@@ -63,67 +64,85 @@ setup(
 
 extern volatile bool sleep_requested;
 
-void
+void 
 loop(
     void
 ){
     static uint32_t activityTimeout = 0;
     static bool in_sleep = false;
 
-    if ( sleep_requested && in_sleep ){ // waiting for MCU to actually go to sleep
+    if (sleep_requested && in_sleep)
+    { // waiting for MCU to actually go to sleep
         return;
-    } else if ( sleep_requested && !in_sleep ){ // we've asked to sleep, but we haven't told the device yet
+    }
+    else if (sleep_requested && !in_sleep)
+    { // we've asked to sleep, but we haven't told the device yet
         in_sleep = true;
         goToSleep();
 
         return;
-    } else if ( !sleep_requested && in_sleep ){ // we've woken up from sleep, execute wakeup
+    }
+    else if (!sleep_requested && in_sleep)
+    { // we've woken up from sleep, execute wakeup
         wakeUp();
-        
+
         activityTimeout = 0;
         in_sleep = false;
         return;
-    } else {
+    }
+    else
+    {
         // Normal Operation
     }
 
 #ifdef DEBUG_ON // DEBUG_ON
     static bool print_start_loop = true;
 
-    if(print_start_loop){
+    if (print_start_loop)
+    {
         Serial.printf("Initialization Completed. Starting Services...\r\n");
 
         print_start_loop = false;
     }
 #endif // DEBUG_ON
-    
-    auto& svcs = ServiceRegistry::instance().services();
+
+    auto &svcs = ServiceRegistry::instance().services();
     uint32_t now = millis();
     bool anyBusy = false;
 
-    for (auto* s : svcs) {
-        if (s->period == 0 || (now - s->lastRun) >= s->period) {
+    for (auto *s : svcs)
+    {
+        if (s->period == 0 || (now - s->lastRun) >= s->period)
+        {
             s->busy = false;
             s->fn();
 
             anyBusy |= s->busy;
 
-            if(s->busy){
+            if (s->busy)
+            {
                 s->lastRun = now;
             }
-        }else{
+        }
+        else
+        {
             /* Do nothing */
         }
     }
 
 #ifndef RECV_SERIAL_NEST // !RECV_SERIAL_NEST
-    if (!anyBusy) {
-        if( activityTimeout == 0 ) activityTimeout = now + 100;
+    if (!anyBusy)
+    {
+        if (activityTimeout == 0)
+            activityTimeout = now + 100;
 
-        if( activityTimeout != 0 && (int32_t)(now - activityTimeout) >= 0 ){
+        if (activityTimeout != 0 && (int32_t)(now - activityTimeout) >= 0)
+        {
             sleep_requested = true;
         }
-    }else{
+    }
+    else
+    {
         activityTimeout = 0;
     }
 #endif // !RECV_SERIAL_NEST
