@@ -1,25 +1,34 @@
 #include <EEPROM.h>
+#include "safe_arduino.hpp"
 
 #include <stdint.h>
 
+#include <floc.hpp>
+
 #include "burd_EEPROM.hpp"
 
-const uint8_t SERIAL_NUM_SIZE       = sizeof(uint32_t);
+#define SERIAL_NUM_SIZE       sizeof(uint32_t)
 
-const uint8_t MAGIC_SIZE            = sizeof(uint8_t);
+#define MAGIC_SIZE            sizeof(uint8_t)
 
-const uint8_t DEVICE_ID_SIZE        = sizeof(uint16_t);
-const uint8_t NETWORK_ID_SIZE       = sizeof(uint16_t);
-const uint8_t DID_NID_SET_SIZE      = sizeof(uint8_t);
+#define DEVICE_ID_SIZE        sizeof(uint16_t)
+#define NETWORK_ID_SIZE       sizeof(uint16_t)
+#define DID_NID_SET_SIZE      sizeof(uint8_t)
 
-const uint8_t SERIAL_NUM_ADDR       = 0;
+#define EEPROM_SIZE           (size_t)( SERIAL_NUM_SIZE + \
+                                MAGIC_SIZE + \
+                                DEVICE_ID_SIZE + \
+                                NETWORK_ID_SIZE + \
+                                DID_NID_SET_SIZE ) 
 
-const uint8_t EEPROM_MAGIC          = 0x42;
-const uint8_t MAGIC_ADDR            = SERIAL_NUM_ADDR + SERIAL_NUM_SIZE;
+#define SERIAL_NUM_ADDR       0
 
-const uint8_t DEVICE_ID_ADDR        = MAGIC_ADDR + MAGIC_SIZE;
-const uint8_t NETWORK_ID_ADDR       = DEVICE_ID_ADDR + NETWORK_ID_SIZE;
-const uint8_t DID_NID_SET_BYTE_ADDR = NETWORK_ID_ADDR + DID_NID_SET_SIZE;
+#define EEPROM_MAGIC          0x42
+#define MAGIC_ADDR            ( SERIAL_NUM_ADDR + SERIAL_NUM_SIZE )
+
+#define DEVICE_ID_ADDR        ( MAGIC_ADDR + MAGIC_SIZE )
+#define NETWORK_ID_ADDR       ( DEVICE_ID_ADDR + DEVICE_ID_SIZE )
+#define DID_NID_SET_BYTE_ADDR ( NETWORK_ID_ADDR + NETWORK_ID_SIZE )
 
 void
 EEPROM_firstTime(
@@ -109,4 +118,43 @@ EEPROM_getNetworkID(
     EEPROM.get(NETWORK_ID_ADDR, nId);
 
     return nId;
+}
+
+void
+EEPROM_init(
+    void
+){
+    EEPROM.begin(EEPROM_SIZE);
+
+    EEPROM_firstTime();
+
+    uint8_t dIDnIDSet = EEPROM_getDeviceIdNetworkIdSet();
+
+    if (dIDnIDSet != 0x01)
+    {
+    #ifdef DEBUG_ON // DEBUG_ON
+        Serial.printf("Device ID and Network ID not set in EEPROM. Setting...\r\n");
+    #endif // DEBUG_ON
+
+        // TODO: wait for device id's to come in through serial and display this on the device's screen
+    #ifdef RECV_SERIAL_NEST
+        EEPROM_setDeviceIdNetworkId((uint16_t)0x0001, (uint16_t)0x0001);
+    #else
+        EEPROM_setDeviceIdNetworkId((uint16_t)0x0002, (uint16_t)0x0001);
+    #endif
+    } 
+
+    
+    uint16_t t_device_id = EEPROM_getDeviceID();
+    uint16_t t_network_id = EEPROM_getNetworkID();
+
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Got DID (%d), NID (%d) from EEPROM. Setting locally...\r\n", t_device_id, t_network_id);
+#endif // DEBUG_ON
+
+    set_device_id(t_device_id);
+    set_network_id(t_network_id);
+
+    // End interaction with EEPROM. Commit changes to flash.
+    EEPROM.end();
 }

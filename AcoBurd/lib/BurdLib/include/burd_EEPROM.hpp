@@ -47,3 +47,8 @@ uint16_t
 EEPROM_getNetworkID(
     void
 );
+
+void
+EEPROM_init(
+    void
+);

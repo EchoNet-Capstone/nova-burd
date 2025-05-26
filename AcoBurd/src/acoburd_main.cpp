@@ -31,17 +31,7 @@ setup(
     Serial.printf("Booting up...\r\n");
 #endif // DEBUG_ON
 
-    EEPROM_firstTime();
-
-    if (EEPROM_getDeviceIdNetworkIdSet() != 0x01)
-    {
-        // TODO: wait for device id's to come in through serial and display this on the device's screen
-#ifdef RECV_SERIAL_NEST
-        EEPROM_setDeviceIdNetworkId((uint16_t)0x0001, (uint16_t)0x0001);
-#else
-        EEPROM_setDeviceIdNetworkId((uint16_t)0x0002, (uint16_t)0x0001);
-#endif
-    }
+    EEPROM_init();
 
 #ifdef RECV_SERIAL_NEST // RECV_SERIAL_NEST
     nestSerial_init();

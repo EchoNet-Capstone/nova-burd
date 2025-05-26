@@ -4,7 +4,6 @@
 #include <nmv3_api.hpp>
 
 #include "bloomfilter.hpp"
-#include "burd_EEPROM.hpp"
 #include "device_actions.hpp"
 #include "display.hpp"
 #include "globals.hpp"
@@ -16,7 +15,7 @@
 extern Service modemServiceDesc;
 
 // Packet buffer for data received from the acoustic modem serial line
-static uint8_t packetBuffer_modem[FLOC_MAX_SIZE] = {0};
+static uint8_t packetBuffer_modem[sizeof(ModemPacket_t) + 2] = {0};
 static uint8_t packetBuffer_modem_idx = 0;
 
 HardwareSerial& modem_connection = MODEM_SERIAL_CONNECTION;
@@ -33,10 +32,6 @@ modemService(
 
     while (modem_connection.available() > 0) {
         char modem_char = modem_connection.read();
-
-        #ifdef DEBUG_ON // DEBUG_ON
-            Serial.printf("Read char: %c\r\n", modem_char);
-        #endif // DEBUG_ON
 
         // Check for <CR><LF> sequence
         if (modem_char == '\n' && packetBuffer_modem_idx > 0 && packetBuffer_modem[packetBuffer_modem_idx - 1] == '\r') {
@@ -85,28 +80,22 @@ modemService(
 
             in_frame = false;
         } else {
-            if (packetBuffer_modem_idx >= sizeof(packetBuffer_modem)) {
+            if (packetBuffer_modem_idx >= sizeof(packetBuffer_modem) - 1) {
                 // Some error has occurred, clear the packet
                 memset(packetBuffer_modem, 0 , sizeof(packetBuffer_modem));
                 packetBuffer_modem_idx = 0;
+
+                in_frame = false;
+                continue;
             }
 
-            #ifdef DEBUG_ON // DEBUG_ON
-                Serial.printf("Index start %i\r\n", packetBuffer_modem_idx);
-            #endif // DEBUG_ON
             // Append character to the buffer
 
             if (!in_frame && (modem_char == '$' || modem_char == '#')){
                 in_frame = true;
-            #ifdef DEBUG_ON // DEBUG_ON
-                Serial.printf("In frame\r\n");
-            #endif // DEBUG_ON
             } 
             
             if (in_frame){
-            #ifdef DEBUG_ON // DEBUG_ON
-                Serial.printf("add char\r\n");
-            #endif // DEBUG_ON
                 packetBuffer_modem[packetBuffer_modem_idx] = modem_char;
                 packetBuffer_modem_idx++;
             }
@@ -129,27 +118,8 @@ nmv3_init(
 
     delay(100);
 
-#ifdef RECV_SERIAL_NEST
-    uint16_t t_device_id = 0x0001;
-#else
-    uint16_t t_device_id = 0x0002;
-#endif
-
-    uint16_t t_network_id = 0x0001;
-
-    set_device_id(t_device_id);
-    set_network_id(t_network_id);
-
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("Got DID, NID. Setting Modem ID...\r\n");
-#endif // DEBUG_ON
-
     // hash
-    uint8_t new_modem_id = (t_device_id * 31 + t_network_id) & 0xFF;
+    uint8_t new_modem_id = (get_device_id() * 31 + get_network_id()) & 0xFF;
 
     set_address(new_modem_id);
-
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("Modem ID set...\r\n");
-#endif // DEBUG_ON
 }
