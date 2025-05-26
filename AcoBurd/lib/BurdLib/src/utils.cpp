@@ -2,7 +2,7 @@
 
 #include "safe_arduino.hpp"
 
-static void
+void
 printBufferContents(
     uint8_t* buf,
     uint8_t size
