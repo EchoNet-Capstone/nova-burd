@@ -53,7 +53,7 @@ packet_received_nest(
             #endif // DEBUG_ON
 
                 SerialBroadcastPacket_t* broadcastPacket = (SerialBroadcastPacket_t* )&pkt->payload;
-                broadcast((char*) broadcastPacket, pkt->header.size);
+                broadcast((uint8_t*) broadcastPacket, pkt->header.size);
                 break;
             }
             case SERIAL_UNICAST_TYPE:   // 'U'

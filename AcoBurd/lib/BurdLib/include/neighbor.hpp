@@ -5,31 +5,22 @@
 
 typedef struct 
 Neighbor {
-    uint16_t    devAdd; // Device address
-    uint8_t     modAdd; // Modem address
-    uint64_t    lastSeen;
+    uint16_t    devAdd = 0xFFFF; // Device address
     uint16_t    range = 0xFFFF; // 0xFFFF means unknown
+    uint32_t    lastRanged = 0xFFFF; // 0xFFFF means unknown
 } Neighbor;
-
 
 class 
 NeighborManager {
     public: 
         void 
         add_neighbor(
-            uint16_t devAdd, 
-            uint8_t modAdd
+            uint16_t devAdd
         );
 
         void 
         remove_neighbor(
             uint16_t devAdd
-        );
-
-        void 
-        update_neighbor_range(
-            uint16_t devAdd, 
-            uint16_t range
         );
 
         void 
@@ -47,7 +38,7 @@ NeighborManager {
             void
         );
 
-        int  
+        bool  
         rangeTimeout(
             void
         );
@@ -68,24 +59,30 @@ NeighborManager {
         const uint64_t updateInterval = (60*60*1000); // 1 hour
 
         Neighbor neighbors[MAX_NEIGHBORS];
+        uint16_t neighbors_size = 0;
 
-        
-
-        void 
-        get_top_3(
-            Neighbor *rec_neighbors[3]
-        );
-
-        static int 
-        compare_recent(
-            const void *a, 
-            const void *b
-        );
-
-        int 
+        bool
         check_for_neighbors(
             uint16_t dev_add
         );
+
+        int 
+        get_top_3(
+            Neighbor** rec_neighbors
+        );
+
+        static int 
+        compare_neighbors(
+            const void* a, 
+            const void* b
+        ){
+            Neighbor *neighborA = *(Neighbor **)a;
+            Neighbor *neighborB = *(Neighbor **)a;
+
+            if (neighborA->lastRanged > neighborB->lastRanged) return -1;
+            if (neighborA->lastRanged < neighborB->lastRanged) return 1;
+            return 0;
+        }
 };
 
 extern NeighborManager neighborManager;

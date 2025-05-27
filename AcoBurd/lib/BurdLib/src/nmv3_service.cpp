@@ -9,6 +9,7 @@
 #include "globals.hpp"
 #include "neighbor.hpp"
 #include "services.hpp"
+#include "utils.hpp"
 
 #include "nmv3_service.hpp"
 
@@ -48,8 +49,12 @@ modemService(
                     init_da();
         
                     floc_broadcast_received(r.broadcast.payload, r.broadcast.payload_size);
-        
-                    act_upon();
+
+                    if(FLOC_DATA_TYPE <= da.flocType && da.flocType <= FLOC_RESPONSE_TYPE){ // Valid FLOC Packet
+                        neighborManager.add_neighbor(da.srcAddr);
+                        act_upon();
+                    }
+
                     break;
                 case PING_RESP_TYPE:
                     // TODO: Handle ping response
@@ -110,7 +115,7 @@ nmv3_init(
     delay(100);
 
     // hash
-    uint8_t new_modem_id = (get_device_id() * 31 + get_network_id()) & 0xFF;
+    uint8_t new_modem_id = modemIdFromDidNid(get_device_id(), get_network_id());
 
     set_address(new_modem_id);
 }

@@ -2,6 +2,12 @@
 
 #include <stdint.h>
 
+uint8_t
+modemIdFromDidNid(
+    uint16_t deviceID,
+    uint16_t networkID
+);
+
 void
 printBufferContents(
     uint8_t* buf,

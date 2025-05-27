@@ -2,6 +2,14 @@
 
 #include "safe_arduino.hpp"
 
+uint8_t
+modemIdFromDidNid(
+    uint16_t deviceID,
+    uint16_t networkID
+){
+    return (deviceID * 31 + networkID) & 0xFF;
+}
+
 void
 printBufferContents(
     uint8_t* buf,
