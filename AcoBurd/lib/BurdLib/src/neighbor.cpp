@@ -105,14 +105,12 @@ NeighborManager::print_neighbors(
             return;
         }
 
-    #ifdef DEBUG_ON // DEBUG_ON
         Serial.printf(
             "Neighbor: devAdd=%d, modAdd=%d, lastSeen=%lu, range=%d\r\n",
             ntohs(neighbors[i].devAdd),
             neighbors[i].lastRanged,
             neighbors[i].range
         );
-    #endif // DEBUG_ON
     }
 }
 
@@ -168,11 +166,12 @@ NeighborManager::rangeTimeout(
 ){
     if (millis() - neighborManager.lastUpdateTime > neighborManager.updateInterval) {
         neighborManager.lastUpdateTime = millis();
-        neighborManager.print_neighbors();
 
         #ifdef DEBUG_ON // DEBUG_ON
-            Serial.printf("Starting ranging period\r\n");   
+            Serial.printf("Starting ranging period\r\n");
+            neighborManager.print_neighbors();   
         #endif // DEBUG_ON
+
         return true;
     }
 
@@ -261,8 +260,6 @@ neighborService(
 
     // // Check for new neighbors
     if (neighborManager.rangeTimeout()) {
-
-        neighborServiceDesc.busy = true;
 
         neighborManager.start_ranging();
 

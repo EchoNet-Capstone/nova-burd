@@ -48,10 +48,6 @@ activityService(
 
     activityServiceDesc.busy = false;
 
-    if ((current_time - activity_period_start < ACTIVITY_PERIOD)) {
-        return;
-    }
-
     switch(get_activity_state()) {
         case SENDING:
             if ((current_time - activity_period_start) >= ACTIVITY_SENDING) {
