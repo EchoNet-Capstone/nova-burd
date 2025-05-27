@@ -1,0 +1,29 @@
+{
+    "name": "BurdLib",
+    "version": "1.0.0",
+    "description": "Internal Burd library for AcoBurd project",
+    "keywords": "internal, device",
+    "authors": [
+      {
+        "name": "Cooper Mattern",
+        "email": "cnamattern@gmail.com",
+        "url": "https://github.com/bobjoe400"
+      },
+      {
+        "name": "Daniel Brathwaite"
+      },
+      {
+        "name": "Nina St. John"
+      },
+      {
+        "name": "Armaan Oberai"
+      }
+    ],
+    "build": { 
+      "flags": ["-Wall", "-Wextra"]
+    },
+    "dependencies": {
+      "Floc": "*",
+      "Nmv3": "*"
+    }
+  }

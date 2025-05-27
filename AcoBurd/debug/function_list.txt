@@ -1,0 +1,60 @@
+##############################################
+# Function list to produce dissasemblies of. #
+#                                            #
+# Add a function below by just writing its   #
+# name without the "()", or leading class    #
+# name.                                      #
+#                                            #
+# Comment out functions with "#"             #
+#                                            #
+# Output will be put into the                #
+# "outputs/<build-env-name>/dissasemblies"   #
+# folder under "<func_name>.S"               #
+#                                            #
+# Example:                                   #
+# // my_file.cpp                             #
+# ...                                        #
+# void                                       #
+# myFunc(                                    #
+#   int arg1,                                #
+#   int arg2,                                #
+# ){                                         #
+#   ...                                      # 
+# }                                          #
+# ...                                        #
+#                                            #
+# // myClassFile.cpp                         #
+# ...                                        #
+# bool                                       #
+# MyClass::myClassFunc(                      #
+#   int arg1,                                #
+#   int arg2,                                #
+#   bool arg3,                               #
+# ){                                         #
+#   ...                                      #
+# }                                          #
+# ...                                        #
+#                                            #                                        
+# // function_list.txt                       #
+# ...                                        #
+# ######################                     #
+# #Start Function List #                     #
+# ######################                     #                                       
+#                                            #
+# myFunc                                     #
+# #myClassFunc <- Commented Out, No Output   #
+# ...                                        #
+#                                            #
+# #######################                    #
+# #  End Function List  #                    #
+# #######################                    #
+#                                            #
+##############################################
+
+#######################
+# Start Function List #
+#######################
+
+#######################
+#  End Function List  #
+#######################

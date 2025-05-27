@@ -1,3 +1,8 @@
-[submodule "nova-floc"]
-	path = nova-floc
+[submodule "AcoBurd/lib/Floc"]
+	path = AcoBurd/lib/Floc
 	url = git@github.com:EchoNet-Capstone/nova-floc.git
+	branch = dev
+[submodule "AcoBurd/lib/Nmv3"]
+	path = AcoBurd/lib/Nmv3
+	url = git@github.com:EchoNet-Capstone/nova-nmv3.git
+	branch = dev
