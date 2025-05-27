@@ -144,6 +144,7 @@ NeighborManager::check_for_neighbors(
 }
 
 extern Service neighborServiceDesc;
+#include "debug.hpp"
 
 void 
 neighborService(
@@ -154,6 +155,10 @@ neighborService(
 
     // // Check for new neighbors
     if (neighborManager.rangeTimeout()) {
+
+        neighborServiceDesc.busy = true;
+
+        neighborManager.start_ranging();
 
         neighborServiceDesc.busy = true;
     }
@@ -176,12 +181,14 @@ NeighborManager::rangeTimeout(
     return 0;
 }
 
+
+
 // start ranging protocol
 void
 NeighborManager::start_ranging(
     void
 ) {
-    Neighbor *rec_neighbors[SEND_AMOUNT];
+    Neighbor *rec_neighbors[SEND_AMOUNT] = {0};
     get_top_3(rec_neighbors);
 
     for (int i = 0; i < SEND_AMOUNT; i++) {
@@ -220,7 +227,7 @@ void
 NeighborManager::get_top_3(
     Neighbor *rec_neighbors[SEND_AMOUNT]
 ) {
-    Neighbor *temp[MAX_NEIGHBORS];
+    Neighbor *temp[MAX_NEIGHBORS] = {0};
     int count = 0;
 
     for (int i = 0; i < MAX_NEIGHBORS; i++) {
@@ -229,6 +236,9 @@ NeighborManager::get_top_3(
 
         }
     }
+
+    if (!count)
+        return;
 
     qsort(temp, count, sizeof(Neighbor *), compare_recent);
 

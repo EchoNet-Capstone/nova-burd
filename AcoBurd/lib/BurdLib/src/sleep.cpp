@@ -51,6 +51,7 @@ goToSleep(
 #endif // DEBUG_ON
 
 #ifndef RECV_SERIAL_NEST // !RECV_SERIAL_NEST
+    Serial1.flush();
     Serial1.end();
 
     delay(100);

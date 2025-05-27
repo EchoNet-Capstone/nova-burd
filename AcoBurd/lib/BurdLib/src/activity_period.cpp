@@ -59,11 +59,6 @@ activityService(
                 activity_period_start = current_time;
 
                 activityServiceDesc.busy = true;
-
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("LISTENING\r\n");
-#endif // DEBUG_ON
-
             }
             break;
         case LISTENING:
@@ -71,10 +66,6 @@ activityService(
                 activity_state = SENDING;
 
                 activityServiceDesc.busy = true;
-
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("SENDING\r\n");
-#endif // DEBUG_ON
             }
             break;
         default:

@@ -39,18 +39,9 @@ modemService(
             packetBuffer_modem[packetBuffer_modem_idx - 1] = 0;
 
             uint8_t packet_size = packetBuffer_modem_idx - 1;
-
-            if (bloom_check_packet(packetBuffer_modem, packet_size)) {
-            #ifdef DEBUG_ON
-                Serial.printf("Duplicate packet (raw hash), dropping.\n");
-            #endif
-            }
-                
-            maybe_reset_bloom_filter();
-            bloom_add_packet(packetBuffer_modem, packet_size);
-
-            r = packet_received_modem(packetBuffer_modem, packet_size);
             
+            r = packet_received_modem(packetBuffer_modem, packet_size);
+
             // Packet Received Parse the response;
             switch (r.type) {
                 case BROAD_RECV_TYPE:

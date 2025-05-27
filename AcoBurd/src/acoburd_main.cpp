@@ -13,6 +13,7 @@
 #include <nmv3_service.hpp>
 #include <services.hpp>
 #include <sleep.hpp>
+#include <neighbor.hpp>
 
 void 
 setup(
@@ -50,6 +51,9 @@ setup(
     display_init();
 
     registerAllServices();
+
+    // neighbor init
+    neighborManager.clear_neighbors();
 }
 
 extern volatile bool sleep_requested;

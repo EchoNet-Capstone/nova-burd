@@ -58,16 +58,18 @@ NeighborManager {
             uint16_t range
         );
 
+        void 
+        start_ranging(
+            void
+        );
+
     private:
         uint64_t lastUpdateTime = 0;
         const uint64_t updateInterval = (60*60*1000); // 1 hour
 
         Neighbor neighbors[MAX_NEIGHBORS];
 
-        void 
-        start_ranging(
-            void
-        );
+        
 
         void 
         get_top_3(
