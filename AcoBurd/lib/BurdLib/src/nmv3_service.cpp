@@ -51,7 +51,7 @@ modemService(
                     floc_broadcast_received(r.broadcast.payload, r.broadcast.payload_size);
 
                     if(FLOC_DATA_TYPE <= da.flocType && da.flocType <= FLOC_RESPONSE_TYPE){ // Valid FLOC Packet
-                        neighborManager.add_neighbor(da.srcAddr);
+                        neighborManager.add_neighbor(da.lastHopAddr);
                         act_upon();
                     }
 
