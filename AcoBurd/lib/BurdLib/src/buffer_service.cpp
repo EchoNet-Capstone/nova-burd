@@ -18,7 +18,7 @@ bufferService(
     //     Serial.printf("Activity period is open for sending...\r\n");
     // #endif // DEBUG_ON
 
-        if (flocBuffer.checkqueueStatus() == 0) {
+        if (flocBuffer.checkQueueStatus() == 0) {
         // #ifdef DEBUG_ON // DEBUG_ON
         //     Serial.printf("No packets in the queue...\r\n");
         // #endif // DEBUG_ON    
@@ -28,7 +28,7 @@ bufferService(
         //     Serial.printf("Packets in the queue...\r\n");
         // #endif // DEBUG_ON
         
-            flocBuffer.queuehandler();
+            flocBuffer.queueHandler();
 
             bufferServiceDesc.busy = true;
         }

@@ -36,6 +36,18 @@ NeighborManager::add_neighbor(
     #ifdef DEBUG_ON // DEBUG_ON
         Serial.printf("Neighbor list full! Not adding neighbor...\r\n");
     #endif // DEBUG_ON
+
+        return;
+    }
+
+    if (devAdd > get_device_id()){
+    #ifdef DEBUG_ON // DEBUG_ON
+        Serial.printf("Higher device ID.");
+        Serial.printf("Only care about Neighbors with a lower Device ID.");
+        Serial.printf("Not Adding neighbor....\r\n");
+    #endif // DEBUG_ON
+
+        return;
     }
 
 #ifdef DEBUG_ON // DEBUG_ON
@@ -183,7 +195,7 @@ NeighborManager::start_ranging(
             Serial.printf("Requesting range from neighbor: devAdd=%d\r\n", ntohs(neighbors[i].devAdd));
         #endif
 
-            flocBuffer.add_pinglist(i, rec_neighbors[i]->devAdd);
+            flocBuffer.addToPingList(i, rec_neighbors[i]->devAdd);
         }
     }
 }

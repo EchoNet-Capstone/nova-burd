@@ -76,11 +76,26 @@ NeighborManager {
             const void* a, 
             const void* b
         ){
-            Neighbor *neighborA = *(Neighbor **)a;
-            Neighbor *neighborB = *(Neighbor **)a;
+            Neighbor* neighborA = *(Neighbor**) a;
+            Neighbor* neighborB = *(Neighbor**) b;
 
-            if (neighborA->lastRanged > neighborB->lastRanged) return -1;
-            if (neighborA->lastRanged < neighborB->lastRanged) return 1;
+            // Empty entries (devAdd == 0xFFFF) go to the end (4th priority)
+            if (neighborA->devAdd == 0xFFFF && neighborB->devAdd == 0xFFFF) return 0;
+            if (neighborA->devAdd == 0xFFFF) return 1;  // A empty, B comes first
+            if (neighborB->devAdd == 0xFFFF) return -1; // B empty, A comes first
+
+            // Unknown entries (range == 0xFFFF) have highest priority (1st)
+            bool aUnknown = (neighborA->range == 0xFFFF);
+            bool bUnknown = (neighborB->range == 0xFFFF);
+            
+            if (aUnknown && bUnknown) return 0;
+            if (aUnknown) return -1;  // A unknown, comes first
+            if (bUnknown) return 1;   // B unknown, comes first
+            
+            // Both have been ranged - sort by lastRanged (older first)
+            // This puts stale entries (2nd priority) before known entries (3rd priority)
+            if (neighborA->lastRanged < neighborB->lastRanged) return -1;
+            if (neighborA->lastRanged > neighborB->lastRanged) return 1;
             return 0;
         }
 };
