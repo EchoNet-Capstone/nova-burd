@@ -33,10 +33,11 @@ activitity_init(
     void
 ){
 #ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("Activity Init...\r\n");
+    Serial.printf("Activity Init with jitter...\r\n");
 #endif // DEBUG_ON
 
-    activity_period_start = millis();
+    int16_t jitter = random(2001) - 1000;
+    activity_period_start = millis() + jitter;
     activity_state = SENDING;
 }
 
@@ -55,6 +56,7 @@ activityService(
                 activity_period_start = current_time;
 
                 activityServiceDesc.busy = true;
+
             }
             break;
         case LISTENING:

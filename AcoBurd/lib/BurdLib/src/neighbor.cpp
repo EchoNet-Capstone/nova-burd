@@ -27,8 +27,8 @@ NeighborManager::add_neighbor(
     if (check_for_neighbors(devAdd)) {
     #ifdef DEBUG_ON // DEBUG_ON
         Serial.printf("Neighbor already exists: devAdd=%d\r\n", ntohs(devAdd));
+        Serial.printf("\tUpdating last seen \r\n");
     #endif // DEBUG_ON
-
         return;
     }
 
@@ -51,14 +51,20 @@ NeighborManager::add_neighbor(
     }
 
 #ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("Adding neighbor: devAdd=%d\r\n", ntohs(devAdd));
+    Serial.printf("Adding neighbor: devAdd=%d at time %i \r\n", ntohs(devAdd), millis());
 #endif // DEBUG_ON
 
     Neighbor neighbor;
 
     neighbor.devAdd = devAdd;
+
     neighbors[neighbors_size] = neighbor;
+
     neighbors_size += 1;
+
+    #ifdef DEBUG_ON // DEBUG_ON
+        neighborManager.print_neighbors();
+    #endif // DEBUG_ON
 
     qsort(neighbors, neighbors_size, sizeof(Neighbor), compare_neighbors);
 }
@@ -106,7 +112,7 @@ NeighborManager::print_neighbors(
         }
 
         Serial.printf(
-            "Neighbor: devAdd=%d, modAdd=%d, lastSeen=%lu, range=%d\r\n",
+            "Neighbor: devAdd=%d, lastRanged=%i, range=%d\r\n",
             ntohs(neighbors[i].devAdd),
             neighbors[i].lastRanged,
             neighbors[i].range
@@ -199,7 +205,7 @@ NeighborManager::start_ranging(
     }
 }
 
-// ikykyk
+
 void
 NeighborManager::update_neighbors(
     uint16_t devAdd,
@@ -209,10 +215,11 @@ NeighborManager::update_neighbors(
         if (neighbors[i].devAdd == devAdd) {
             neighbors[i].range = range;
             neighbors[i].lastRanged = millis(); // update timestamp
+            break;
         }
     }
 
-    qsort(neighbors, neighbors_size, sizeof(Neighbor *), compare_neighbors);
+    qsort(neighbors, neighbors_size, sizeof(Neighbor), compare_neighbors);
 }
 
 // helper functions

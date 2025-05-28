@@ -14,6 +14,7 @@
 #include <services.hpp>
 #include <sleep.hpp>
 #include <neighbor.hpp>
+#include <bloomfilter.hpp>
 
 void 
 setup(
@@ -54,6 +55,8 @@ setup(
 
     // neighbor init
     neighborManager.clear_neighbors();
+
+    bloom_reset();
 }
 
 extern volatile bool sleep_requested;
