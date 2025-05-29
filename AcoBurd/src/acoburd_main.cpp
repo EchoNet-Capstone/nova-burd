@@ -68,6 +68,7 @@ loop(
     static uint32_t activityTimeout = 0;
     static bool in_sleep = false;
 
+#ifndef RECV_SERIAL_NEST // !RECV_SERIAL_NEST
     if (sleep_requested && in_sleep)
     { // waiting for MCU to actually go to sleep
         return;
@@ -91,6 +92,7 @@ loop(
     {
         // Normal Operation
     }
+#endif // !RECV_SERIAL_NEST
 
 #ifdef DEBUG_ON // DEBUG_ON
     static bool print_start_loop = true;

@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <HT_SSD1306Wire.h>
+#include <EEPROM.h>
 
 #include <stdlib.h>
 
@@ -45,6 +46,8 @@ setup(
     
     // Note: We don't clear the serial number here anymore
     // That will happen after button confirmation
+
+    EEPROM.begin(EEPROM_SIZE);
 }
 
 void loop(void) {
@@ -106,6 +109,8 @@ void loop(void) {
                     
                     Serial.printf("New serial number set: 0x%08X\n", newSerialNumber);
                     
+                    EEPROM.end(); // End transaction with EEPROM
+
                     // Mark process as complete
                     state = SERIAL_NUMBER_SET;
                     break;
