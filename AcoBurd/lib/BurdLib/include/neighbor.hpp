@@ -56,8 +56,12 @@ NeighborManager {
 
     private:
         uint64_t lastUpdateTime = 0;
-        //const uint64_t updateInterval = (60*60*1000); // 1 hour
+
+    #ifdef DEBUG_ON // DEBUG_ON
         const uint64_t updateInterval = (60*1000); // 30 sec test
+    #else
+        const uint64_t updateInterval = (60*60*1000); // 1 hour
+    #endif
 
         Neighbor neighbors[MAX_NEIGHBORS];
         uint16_t neighbors_size = 0;
