@@ -1,10 +1,15 @@
 #pragma once
 
+#include "get_set_macros.hpp"
+
 enum
 activityState {
     LISTENING,
-    SENDING
+    SENDING,
+    RANGING
 };
+
+GET_SET_FUNC_PROTO(activityState, activity_state)
 
 void
 activitity_init(

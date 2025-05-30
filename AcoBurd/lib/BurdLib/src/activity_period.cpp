@@ -21,12 +21,19 @@
 
 GET_SET_FUNC_DEF(activityState, activity_state, SENDING)
 
-static unsigned long activity_period_start = 0;
+static uint32_t activity_period_start = 0;
 
-const unsigned int ACTIVITY_PERIOD = 10000; // 10 second (total)
-const unsigned int ACTIVITY_SENDING = 2000; // 2 seconds
+#define ACTIVITY_PERIOD  10000  // 10 second (total)
+#define ACTIVITY_SENDING  2000  // 2 seconds
 
 extern Service activityServiceDesc;
+
+bool
+is_activity_period_open(
+    void
+){
+    return get_activity_state() == SENDING;
+}
 
 void
 activitity_init(
@@ -36,8 +43,8 @@ activitity_init(
     Serial.printf("Activity Init with jitter...\r\n");
 #endif // DEBUG_ON
 
-    int16_t jitter = random(2001) - 1000;
-    activity_period_start = millis() + jitter;
+    activity_period_start = millis() + random(0, 2000);
+
     activity_state = SENDING;
 }
 
@@ -45,15 +52,20 @@ void
 activityService(
     void
 ){
-    unsigned long current_time = millis();
+    uint32_t current_time = millis();
 
     activityServiceDesc.busy = false;
+
+    if( current_time < activity_period_start ){
+        /* Do Nothing */
+
+        return;
+    }
 
     switch(get_activity_state()) {
         case SENDING:
             if ((current_time - activity_period_start) >= ACTIVITY_SENDING) {
-                activity_state = LISTENING;
-                activity_period_start = current_time;
+                set_activity_state(LISTENING);
 
                 activityServiceDesc.busy = true;
 
@@ -61,20 +73,19 @@ activityService(
             break;
         case LISTENING:
             if ((current_time - activity_period_start) >= ACTIVITY_PERIOD) {
-                activity_state = SENDING;
+                set_activity_state(SENDING);
 
+
+                activity_period_start = current_time + random(0, 2000);
                 activityServiceDesc.busy = true;
             }
+            break;
+        case RANGING:
+            /* Do nothing, neighbor service does this stuff */
+
+            activityServiceDesc.busy = true;
             break;
         default:
             break;
     }
 }
-
-bool
-is_activity_period_open(
-    void
-){
-    return get_activity_state() == SENDING;
-}
-

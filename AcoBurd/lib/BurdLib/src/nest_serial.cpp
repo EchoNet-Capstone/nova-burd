@@ -62,7 +62,8 @@ packet_received_nest(
                 break;
             default:
             #ifdef DEBUG_ON // DEBUG_ON
-                Serial.printf("Unhandled Serial NeST-to-BuRD packet type! Prefix [%c]\r\n", (char) pkt->header.type);
+                Serial.printf("Unhandled Serial NeST-to-BuRD packet type!");
+                Serial.printf("Prefix [%c]\r\n", (char) pkt->header.type);
             #endif // DEBUG_ON
 
                 return;

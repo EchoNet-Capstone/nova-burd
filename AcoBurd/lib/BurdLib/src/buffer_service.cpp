@@ -13,24 +13,18 @@ bufferService(
 ){
     bufferServiceDesc.busy = false;
 
-    if (is_activity_period_open()) {
-    // #ifdef DEBUG_ON // DEBUG_ON
-    //     Serial.printf("Activity period is open for sending...\r\n");
-    // #endif // DEBUG_ON
-
-        if (flocBuffer.checkQueueStatus() == 0) {
-        // #ifdef DEBUG_ON // DEBUG_ON
-        //     Serial.printf("No packets in the queue...\r\n");
-        // #endif // DEBUG_ON    
-
-        } else {
-        // #ifdef DEBUG_ON // DEBUG_ON
-        //     Serial.printf("Packets in the queue...\r\n");
-        // #endif // DEBUG_ON
-        
-            flocBuffer.queueHandler();
-
-            bufferServiceDesc.busy = true;
-        }
+    if (!is_activity_period_open()) {
+        /* Do Nothing */
+        return;
     }
+
+    if (flocBuffer.checkQueueStatus() != 0) {
+        flocBuffer.queueHandler();
+
+        bufferServiceDesc.busy = true;
+
+        return;
+    }
+
+    /* Do Nothing */
 }

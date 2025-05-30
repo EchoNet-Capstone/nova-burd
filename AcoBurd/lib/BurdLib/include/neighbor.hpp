@@ -2,13 +2,25 @@
 
 #include <stdint.h>
 #define MAX_NEIGHBORS 10
+#define TIMEOUT_NEIGHBORS (60 * 60 * 1000 * 6) // 6 hours
+
+#define UNKNOWN 0xFFFF
+
+#define NEIGHBORS_TO_PING 3
+#define MAX_PINGS 5
 
 typedef struct 
 Neighbor {
-    uint16_t    devAdd = 0xFFFF; // Device address
-    uint16_t    range = 0xFFFF; // 0xFFFF means unknown
-    uint32_t    lastRanged = 0xFFFF; // 0xFFFF means unknown
+    uint16_t    devAdd = UNKNOWN; // Device address
+    uint16_t    range = UNKNOWN;
+    uint32_t    lastRanged = 0; 
 } Neighbor;
+
+typedef struct{
+    uint16_t    devAdd;
+    uint8_t     pings;
+    bool        dataRecvd;
+} PingEntry_t;
 
 class 
 NeighborManager {
@@ -16,16 +28,6 @@ NeighborManager {
         void 
         add_neighbor(
             uint16_t devAdd
-        );
-
-        void 
-        remove_neighbor(
-            uint16_t devAdd
-        );
-
-        void 
-        print_neighbors(
-            void
         );
 
         void 
@@ -44,14 +46,24 @@ NeighborManager {
         );
 
         void 
-        update_neighbors(
-            uint16_t devAdd,
-            uint16_t range
+        start_ranging(
+            void
+        );
+
+        void
+        pingHandler(
+            void
         );
 
         void 
-        start_ranging(
+        acknowledgeTimeout(
             void
+        );
+
+        void 
+        update_neighbor(
+            uint8_t modemAdd,
+            uint16_t range
         );
 
     private:
@@ -60,11 +72,19 @@ NeighborManager {
     #ifdef DEBUG_ON // DEBUG_ON
         const uint64_t updateInterval = (60*1000); // 30 sec test
     #else
-        const uint64_t updateInterval = (60*60*1000); // 1 hour
+        const uint64_t updateInterval = (5*60*1000); // 5 minutes
     #endif
 
         Neighbor neighbors[MAX_NEIGHBORS];
         uint16_t neighbors_size = 0;
+
+        PingEntry_t pingList[NEIGHBORS_TO_PING] = {0};
+        uint8_t pingList_size = 0;
+
+        void 
+        print_neighbors(
+            void
+        );
 
         bool
         check_for_neighbors(
@@ -73,7 +93,7 @@ NeighborManager {
 
         int 
         get_top_3(
-            Neighbor** rec_neighbors
+            void
         );
 
         static int 
@@ -81,8 +101,8 @@ NeighborManager {
             const void* a, 
             const void* b
         ){
-            Neighbor* neighborA = *(Neighbor**) a;
-            Neighbor* neighborB = *(Neighbor**) b;
+            Neighbor *neighborA = (Neighbor*)a;
+            Neighbor *neighborB = (Neighbor*)b;
 
             // Empty entries (devAdd == 0xFFFF) go to the end (4th priority)
             if (neighborA->devAdd == 0xFFFF && neighborB->devAdd == 0xFFFF) return 0;
@@ -93,7 +113,12 @@ NeighborManager {
             bool aUnknown = (neighborA->range == 0xFFFF);
             bool bUnknown = (neighborB->range == 0xFFFF);
             
-            if (aUnknown && bUnknown) return 0;
+            if (aUnknown && bUnknown) {
+                // Both unknown - sort by device address (lower first)
+                if (neighborA->devAdd < neighborB->devAdd) return -1;
+                if (neighborA->devAdd > neighborB->devAdd) return 1;
+                return 0;
+            }
             if (aUnknown) return -1;  // A unknown, comes first
             if (bUnknown) return 1;   // B unknown, comes first
             
@@ -102,7 +127,7 @@ NeighborManager {
             if (neighborA->lastRanged < neighborB->lastRanged) return -1;
             if (neighborA->lastRanged > neighborB->lastRanged) return 1;
             return 0;
-        }
+        };
 };
 
 extern NeighborManager neighborManager;

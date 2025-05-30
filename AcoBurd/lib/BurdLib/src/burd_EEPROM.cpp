@@ -110,7 +110,8 @@ EEPROM_init(
     if (dIDnIDSet != 0x01)
     {
     #ifdef DEBUG_ON // DEBUG_ON
-        Serial.printf("Device ID and Network ID not set in EEPROM. Setting...\r\n");
+        Serial.printf("Device ID and Network ID not set in EEPROM. ");
+        Serial.printf("Setting in EEPROM...\r\n");
     #endif // DEBUG_ON
 
         // TODO: wait for device id's to come in through serial and display this on the device's screen
@@ -126,7 +127,8 @@ EEPROM_init(
     uint16_t t_network_id = EEPROM_getNetworkID();
 
 #ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("Got DID (%d), NID (%d) from EEPROM. Setting locally...\r\n", t_device_id, t_network_id);
+    Serial.printf("Got DID (%d), NID (%d) from EEPROM. ");
+    Serial.printf("Setting locally...\r\n", t_device_id, t_network_id);
 #endif // DEBUG_ON
 
     set_device_id(t_device_id);

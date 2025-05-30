@@ -22,6 +22,25 @@ static uint8_t packetBuffer_modem_idx = 0;
 HardwareSerial& modem_connection = MODEM_SERIAL_CONNECTION;
 
 void
+nmv3_init(
+    void
+){
+#ifdef DEBUG_ON // DEBUG_ON
+    Serial.printf("Initializing NMV3...\r\n");
+#endif // DEBUG_ON
+
+    // Serial connection to modem
+    modem_connection.begin(9600, SERIAL_8N1);
+
+    delay(100);
+
+    // hash
+    uint8_t new_modem_id = modemIdFromDidNid(get_device_id(), get_network_id());
+
+    set_address(new_modem_id);
+}
+
+void
 modemService(
     void
 ){
@@ -50,24 +69,26 @@ modemService(
         
                     floc_broadcast_received(r.broadcast.payload, r.broadcast.payload_size);
 
-                    // what is going on here?
-                    if(FLOC_DATA_TYPE <= da.flocType && da.flocType <= FLOC_RESPONSE_TYPE){ // Valid FLOC Packet
-                        neighborManager.add_neighbor(da.lastHopAddr);
-                        act_upon();
+                    neighborManager.add_neighbor(da.lastHopAddr);
+
+                    if (da.flocType >= FLOC_DATA_TYPE && da.flocType <= FLOC_RESPONSE_TYPE) {
+                        act_upon(); 
                     }
                     
-
                     break;
                 case PING_RESP_TYPE:
                     // TODO: Handle ping response
 
-                    neighborManager.update_neighbors(r.ping.src_addr, r.ping.meter_range);
+                    neighborManager.update_neighbor(r.ping.src_addr, r.ping.meter_range);
                     break;
                 case STATUS_QUERY_TYPE:
                     // TODO: handle status query response
                     break;
                 case SET_ADDR_TYPE:
                     // TODO: handle set_addr_type
+                    break;
+                case TIMEOUT_TYPE:
+                    neighborManager.acknowledgeTimeout();
                     break;
                 default:
                     break;
@@ -101,23 +122,4 @@ modemService(
 
         modemServiceDesc.busy = true;
     }
-}
-
-void
-nmv3_init(
-    void
-){
-#ifdef DEBUG_ON // DEBUG_ON
-    Serial.printf("Initializing NMV3...\r\n");
-#endif // DEBUG_ON
-
-    // Serial connection to modem
-    modem_connection.begin(9600, SERIAL_8N1);
-
-    delay(100);
-
-    // hash
-    uint8_t new_modem_id = modemIdFromDidNid(get_device_id(), get_network_id());
-
-    set_address(new_modem_id);
 }
